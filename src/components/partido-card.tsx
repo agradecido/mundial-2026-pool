@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { guardarPronostico } from "@/app/partidos/actions";
+import { getFlag } from "@/lib/flags";
 import type { EstadoPartido, Fase } from "@prisma/client";
 
 interface Props {
@@ -9,7 +10,7 @@ interface Props {
     id: string;
     equipoLocal: string;
     equipoVisitante: string;
-    fechaPartido: string; // ISO string (serialized from server)
+    fechaPartido: string;
     fase: Fase;
     estado: EstadoPartido;
     golesLocalReal: number | null;
@@ -20,8 +21,7 @@ interface Props {
 
 function isLocked(fechaPartido: string, estado: EstadoPartido) {
   if (estado !== "PROGRAMADO") return true;
-  const limite = new Date(fechaPartido).getTime() - 15 * 60 * 1000;
-  return Date.now() >= limite;
+  return Date.now() >= new Date(fechaPartido).getTime() - 15 * 60 * 1000;
 }
 
 function formatFecha(iso: string) {
@@ -36,95 +36,121 @@ function formatFecha(iso: string) {
 
 export default function PartidoCard({ partido, pronostico }: Props) {
   const locked = isLocked(partido.fechaPartido, partido.estado);
-  const [local, setLocal] = useState(pronostico?.golesLocal ?? "");
-  const [visitante, setVisitante] = useState(pronostico?.golesVisitante ?? "");
-  const [msg, setMsg] = useState<string | null>(null);
+  const [local, setLocal] = useState<string>(
+    pronostico != null ? String(pronostico.golesLocal) : ""
+  );
+  const [visitante, setVisitante] = useState<string>(
+    pronostico != null ? String(pronostico.golesVisitante) : ""
+  );
+  const [saved, setSaved] = useState(!!pronostico);
+  const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (local === "" || visitante === "") return;
+    setError(null);
     startTransition(async () => {
-      const res = await guardarPronostico(
-        partido.id,
-        Number(local),
-        Number(visitante)
-      );
-      setMsg(res.error ? `✗ ${res.error}` : "✓ Guardado");
-      setTimeout(() => setMsg(null), 2500);
+      const res = await guardarPronostico(partido.id, Number(local), Number(visitante));
+      if (res.error) {
+        setError(res.error);
+      } else {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      }
     });
   }
 
-  const estadoBadge =
-    partido.estado === "EN_PROGRESO"
-      ? "En juego"
-      : partido.estado === "FINALIZADO"
-      ? `${partido.golesLocalReal} - ${partido.golesVisitanteReal}`
-      : null;
+  const flagLocal = getFlag(partido.equipoLocal);
+  const flagVisitante = getFlag(partido.equipoVisitante);
 
   return (
-    <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm">
-      {/* Equipos + inputs */}
-      <span className="w-32 truncate text-right font-medium text-gray-800">
-        {partido.equipoLocal}
-      </span>
+    <div className="relative overflow-hidden rounded-xl border border-white/[0.07] bg-white/[0.03] transition-all hover:border-white/[0.12] hover:bg-white/[0.05] group">
+      {/* top shine */}
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent group-hover:via-[#00e87a]/30 transition-colors" />
 
-      {locked ? (
-        <div className="flex items-center gap-1 px-2 text-gray-400 font-mono">
-          <span>{pronostico?.golesLocal ?? "–"}</span>
-          <span>:</span>
-          <span>{pronostico?.golesVisitante ?? "–"}</span>
+      <div className="flex items-center gap-2 px-4 py-3">
+
+        {/* Local */}
+        <div className="flex flex-1 items-center justify-end gap-2 min-w-0">
+          <span className="truncate text-sm font-semibold text-gray-200 text-right">
+            {partido.equipoLocal}
+          </span>
+          <span className="text-xl shrink-0">{flagLocal}</span>
         </div>
-      ) : (
-        <form onSubmit={handleSubmit} className="flex items-center gap-1">
-          <input
-            type="number"
-            min={0}
-            max={20}
-            value={local}
-            onChange={(e) => { setLocal(e.target.value); setMsg(null); }}
-            className="w-10 rounded border border-gray-300 p-1 text-center font-mono"
-          />
-          <span className="text-gray-400">:</span>
-          <input
-            type="number"
-            min={0}
-            max={20}
-            value={visitante}
-            onChange={(e) => { setVisitante(e.target.value); setMsg(null); }}
-            className="w-10 rounded border border-gray-300 p-1 text-center font-mono"
-          />
-          <button
-            type="submit"
-            disabled={pending}
-            className="ml-1 rounded bg-green-700 px-2 py-1 text-white hover:bg-green-600 disabled:opacity-50"
-          >
-            {pending ? "…" : "OK"}
-          </button>
-        </form>
-      )}
 
-      <span className="w-32 truncate font-medium text-gray-800">
-        {partido.equipoVisitante}
-      </span>
+        {/* Score */}
+        <div className="flex items-center gap-2 shrink-0">
+          {locked ? (
+            <div className="flex items-center gap-2 px-1">
+              <span className="score-input flex items-center justify-center text-gray-400 text-xl font-bold font-mono bg-transparent border-transparent select-none">
+                {pronostico != null ? pronostico.golesLocal : "–"}
+              </span>
+              <span className="text-gray-600 font-bold">:</span>
+              <span className="score-input flex items-center justify-center text-gray-400 text-xl font-bold font-mono bg-transparent border-transparent select-none">
+                {pronostico != null ? pronostico.golesVisitante : "–"}
+              </span>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="flex items-center gap-2">
+              <input
+                type="number"
+                min={0}
+                max={20}
+                value={local}
+                onChange={(e) => { setLocal(e.target.value); setError(null); setSaved(false); }}
+                className="score-input"
+                placeholder="0"
+              />
+              <span className="text-[#00e87a] font-bold text-lg">:</span>
+              <input
+                type="number"
+                min={0}
+                max={20}
+                value={visitante}
+                onChange={(e) => { setVisitante(e.target.value); setError(null); setSaved(false); }}
+                className="score-input"
+                placeholder="0"
+              />
+              <button
+                type="submit"
+                disabled={pending || local === "" || visitante === ""}
+                className={`btn-save ${saved ? "animate-saved" : ""}`}
+              >
+                {pending ? "…" : saved ? "✓" : "OK"}
+              </button>
+            </form>
+          )}
+        </div>
 
-      {/* Meta */}
-      <div className="ml-auto flex items-center gap-2 text-xs text-gray-400">
-        {estadoBadge && (
-          <span className={`rounded px-1.5 py-0.5 font-medium ${
-            partido.estado === "EN_PROGRESO"
-              ? "bg-yellow-100 text-yellow-700"
-              : "bg-gray-100 text-gray-600"
-          }`}>
-            {estadoBadge}
+        {/* Visitante */}
+        <div className="flex flex-1 items-center justify-start gap-2 min-w-0">
+          <span className="text-xl shrink-0">{flagVisitante}</span>
+          <span className="truncate text-sm font-semibold text-gray-200">
+            {partido.equipoVisitante}
           </span>
-        )}
-        {msg && (
-          <span className={msg.startsWith("✓") ? "text-green-600" : "text-red-500"}>
-            {msg}
-          </span>
-        )}
-        <span>{formatFecha(partido.fechaPartido)}</span>
+        </div>
+
+        {/* Meta */}
+        <div className="hidden sm:flex shrink-0 flex-col items-end gap-1 ml-2 text-right min-w-[90px]">
+          {partido.estado === "EN_PROGRESO" && (
+            <span className="text-xs font-semibold text-yellow-400 bg-yellow-400/10 rounded px-1.5 py-0.5">
+              EN JUEGO
+            </span>
+          )}
+          {partido.estado === "FINALIZADO" && (
+            <span className="text-xs text-gray-500 font-mono">
+              {partido.golesLocalReal}–{partido.golesVisitanteReal}
+            </span>
+          )}
+          {locked && partido.estado === "PROGRAMADO" && (
+            <span className="text-xs text-gray-600">🔒</span>
+          )}
+          {error && (
+            <span className="text-xs text-red-400">{error}</span>
+          )}
+          <span className="text-xs text-gray-600">{formatFecha(partido.fechaPartido)}</span>
+        </div>
       </div>
     </div>
   );

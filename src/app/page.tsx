@@ -1,30 +1,36 @@
 import { auth } from "@/lib/auth";
+import Link from "next/link";
 
 export default async function Home() {
   const session = await auth();
 
   return (
-    <div className="flex flex-col items-center justify-center py-20 text-center">
-      <p className="text-6xl mb-4">⚽</p>
-      <h1 className="text-3xl font-bold text-gray-900 mb-2">
-        Bienvenido, {session?.user?.name}
+    <div className="flex flex-col items-center justify-center py-16 text-center">
+      <p className="text-7xl mb-6 select-none">⚽</p>
+
+      <h1 className="text-4xl font-bold tracking-tight text-white mb-2">
+        Bienvenido,{" "}
+        <span className="bg-gradient-to-r from-[#00e87a] to-emerald-300 bg-clip-text text-transparent">
+          {session?.user?.name?.split(" ")[0]}
+        </span>
       </h1>
-      <p className="text-gray-500 mb-8">
-        El Mundial 2026 arranca pronto. ¡Haz tus pronósticos!
+      <p className="text-gray-500 mb-10 text-sm">
+        El Mundial 2026 arranca el 11 de junio. ¡Haz tus pronósticos antes del pitido inicial!
       </p>
-      <div className="flex gap-4">
-        <a
+
+      <div className="flex gap-3">
+        <Link
           href="/partidos"
-          className="rounded-lg bg-green-700 px-6 py-3 text-white font-medium hover:bg-green-600 transition-colors"
+          className="btn-save rounded-xl px-6 py-2.5 text-sm font-semibold inline-block"
         >
           Ver partidos
-        </a>
-        <a
+        </Link>
+        <Link
           href="/ranking"
-          className="rounded-lg border border-gray-300 bg-white px-6 py-3 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+          className="rounded-xl border border-white/10 bg-white/5 px-6 py-2.5 text-sm font-medium text-gray-300 hover:border-white/20 hover:text-white transition-colors"
         >
           Ranking
-        </a>
+        </Link>
       </div>
     </div>
   );
