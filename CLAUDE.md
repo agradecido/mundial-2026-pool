@@ -32,13 +32,18 @@ npx auth secret                        # generar AUTH_SECRET para .env
 ## Variables de entorno (.env)
 
 ```
-DATABASE_URL      # Vercel > Storage > tu DB > .env.local
-DIRECT_URL        # ídem (conexión directa para migraciones)
+# Neon "neon-porra-mundial" (prefijo PORRA_ por la integración Vercel)
+PORRA_POSTGRES_PRISMA_URL       # URL pooled para Prisma (runtime)
+PORRA_POSTGRES_URL_NON_POOLING  # URL directa para migraciones
+
+# NextAuth.js
 AUTH_SECRET       # generado con: npx auth secret
 AUTH_URL          # http://localhost:3000 en dev, URL pública en prod
 AUTH_GOOGLE_ID    # Google Cloud Console > Credenciales
 AUTH_GOOGLE_SECRET
 ```
+
+> Las variables de BD se obtienen con `npx vercel env pull .env.local --environment=production --yes`
 
 ## Reglas de negocio (críticas)
 
