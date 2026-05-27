@@ -58,6 +58,7 @@ model User {
   sessions         Session[]
   pronosticos      Pronostico[]
   prediccionFutura PrediccionFutura?
+  bracketPicks     PronosticoBracket?
 }
 
 enum Role {
@@ -108,6 +109,19 @@ model Pronostico {
   partido Partido @relation(fields: [partidoId], references: [id], onDelete: Cascade)
 
   @@unique([userId, partidoId])
+}
+
+// Bracket prediction game — locked at tournament start
+// picks JSON: { grupos: {A:[t1,t2],...}, terceros:[t,...×8],
+//               octavos:[×16], cuartos:[×8], semifinal:[×4],
+//               final:[×2], campeon:string }
+model PronosticoBracket {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  picks     Json     @default("{}")
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model PrediccionFutura {

@@ -26,6 +26,7 @@ export default async function Header() {
         <nav className="hidden sm:flex items-center gap-1 text-sm font-medium">
           {[
             { href: "/partidos", label: "Partidos" },
+            { href: "/llaves",  label: "Llaves" },
             { href: "/ranking", label: "Ranking" },
             ...(session?.user?.role === "ADMIN"
               ? [{ href: "/admin", label: "Admin" }]
