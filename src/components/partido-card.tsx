@@ -66,23 +66,29 @@ export default function PartidoCard({ partido, pronostico }: Props) {
 
   return (
     <div className="relative overflow-hidden rounded-xl border border-white/[0.07] bg-white/[0.03] transition-all hover:border-white/[0.12] hover:bg-white/[0.05] group">
-      {/* top shine */}
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent group-hover:via-[#00e87a]/30 transition-colors" />
 
-      <div className="flex items-center gap-2 px-4 py-3">
-
-        {/* Local */}
-        <div className="flex flex-1 items-center justify-end gap-2 min-w-0">
-          <span className="truncate text-sm font-semibold text-gray-200 text-right">
-            {partido.equipoLocal}
-          </span>
-          <span className="text-xl shrink-0">{flagLocal}</span>
+      <div className="px-4 py-3 space-y-2">
+        {/* Row 1: Teams */}
+        <div className="flex items-center gap-2">
+          <div className="flex flex-1 items-center gap-2 min-w-0">
+            <span className="text-xl shrink-0">{flagLocal}</span>
+            <span className="truncate text-sm font-semibold text-gray-200">
+              {partido.equipoLocal}
+            </span>
+          </div>
+          <div className="flex flex-1 items-center justify-end gap-2 min-w-0">
+            <span className="truncate text-sm font-semibold text-gray-200 text-right">
+              {partido.equipoVisitante}
+            </span>
+            <span className="text-xl shrink-0">{flagVisitante}</span>
+          </div>
         </div>
 
-        {/* Score */}
-        <div className="flex items-center gap-2 shrink-0">
+        {/* Row 2: Score + Meta */}
+        <div className="flex items-center justify-between gap-2">
           {locked ? (
-            <div className="flex items-center gap-2 px-1">
+            <div className="flex items-center gap-2">
               <span className="score-input flex items-center justify-center text-gray-400 text-xl font-bold font-mono bg-transparent border-transparent select-none">
                 {pronostico != null ? pronostico.golesLocal : "–"}
               </span>
@@ -121,35 +127,26 @@ export default function PartidoCard({ partido, pronostico }: Props) {
               </button>
             </form>
           )}
-        </div>
 
-        {/* Visitante */}
-        <div className="flex flex-1 items-center justify-start gap-2 min-w-0">
-          <span className="text-xl shrink-0">{flagVisitante}</span>
-          <span className="truncate text-sm font-semibold text-gray-200">
-            {partido.equipoVisitante}
-          </span>
-        </div>
-
-        {/* Meta */}
-        <div className="hidden sm:flex shrink-0 flex-col items-end gap-1 ml-2 text-right min-w-[90px]">
-          {partido.estado === "EN_PROGRESO" && (
-            <span className="text-xs font-semibold text-yellow-400 bg-yellow-400/10 rounded px-1.5 py-0.5">
-              EN JUEGO
-            </span>
-          )}
-          {partido.estado === "FINALIZADO" && (
-            <span className="text-xs text-gray-500 font-mono">
-              {partido.golesLocalReal}–{partido.golesVisitanteReal}
-            </span>
-          )}
-          {locked && partido.estado === "PROGRAMADO" && (
-            <span className="text-xs text-gray-600">🔒</span>
-          )}
-          {error && (
-            <span className="text-xs text-red-400">{error}</span>
-          )}
-          <span className="text-xs text-gray-600">{formatFecha(partido.fechaPartido)}</span>
+          <div className="flex flex-col items-end gap-0.5 text-right shrink-0">
+            {partido.estado === "EN_PROGRESO" && (
+              <span className="text-xs font-semibold text-yellow-400 bg-yellow-400/10 rounded px-1.5 py-0.5">
+                EN JUEGO
+              </span>
+            )}
+            {partido.estado === "FINALIZADO" && (
+              <span className="text-xs text-gray-500 font-mono">
+                {partido.golesLocalReal}–{partido.golesVisitanteReal}
+              </span>
+            )}
+            {locked && partido.estado === "PROGRAMADO" && (
+              <span className="text-xs text-gray-600">🔒</span>
+            )}
+            {error && (
+              <span className="text-xs text-red-400">{error}</span>
+            )}
+            <span className="text-xs text-gray-600">{formatFecha(partido.fechaPartido)}</span>
+          </div>
         </div>
       </div>
     </div>
