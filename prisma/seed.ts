@@ -58,6 +58,7 @@ async function main() {
     equipoVisitante: m.team2,
     fechaPartido: parseDateTime(m.date, m.time),
     fase: roundToFase(m.round, m.group),
+    grupo: m.group ? m.group.replace("Group ", "") : null,
   }));
 
   const result = await prisma.partido.createMany({ data });
