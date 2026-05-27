@@ -1,0 +1,1 @@
+Read AGENTS.md and CLAUDE.md in the root directory to understand the context of this project and the agents involved. This will help you generate more relevant and accurate code suggestions when working on this project.
