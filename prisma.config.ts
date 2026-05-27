@@ -14,6 +14,5 @@ export default defineConfig({
   },
   datasource: {
     url: process.env["PORRA_POSTGRES_PRISMA_URL"]!,
-    directUrl: process.env["PORRA_POSTGRES_URL_NON_POOLING"],
   },
 });

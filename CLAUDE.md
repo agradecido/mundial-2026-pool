@@ -58,3 +58,13 @@ npx prisma migrate dev --name <name>   # Crear y aplicar migraciones a la Base d
 npx prisma generate                    # Regenerar el cliente de Prisma tras cambiar el esquema
 npx prisma studio                      # Explorador visual de la Base de Datos
 npx auth secret                        # Generar el AUTH_SECRET de NextAuth para el .env
+```
+
+## 5. Notas de implementación
+
+- **Prisma v7**: el cliente requiere un adapter explícito. Se usa `PrismaNeon` de `@prisma/adapter-neon`. La URL se pasa en el constructor, no desde env vars automáticamente.
+- **Middleware**: Next.js 16 renombró `middleware.ts` → `proxy.ts`. El auth split config usa `src/lib/auth.config.ts` (sin Prisma, para Edge) y `src/lib/auth.ts` (con PrismaAdapter, para servidor).
+- **Variables de BD**: el prefijo `PORRA_` viene de la integración Neon en Vercel. Obtener con `npx vercel env pull .env.local --environment=production --yes`.
+- **Cálculo de puntos**: se dispara cuando un admin guarda el resultado de un partido; actualiza en batch `puntosGanados` en todos los `Pronostico` asociados. La lógica vive en `src/lib/scoring.ts`.
+- **Ranking**: sumar `puntosGanados` de `Pronostico` + puntos de `PrediccionFutura` por usuario; aplicar desempate en la query.
+- **`User.name`**: renombrado de `nombre` por compatibilidad con el PrismaAdapter de NextAuth. En la UI se etiqueta como "Nombre".
