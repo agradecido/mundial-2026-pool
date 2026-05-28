@@ -10,7 +10,8 @@
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
       "Bash(node *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(npx tsc *)"
     ]
   }
 }
