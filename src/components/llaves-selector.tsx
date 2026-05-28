@@ -21,29 +21,29 @@ type Phase =
   | "campeon";
 
 const PHASES: Array<{ id: Phase; label: string; hint: string }> = [
-  { id: "grupos",    label: "Grupos",     hint: "2 por grupo" },
-  { id: "terceros",  label: "Mejores 3°", hint: "8 equipos"  },
-  { id: "octavos",   label: "Octavos",    hint: "16 pasan"   },
-  { id: "cuartos",   label: "Cuartos",    hint: "8 pasan"    },
-  { id: "semifinal", label: "Semifinal",  hint: "4 pasan"    },
-  { id: "final",     label: "Final",      hint: "2 pasan"    },
-  { id: "campeon",   label: "Campeón",    hint: "1 gana"     },
+  { id: "grupos", label: "Grupos", hint: "2 por grupo" },
+  { id: "terceros", label: "Mejores 3°", hint: "8 equipos" },
+  { id: "octavos", label: "Octavos", hint: "16 pasan" },
+  { id: "cuartos", label: "Cuartos", hint: "8 pasan" },
+  { id: "semifinal", label: "Semifinal", hint: "4 pasan" },
+  { id: "final", label: "Final", hint: "2 pasan" },
+  { id: "campeon", label: "Campeón", hint: "1 gana" },
 ];
 
 const PHASE_LABEL: Record<Phase, string> = {
-  grupos:    "",
-  terceros:  "Selecciona los 8 mejores terceros que crees que clasificarán",
-  octavos:   "Elige el ganador de cada cruce de dieciseisavos",
-  cuartos:   "Elige quién pasa a cuartos de final",
+  grupos: "",
+  terceros: "Selecciona los 8 mejores terceros que crees que clasificarán",
+  octavos: "Elige el ganador de cada cruce de dieciseisavos",
+  cuartos: "Elige quién pasa a cuartos de final",
   semifinal: "Elige los cuatro semifinalistas",
-  final:     "Elige los dos finalistas",
-  campeon:   "¿Quién ganará el Mundial?",
+  final: "Elige los dos finalistas",
+  campeon: "¿Quién ganará el Mundial?",
 };
 
 interface Props {
-  grupos:        Record<string, string[]>;
-  initialPicks:  BracketPicks;
-  locked:        boolean;
+  grupos: Record<string, string[]>;
+  initialPicks: BracketPicks;
+  locked: boolean;
 }
 
 // ── Slot description helper ───────────────────────────────────────────────────
@@ -59,28 +59,36 @@ function slotDesc(slot: string): string {
   }
   if (/^1[A-L]$/.test(slot)) return `1° Gr.${slot[1]}`;
   if (/^2[A-L]$/.test(slot)) return `2° Gr.${slot[1]}`;
-  if (slot.startsWith("3-"))  return `3°Mej.${slot.slice(2)}`;
+  if (slot.startsWith("3-")) return `3°Mej.${slot.slice(2)}`;
   return slot;
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function LlavesSelector({ grupos, initialPicks, locked }: Props) {
-  const [picks, setPicks]   = useState<BracketPicks>(initialPicks);
-  const [phase, setPhase]   = useState<Phase>("grupos");
-  const [saved, setSaved]   = useState(false);
-  const [error, setError]   = useState<string | null>(null);
+  const [picks, setPicks] = useState<BracketPicks>(initialPicks);
+  const [phase, setPhase] = useState<Phase>("grupos");
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const [showClearModal, setShowClearModal] = useState(false);
 
   const gruposLetters = Object.keys(grupos).sort();
 
-  // ── isComplete ─────────────────────────────────────────────────────────────
+  // ── isComplete / haspicks ──────────────────────────────────────────────────
 
   function isComplete(ph: Phase): boolean {
-    if (ph === "grupos")   return gruposLetters.every(g => (picks.grupos?.[g]?.length ?? 0) === 2);
+    if (ph === "grupos") return gruposLetters.every(g => (picks.grupos?.[g]?.length ?? 0) === 2);
     if (ph === "terceros") return (picks.terceros?.length ?? 0) === 8;
     const matches = PHASE_MATCHES[ph] ?? [];
     return matches.every(m => picks.resultados?.[m.id] !== undefined);
+  }
+
+  function hasPicksInPhase(ph: Phase): boolean {
+    if (ph === "grupos") return Object.values(picks.grupos ?? {}).some(g => g.length > 0);
+    if (ph === "terceros") return (picks.terceros?.length ?? 0) > 0;
+    const matches = PHASE_MATCHES[ph] ?? [];
+    return matches.some(m => picks.resultados?.[m.id] !== undefined);
   }
 
   // ── Toggles ────────────────────────────────────────────────────────────────
@@ -88,7 +96,7 @@ export default function LlavesSelector({ grupos, initialPicks, locked }: Props) 
   function toggleGroup(group: string, team: string) {
     if (locked) return;
     setPicks(prev => {
-      const cur     = prev.grupos?.[group] ?? [];
+      const cur = prev.grupos?.[group] ?? [];
       const updated = cur.includes(team)
         ? cur.filter(t => t !== team)
         : cur.length < 2 ? [...cur, team] : cur;
@@ -100,7 +108,7 @@ export default function LlavesSelector({ grupos, initialPicks, locked }: Props) 
   function toggleTercero(team: string) {
     if (locked) return;
     setPicks(prev => {
-      const cur     = prev.terceros ?? [];
+      const cur = prev.terceros ?? [];
       const updated = cur.includes(team)
         ? cur.filter(t => t !== team)
         : cur.length < 8 ? [...cur, team] : cur;
@@ -126,7 +134,22 @@ export default function LlavesSelector({ grupos, initialPicks, locked }: Props) 
     setSaved(false);
   }
 
-  // ── Save ───────────────────────────────────────────────────────────────────
+  // ── Clear / Save ──────────────────────────────────────────────────────────
+
+  function clearPhase(ph: Phase) {
+    setPicks(prev => {
+      if (ph === "grupos")   return cascadeAll({ ...prev, grupos: {} });
+      if (ph === "terceros") return cascadeAll({ ...prev, terceros: [] });
+      const matches = PHASE_MATCHES[ph] ?? [];
+      const newRes  = { ...(prev.resultados ?? {}) };
+      for (const m of matches) {
+        delete newRes[m.id];
+        for (const desc of getDescendants(m.id)) delete newRes[desc];
+      }
+      return { ...prev, resultados: newRes };
+    });
+    setSaved(false);
+  }
 
   function handleSave() {
     setError(null);
@@ -154,19 +177,18 @@ export default function LlavesSelector({ grupos, initialPicks, locked }: Props) 
       {/* Phase stepper */}
       <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-none">
         {PHASES.map((p) => {
-          const done   = isComplete(p.id);
+          const done = isComplete(p.id);
           const active = p.id === phase;
           return (
             <button
               key={p.id}
               onClick={() => setPhase(p.id)}
-              className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                active
-                  ? "bg-[#00e87a]/15 text-[#00e87a] border border-[#00e87a]/20"
-                  : done
-                    ? "bg-white/5 text-gray-300 border border-white/8"
-                    : "text-gray-600 hover:text-gray-400 border border-transparent"
-              }`}
+              className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${active
+                ? "bg-[#00e87a]/15 text-[#00e87a] border border-[#00e87a]/20"
+                : done
+                  ? "bg-white/5 text-gray-300 border border-white/8"
+                  : "text-gray-600 hover:text-gray-400 border border-transparent"
+                }`}
             >
               {done && !active && <span className="text-[#00e87a] text-[10px]">✓</span>}
               {p.label}
@@ -240,21 +262,63 @@ export default function LlavesSelector({ grupos, initialPicks, locked }: Props) 
       {/* Save bar */}
       {locked ? (
         <p className="text-center text-xs text-gray-600 py-2">
-          🔒 Las llaves están cerradas — el torneo ya ha comenzado
+          🔒 La porra está cerrada — el torneo ya ha comenzado
         </p>
       ) : (
         <div className="flex items-center justify-between gap-4 glass-card px-4 py-3">
-          {error
-            ? <span className="text-xs text-red-400">{error}</span>
-            : <span className="text-xs text-gray-600">{completedCount}/{PHASES.length} fases completadas</span>
-          }
+          <div className="flex items-center gap-3 min-w-0">
+            {error
+              ? <span className="text-xs text-red-400">{error}</span>
+              : <span className="text-xs text-gray-600">{completedCount}/{PHASES.length} fases completadas</span>
+            }
+            {!locked && hasPicksInPhase(phase) && (
+              <button
+                onClick={() => setShowClearModal(true)}
+                className="text-xs text-gray-600 hover:text-red-400 transition-colors shrink-0"
+              >
+                Limpiar fase
+              </button>
+            )}
+          </div>
           <button
             onClick={handleSave}
             disabled={pending}
-            className={`btn-save px-5 py-2 text-sm ${saved ? "animate-saved" : ""}`}
+            className={`btn-save px-5 py-2 text-sm shrink-0 ${saved ? "animate-saved" : ""}`}
           >
-            {pending ? "Guardando…" : saved ? "✓ Guardado" : "Guardar llaves"}
+            {pending ? "Guardando…" : saved ? "✓ Guardado" : "Guardar porra"}
           </button>
+        </div>
+      )}
+
+      {/* Clear confirmation modal */}
+      {showClearModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          onClick={() => setShowClearModal(false)}
+        >
+          <div
+            className="glass-card p-6 max-w-sm w-full mx-4 space-y-4"
+            onClick={e => e.stopPropagation()}
+          >
+            <h3 className="text-base font-semibold text-white">¿Limpiar esta fase?</h3>
+            <p className="text-sm text-gray-400">
+              Se borrarán todas las selecciones de la fase actual y las siguientes.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowClearModal(false)}
+                className="px-4 py-2 text-sm text-gray-400 hover:text-white border border-white/10 rounded-lg transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => { clearPhase(phase); setShowClearModal(false); }}
+                className="px-4 py-2 text-sm text-white bg-red-500/20 border border-red-500/30 hover:bg-red-500/30 rounded-lg transition-colors"
+              >
+                Limpiar
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -264,19 +328,19 @@ export default function LlavesSelector({ grupos, initialPicks, locked }: Props) 
 // ── GruposPanel ───────────────────────────────────────────────────────────────
 
 interface GruposProps {
-  grupos:        Record<string, string[]>;
+  grupos: Record<string, string[]>;
   gruposLetters: string[];
-  picks:         Record<string, string[]>;
-  onToggle:      (group: string, team: string) => void;
-  locked:        boolean;
+  picks: Record<string, string[]>;
+  onToggle: (group: string, team: string) => void;
+  locked: boolean;
 }
 
 function GruposPanel({ grupos, gruposLetters, picks, onToggle, locked }: GruposProps) {
   return (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {gruposLetters.map(letra => {
-        const teams    = grupos[letra] ?? [];
-        const selected = picks[letra]  ?? [];
+        const teams = grupos[letra] ?? [];
+        const selected = picks[letra] ?? [];
         return (
           <div key={letra} className="glass-card p-3">
             <div className="flex items-center gap-2 mb-2.5">
@@ -290,22 +354,21 @@ function GruposPanel({ grupos, gruposLetters, picks, onToggle, locked }: GruposP
             </div>
             <div className="space-y-1">
               {teams.map(team => {
-                const idx        = selected.indexOf(team);
-                const on         = idx !== -1;
-                const off        = !on && selected.length >= 2;
+                const idx = selected.indexOf(team);
+                const on = idx !== -1;
+                const off = !on && selected.length >= 2;
                 const orderLabel = idx === 0 ? "1°" : idx === 1 ? "2°" : null;
                 return (
                   <button
                     key={team}
                     onClick={() => onToggle(letra, team)}
                     disabled={locked || off}
-                    className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs transition-all ${
-                      on
-                        ? "bg-[#00e87a]/15 border border-[#00e87a]/25 text-white"
-                        : off
-                          ? "opacity-25 cursor-not-allowed text-gray-600"
-                          : "border border-white/[0.06] text-gray-400 hover:border-white/15 hover:text-gray-200"
-                    }`}
+                    className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs transition-all ${on
+                      ? "bg-[#00e87a]/15 border border-[#00e87a]/25 text-white"
+                      : off
+                        ? "opacity-25 cursor-not-allowed text-gray-600"
+                        : "border border-white/[0.06] text-gray-400 hover:border-white/15 hover:text-gray-200"
+                      }`}
                   >
                     <span className="text-sm">{getFlag(team)}</span>
                     <span className="truncate flex-1 text-left">{team}</span>
@@ -329,9 +392,9 @@ function GruposPanel({ grupos, gruposLetters, picks, onToggle, locked }: GruposP
 
 interface TercerosProps {
   available: string[];
-  selected:  string[];
-  onToggle:  (team: string) => void;
-  locked:    boolean;
+  selected: string[];
+  onToggle: (team: string) => void;
+  locked: boolean;
 }
 
 function TercerosPanel({ available, selected, onToggle, locked }: TercerosProps) {
@@ -351,20 +414,19 @@ function TercerosPanel({ available, selected, onToggle, locked }: TercerosProps)
       </p>
       <div className="grid gap-2 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
         {available.map(team => {
-          const on  = selected.includes(team);
+          const on = selected.includes(team);
           const off = !on && selected.length >= 8;
           return (
             <button
               key={team}
               onClick={() => onToggle(team)}
               disabled={locked || off}
-              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all ${
-                on
-                  ? "bg-[#00e87a]/15 border border-[#00e87a]/25 text-white"
-                  : off
-                    ? "opacity-20 cursor-not-allowed border border-white/[0.04] text-gray-700"
-                    : "border border-white/[0.07] text-gray-400 hover:border-white/20 hover:text-white bg-white/[0.02]"
-              }`}
+              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all ${on
+                ? "bg-[#00e87a]/15 border border-[#00e87a]/25 text-white"
+                : off
+                  ? "opacity-20 cursor-not-allowed border border-white/[0.04] text-gray-700"
+                  : "border border-white/[0.07] text-gray-400 hover:border-white/20 hover:text-white bg-white/[0.02]"
+                }`}
             >
               <span className="text-lg shrink-0">{getFlag(team)}</span>
               <span className="truncate text-left text-xs flex-1">{team}</span>
@@ -380,20 +442,20 @@ function TercerosPanel({ available, selected, onToggle, locked }: TercerosProps)
 // ── BracketPanel ──────────────────────────────────────────────────────────────
 
 interface BracketPanelProps {
-  phase:      Phase;
-  matches:    Match[];
-  grupos:     Record<string, string[]>;
-  terceros:   string[];
+  phase: Phase;
+  matches: Match[];
+  grupos: Record<string, string[]>;
+  terceros: string[];
   resultados: Record<string, string>;
-  onPick:     (matchId: string, team: string) => void;
-  locked:     boolean;
+  onPick: (matchId: string, team: string) => void;
+  locked: boolean;
 }
 
 function BracketPanel({
   phase, matches, grupos, terceros, resultados, onPick, locked,
 }: BracketPanelProps) {
   const isCampeon = phase === "campeon";
-  const zones     = [...new Set(matches.map(m => m.zone))].sort();
+  const zones = [...new Set(matches.map(m => m.zone))].sort();
 
   return (
     <div className="space-y-5">
@@ -408,13 +470,12 @@ function BracketPanel({
                 Zona {zone}
               </p>
             )}
-            <div className={`grid gap-2 ${
-              isCampeon
-                ? "max-w-md"
-                : zoneMatches.length === 1
-                  ? "sm:grid-cols-1 max-w-md"
-                  : "sm:grid-cols-2"
-            }`}>
+            <div className={`grid gap-2 ${isCampeon
+              ? "max-w-md"
+              : zoneMatches.length === 1
+                ? "sm:grid-cols-1 max-w-md"
+                : "sm:grid-cols-2"
+              }`}>
               {zoneMatches.map(match => (
                 <MatchCard
                   key={match.id}
@@ -438,43 +499,42 @@ function BracketPanel({
 // ── MatchCard ─────────────────────────────────────────────────────────────────
 
 interface MatchCardProps {
-  match:      Match;
-  grupos:     Record<string, string[]>;
-  terceros:   string[];
+  match: Match;
+  grupos: Record<string, string[]>;
+  terceros: string[];
   resultados: Record<string, string>;
-  onPick:     (matchId: string, team: string) => void;
-  locked:     boolean;
-  isCampeon:  boolean;
+  onPick: (matchId: string, team: string) => void;
+  locked: boolean;
+  isCampeon: boolean;
 }
 
 function MatchCard({
   match, grupos, terceros, resultados, onPick, locked, isCampeon,
 }: MatchCardProps) {
-  const teamA  = resolveSlot(match.slotA, grupos, terceros, resultados);
-  const teamB  = resolveSlot(match.slotB, grupos, terceros, resultados);
+  const teamA = resolveSlot(match.slotA, grupos, terceros, resultados);
+  const teamB = resolveSlot(match.slotB, grupos, terceros, resultados);
   const winner = resultados[match.id];
   const canPick = !locked && teamA !== undefined && teamB !== undefined;
 
   function teamBtn(team: string | undefined, slot: string) {
-    const isWinner  = winner !== undefined && winner === team;
-    const isLoser   = winner !== undefined && winner !== team;
+    const isWinner = winner !== undefined && winner === team;
+    const isLoser = winner !== undefined && winner !== team;
     const isUnknown = team === undefined;
 
     return (
       <button
         onClick={() => team && canPick && onPick(match.id, team)}
         disabled={!canPick || isUnknown}
-        className={`flex-1 flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs transition-all min-w-0 ${
-          isWinner && isCampeon
-            ? "bg-yellow-400/20 border border-yellow-400/40 text-white"
-            : isWinner
-              ? "bg-[#00e87a]/20 border border-[#00e87a]/30 text-white"
-              : isLoser
-                ? "opacity-25 border border-transparent text-gray-700"
-                : isUnknown
-                  ? "border border-dashed border-white/10 text-gray-700 cursor-default"
-                  : "border border-white/[0.07] text-gray-400 hover:border-white/20 hover:text-white"
-        }`}
+        className={`flex-1 flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs transition-all min-w-0 ${isWinner && isCampeon
+          ? "bg-yellow-400/20 border border-yellow-400/40 text-white"
+          : isWinner
+            ? "bg-[#00e87a]/20 border border-[#00e87a]/30 text-white"
+            : isLoser
+              ? "opacity-25 border border-transparent text-gray-700"
+              : isUnknown
+                ? "border border-dashed border-white/10 text-gray-700 cursor-default"
+                : "border border-white/[0.07] text-gray-400 hover:border-white/20 hover:text-white"
+          }`}
       >
         <span className="text-sm shrink-0">{team ? getFlag(team) : "?"}</span>
         <span className="truncate text-left flex-1">
@@ -488,9 +548,8 @@ function MatchCard({
   }
 
   return (
-    <div className={`glass-card p-2.5 flex items-center gap-2 ${
-      !canPick && winner === undefined ? "opacity-50" : ""
-    }`}>
+    <div className={`glass-card p-2.5 flex items-center gap-2 ${!canPick && winner === undefined ? "opacity-50" : ""
+      }`}>
       {teamBtn(teamA, match.slotA)}
       <span className="text-[10px] font-bold text-gray-700 shrink-0">vs</span>
       {teamBtn(teamB, match.slotB)}
