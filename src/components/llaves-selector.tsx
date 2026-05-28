@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef, useEffect } from "react";
 import { getFlag } from "@/lib/flags";
 import { guardarBracket } from "@/app/llaves/actions";
 import {
@@ -72,8 +72,18 @@ export default function LlavesSelector({ grupos, initialPicks, locked }: Props) 
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [showClearModal, setShowClearModal] = useState(false);
+  const stepperRef = useRef<HTMLDivElement>(null);
 
   const gruposLetters = Object.keys(grupos).sort();
+
+  useEffect(() => {
+    const container = stepperRef.current;
+    if (!container) return;
+    const active = container.querySelector(`[data-phase="${phase}"]`) as HTMLElement | null;
+    if (!active) return;
+    const left = active.offsetLeft + active.offsetWidth / 2 - container.offsetWidth / 2;
+    container.scrollTo({ left, behavior: "smooth" });
+  }, [phase]);
 
   // ── isComplete / haspicks ──────────────────────────────────────────────────
 
@@ -175,13 +185,14 @@ export default function LlavesSelector({ grupos, initialPicks, locked }: Props) 
     <div className="space-y-6">
 
       {/* Phase stepper */}
-      <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-none">
+      <div ref={stepperRef} className="flex gap-1 overflow-x-auto pb-1 scrollbar-none">
         {PHASES.map((p) => {
           const done = isComplete(p.id);
           const active = p.id === phase;
           return (
             <button
               key={p.id}
+              data-phase={p.id}
               onClick={() => setPhase(p.id)}
               className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${active
                 ? "bg-[#00e87a]/15 text-[#00e87a] border border-[#00e87a]/20"
@@ -274,7 +285,7 @@ export default function LlavesSelector({ grupos, initialPicks, locked }: Props) 
             {!locked && hasPicksInPhase(phase) && (
               <button
                 onClick={() => setShowClearModal(true)}
-                className="text-xs text-gray-600 hover:text-red-400 transition-colors shrink-0"
+                className="text-xs text-gray-400 hover:text-red-400 border border-white/10 hover:border-red-500/30 bg-white/[0.03] hover:bg-red-500/10 px-3 py-1.5 rounded-lg transition-colors shrink-0"
               >
                 Limpiar fase
               </button>
