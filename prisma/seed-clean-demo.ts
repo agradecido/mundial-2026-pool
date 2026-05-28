@@ -17,7 +17,16 @@ async function main() {
   const { count } = await prisma.user.deleteMany({
     where: { email: { endsWith: "@demo.porra" } },
   });
-  console.log(`\n🗑️  ${count} usuarios demo eliminados (pronósticos y predicciones en cascade).\n`);
+  console.log(`\n🗑️  ${count} usuarios demo eliminados (pronósticos y predicciones en cascade).`);
+
+  const { count: partidos } = await prisma.partido.updateMany({
+    data: {
+      golesLocalReal:     null,
+      golesVisitanteReal: null,
+      estado:             "PROGRAMADO",
+    },
+  });
+  console.log(`🔄  ${partidos} partidos reseteados a estado inicial.\n`);
 }
 
 main().catch(console.error).finally(() => prisma.$disconnect());
