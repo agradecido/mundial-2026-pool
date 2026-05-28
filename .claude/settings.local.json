@@ -4,7 +4,8 @@
       "Bash(npm --version)",
       "Bash(npx create-next-app@latest *)",
       "Bash(npm install *)",
-      "Bash(npx prisma *)"
+      "Bash(npx prisma *)",
+      "Bash(npm run *)"
     ]
   }
 }
