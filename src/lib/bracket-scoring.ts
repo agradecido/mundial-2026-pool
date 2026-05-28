@@ -7,28 +7,29 @@ const ROUND_PTS: Record<string, number> = {
 };
 
 export interface ActualBracket {
-  grupos:     Record<string, string[]>; // actual standings [1st, 2nd]
-  terceros:   string[];                 // actual 8 best 3rd-place teams
+  grupos: Record<string, string[]>; // actual standings [1st, 2nd]
+  terceros: string[];                 // actual 8 best 3rd-place teams
   resultados: Record<string, string>;  // matchId → actual winning team
+  allGrupos: Record<string, string[]>; // all teams per group (structural data)
 }
 
 export interface BracketScore {
-  total:         number;
+  total: number;
   dieciseisavos: number; // 1pt per correct group qualifier
-  octavos:       number; // 2pt per correct D32 winner
-  cuartos:       number; // 5pt per correct D16 winner
-  semifinal:     number; // 7pt per correct QF winner
-  final:         number; // 10pt per correct SF winner (finalist)
-  campeon:       number; // 10pt for correct champion
+  octavos: number; // 2pt per correct D32 winner
+  cuartos: number; // 5pt per correct D16 winner
+  semifinal: number; // 7pt per correct QF winner
+  final: number; // 10pt per correct SF winner (finalist)
+  campeon: number; // 10pt for correct champion
 }
 
 type PartidoRow = {
-  equipoLocal:        string;
-  equipoVisitante:    string;
-  golesLocalReal:     number | null;
+  equipoLocal: string;
+  equipoVisitante: string;
+  golesLocalReal: number | null;
   golesVisitanteReal: number | null;
-  fase:               string;
-  grupo:              string | null;
+  fase: string;
+  grupo: string | null;
 };
 
 type Stats = { pts: number; gf: number; ga: number; gd: number };
@@ -53,20 +54,22 @@ export function computeActualBracket(partidos: PartidoRow[]): ActualBracket {
     const upd = (team: string, gf: number, ga: number) => {
       groupMap[g][team] ??= { pts: 0, gf: 0, ga: 0, gd: 0 };
       groupMap[g][team].pts += gf > ga ? 3 : gf === ga ? 1 : 0;
-      groupMap[g][team].gf  += gf;
-      groupMap[g][team].ga  += ga;
-      groupMap[g][team].gd  += gf - ga;
+      groupMap[g][team].gf += gf;
+      groupMap[g][team].ga += ga;
+      groupMap[g][team].gd += gf - ga;
     };
-    upd(p.equipoLocal,     p.golesLocalReal,     p.golesVisitanteReal);
+    upd(p.equipoLocal, p.golesLocalReal, p.golesVisitanteReal);
     upd(p.equipoVisitante, p.golesVisitanteReal, p.golesLocalReal);
   }
 
   const grupos: Record<string, string[]> = {};
   const thirdCandidates: [string, Stats][] = [];
+  const allGrupos: Record<string, string[]> = {};
 
   for (const [g, stats] of Object.entries(groupMap)) {
     const sorted = sortedTeams(Object.entries(stats));
     grupos[g] = sorted.slice(0, 2);
+    allGrupos[g] = Object.keys(stats);
     if (sorted[2]) thirdCandidates.push([sorted[2], stats[sorted[2]]]);
   }
 
@@ -80,23 +83,23 @@ export function computeActualBracket(partidos: PartidoRow[]): ActualBracket {
   const resultados: Record<string, string> = {};
 
   for (const match of ALL_MATCHES) {
-    const teamA = resolveSlot(match.slotA, grupos, terceros, resultados);
-    const teamB = resolveSlot(match.slotB, grupos, terceros, resultados);
+    const teamA = resolveSlot(match.slotA, grupos, terceros, resultados, allGrupos);
+    const teamB = resolveSlot(match.slotB, grupos, terceros, resultados, allGrupos);
     if (!teamA || !teamB) continue;
 
     const fase = roundToFase[match.round];
     const p = partidos.find(
       r => r.fase === fase &&
         ((r.equipoLocal === teamA && r.equipoVisitante === teamB) ||
-         (r.equipoLocal === teamB && r.equipoVisitante === teamA))
+          (r.equipoLocal === teamB && r.equipoVisitante === teamA))
     );
     if (!p || p.golesLocalReal === null || p.golesVisitanteReal === null) continue;
 
-    if (p.golesLocalReal > p.golesVisitanteReal)      resultados[match.id] = p.equipoLocal;
+    if (p.golesLocalReal > p.golesVisitanteReal) resultados[match.id] = p.equipoLocal;
     else if (p.golesVisitanteReal > p.golesLocalReal) resultados[match.id] = p.equipoVisitante;
   }
 
-  return { grupos, terceros, resultados };
+  return { grupos, terceros, resultados, allGrupos };
 }
 
 const PHASE_TO_SCORE_KEY: Record<string, keyof BracketScore> = {

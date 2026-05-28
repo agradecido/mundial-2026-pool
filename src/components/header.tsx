@@ -7,7 +7,7 @@ export default async function Header() {
 
   const navLinks = [
     { href: "/llaves", label: "Mi Porra" },
-    { href: "/porra", label: "Ranking" },
+    { href: "/porra", label: "Clasificación" },
     ...(session?.user?.role === "ADMIN"
       ? [{ href: "/admin", label: "Admin" }]
       : []),

@@ -78,7 +78,7 @@ export default function LlavesSelector({ grupos, initialPicks, locked }: Props) 
       const updated = cur.includes(team)
         ? cur.filter(t => t !== team)
         : cur.length < 2 ? [...cur, team] : cur;
-      return cascadeAll({ ...prev, grupos: { ...(prev.grupos ?? {}), [group]: updated } });
+      return cascadeAll({ ...prev, grupos: { ...(prev.grupos ?? {}), [group]: updated } }, grupos);
     });
     setSaved(false);
   }
@@ -88,9 +88,9 @@ export default function LlavesSelector({ grupos, initialPicks, locked }: Props) 
     setPicks(prev => {
       const cur = prev.terceros ?? [];
       const updated = cur.includes(team)
-        ? cur.filter(t => t !== team)
-        : cur.length < 8 ? [...cur, team] : cur;
-      return cascadeAll({ ...prev, terceros: updated });
+        ? cur.filter(t => t !== team)           // deselect: remove and shift ranks down
+        : cur.length < 8 ? [...cur, team] : cur; // select: append at next rank
+      return cascadeAll({ ...prev, terceros: updated }, grupos);
     });
     setSaved(false);
   }
@@ -116,8 +116,8 @@ export default function LlavesSelector({ grupos, initialPicks, locked }: Props) 
 
   function clearPhase(ph: Phase) {
     setPicks(prev => {
-      if (ph === "grupos") return cascadeAll({ ...prev, grupos: {} });
-      if (ph === "terceros") return cascadeAll({ ...prev, terceros: [] });
+      if (ph === "grupos") return cascadeAll({ ...prev, grupos: {} }, grupos);
+      if (ph === "terceros") return cascadeAll({ ...prev, terceros: [] }, grupos);
       // arbol: wipe all knockout results
       return { ...prev, resultados: {} };
     });
@@ -202,6 +202,7 @@ export default function LlavesSelector({ grupos, initialPicks, locked }: Props) 
             locked={locked}
             gruposComplete={isComplete("grupos")}
             tercerosComplete={isComplete("terceros")}
+            allGrupos={grupos}
           />
         )}
       </div>
@@ -381,28 +382,34 @@ function TercerosPanel({ available, selected, onToggle, locked }: TercerosProps)
   return (
     <div className="space-y-4">
       <p className="text-sm text-gray-500">
-        Selecciona los 8 mejores terceros que crees que clasificarán
+        Selecciona los 8 mejores terceros <span className="text-gray-700">en orden</span> — el primero en que hagas click será el mejor tercero, el último el peor
         <span className="ml-2 text-gray-700 tabular-nums">({selected.length}/8)</span>
       </p>
       <div className="grid gap-2 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
         {available.map(team => {
-          const on = selected.includes(team);
+          const rank = selected.indexOf(team); // 0-based, -1 if not selected
+          const on = rank !== -1;
           const off = !on && selected.length >= 8;
+          const rankLabel = on ? `${rank + 1}°` : null;
           return (
             <button
               key={team}
               onClick={() => onToggle(team)}
               disabled={locked || off}
               className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all ${on
-                ? "bg-[#00e87a]/15 border border-[#00e87a]/25 text-white"
-                : off
-                  ? "opacity-20 cursor-not-allowed border border-white/[0.04] text-gray-700"
-                  : "border border-white/[0.07] text-gray-400 hover:border-white/20 hover:text-white bg-white/[0.02]"
+                  ? "bg-[#00e87a]/15 border border-[#00e87a]/25 text-white"
+                  : off
+                    ? "opacity-20 cursor-not-allowed border border-white/[0.04] text-gray-700"
+                    : "border border-white/[0.07] text-gray-400 hover:border-white/20 hover:text-white bg-white/[0.02]"
                 }`}
             >
               <span className="text-lg shrink-0">{getFlag(team)}</span>
               <span className="truncate text-left text-xs flex-1">{team}</span>
-              {on && <span className="shrink-0 text-xs text-[#00e87a]">✓</span>}
+              {rankLabel && (
+                <span className="text-[10px] text-[#00e87a] font-bold tabular-nums shrink-0">
+                  {rankLabel}
+                </span>
+              )}
             </button>
           );
         })}
@@ -419,9 +426,10 @@ interface ArbolPanelProps {
   locked: boolean;
   gruposComplete: boolean;
   tercerosComplete: boolean;
+  allGrupos: Record<string, string[]>;
 }
 
-function ArbolPanel({ picks, onPick, locked, gruposComplete, tercerosComplete }: ArbolPanelProps) {
+function ArbolPanel({ picks, onPick, locked, gruposComplete, tercerosComplete, allGrupos }: ArbolPanelProps) {
   const showWarning = !gruposComplete || !tercerosComplete;
   return (
     <div className="space-y-3">
@@ -431,7 +439,7 @@ function ArbolPanel({ picks, onPick, locked, gruposComplete, tercerosComplete }:
           ⚠️ Completa <strong>Grupos</strong> y <strong>Mejores 3°</strong> para que los emparejamientos de 16avos se resuelvan. Los slots sin resolver aparecerán como “Por definir”.
         </div>
       )}
-      <BracketTree picks={picks} onPick={onPick} locked={locked} />
+      <BracketTree picks={picks} onPick={onPick} locked={locked} allGrupos={allGrupos} />
     </div>
   );
 }

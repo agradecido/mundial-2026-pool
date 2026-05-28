@@ -7,10 +7,10 @@ import type { BracketScore } from "@/lib/bracket-scoring";
 import { computeActualBracket, scoreBracket } from "@/lib/bracket-scoring";
 
 export type UserBracketData = {
-  user:         { id: string; name: string | null; image: string | null };
-  picks:        BracketPicks;
-  score:        BracketScore;
-  actual:       { grupos: Record<string, string[]>; terceros: string[]; resultados: Record<string, string> };
+  user: { id: string; name: string | null; image: string | null };
+  picks: BracketPicks;
+  score: BracketScore;
+  actual: { grupos: Record<string, string[]>; terceros: string[]; resultados: Record<string, string>; allGrupos: Record<string, string[]> };
   gruposLetters: string[];
 };
 
@@ -20,7 +20,7 @@ export async function getUserBracket(userId: string): Promise<UserBracketData> {
 
   const [record, partidos] = await Promise.all([
     prisma.pronosticoBracket.findUniqueOrThrow({
-      where:   { userId },
+      where: { userId },
       include: { user: { select: { id: true, name: true, image: true } } },
     }),
     prisma.partido.findMany({
@@ -32,9 +32,9 @@ export async function getUserBracket(userId: string): Promise<UserBracketData> {
     }),
   ]);
 
-  const picks         = record.picks as BracketPicks;
-  const actual        = computeActualBracket(partidos);
-  const score         = scoreBracket(picks, actual);
+  const picks = record.picks as BracketPicks;
+  const actual = computeActualBracket(partidos);
+  const score = scoreBracket(picks, actual);
   const gruposLetters = [
     ...new Set(
       partidos.filter(p => p.fase === "GRUPOS").map(p => p.grupo!).filter(Boolean)

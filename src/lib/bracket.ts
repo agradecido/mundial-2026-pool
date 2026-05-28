@@ -1,3 +1,14 @@
+import { findThirdsAssignment } from "./thirds-table";
+
+/** Build a map from team name to group letter using the full world-cup groups data. */
+function buildTeamGroupMap(allGrupos: Record<string, string[]>): Record<string, string> {
+  const map: Record<string, string> = {};
+  for (const [g, teams] of Object.entries(allGrupos)) {
+    for (const team of teams) map[team] = g;
+  }
+  return map;
+}
+
 export interface BracketPicks {
   grupos?: Record<string, string[]>; // index 0 = 1°, index 1 = 2°
   terceros?: string[];                 // 8 mejores terceros
@@ -18,26 +29,26 @@ export const D32_MATCHES: Match[] = [
   // P73..P88 (28 jun – 3 jul 2026).
   // ── Mitad superior del cuadro (SF-1) ──
   // QF-1 (P97) → D16-1 (P89) + D16-2 (P90)
-  { id: "D32-1", round: "D32", slotA: "1E", slotB: "3-1", zone: 1 }, // P74
-  { id: "D32-2", round: "D32", slotA: "1I", slotB: "3-2", zone: 1 }, // P77
+  { id: "D32-1", round: "D32", slotA: "1E", slotB: "3:D32-1", zone: 1 }, // P74
+  { id: "D32-2", round: "D32", slotA: "1I", slotB: "3:D32-2", zone: 1 }, // P77
   { id: "D32-3", round: "D32", slotA: "2A", slotB: "2B", zone: 1 }, // P73
   { id: "D32-4", round: "D32", slotA: "1F", slotB: "2C", zone: 1 }, // P75
   // QF-2 (P98) → D16-3 (P93) + D16-4 (P94)
   { id: "D32-5", round: "D32", slotA: "2K", slotB: "2L", zone: 2 }, // P83
   { id: "D32-6", round: "D32", slotA: "1H", slotB: "2J", zone: 2 }, // P84
-  { id: "D32-7", round: "D32", slotA: "1D", slotB: "3-3", zone: 2 }, // P81
-  { id: "D32-8", round: "D32", slotA: "1G", slotB: "3-4", zone: 2 }, // P82
+  { id: "D32-7", round: "D32", slotA: "1D", slotB: "3:D32-7", zone: 2 }, // P81
+  { id: "D32-8", round: "D32", slotA: "1G", slotB: "3:D32-8", zone: 2 }, // P82
   // ── Mitad inferior del cuadro (SF-2) ──
   // QF-3 (P99) → D16-5 (P91) + D16-6 (P92)
   { id: "D32-9", round: "D32", slotA: "1C", slotB: "2F", zone: 3 }, // P76
   { id: "D32-10", round: "D32", slotA: "2E", slotB: "2I", zone: 3 }, // P78
-  { id: "D32-11", round: "D32", slotA: "1A", slotB: "3-5", zone: 3 }, // P79
-  { id: "D32-12", round: "D32", slotA: "1L", slotB: "3-6", zone: 3 }, // P80
+  { id: "D32-11", round: "D32", slotA: "1A", slotB: "3:D32-11", zone: 3 }, // P79
+  { id: "D32-12", round: "D32", slotA: "1L", slotB: "3:D32-12", zone: 3 }, // P80
   // QF-4 (P100) → D16-7 (P95) + D16-8 (P96)
   { id: "D32-13", round: "D32", slotA: "1J", slotB: "2H", zone: 4 }, // P86
   { id: "D32-14", round: "D32", slotA: "2D", slotB: "2G", zone: 4 }, // P88
-  { id: "D32-15", round: "D32", slotA: "1B", slotB: "3-7", zone: 4 }, // P85
-  { id: "D32-16", round: "D32", slotA: "1K", slotB: "3-8", zone: 4 }, // P87
+  { id: "D32-15", round: "D32", slotA: "1B", slotB: "3:D32-15", zone: 4 }, // P85
+  { id: "D32-16", round: "D32", slotA: "1K", slotB: "3:D32-16", zone: 4 }, // P87
 ];
 
 export const D16_MATCHES: Match[] = [
@@ -85,10 +96,24 @@ export function resolveSlot(
   grupos: Record<string, string[]>,
   terceros: string[],
   resultados: Record<string, string>,
+  allGrupos?: Record<string, string[]>,
 ): string | undefined {
   if (slot.startsWith("W:")) return resultados[slot.slice(2)];
   if (/^[12][A-L]$/.test(slot)) return grupos[slot[1]]?.[slot[0] === "1" ? 0 : 1];
-  if (slot.startsWith("3-")) return terceros[parseInt(slot.slice(2)) - 1];
+  if (slot.startsWith("3:")) {
+    if (!allGrupos || terceros.length !== 8) return undefined;
+    const matchId = slot.slice(2);
+    const teamGroup = buildTeamGroupMap(allGrupos);
+    const terceroGroups = terceros
+      .map(t => teamGroup[t])
+      .filter((g): g is string => g !== undefined);
+    if (terceroGroups.length !== 8) return undefined;
+    const assignment = findThirdsAssignment(terceroGroups);
+    if (!assignment) return undefined;
+    const groupForSlot = assignment[matchId];
+    if (!groupForSlot) return undefined;
+    return terceros.find(t => teamGroup[t] === groupForSlot);
+  }
   return undefined;
 }
 
@@ -107,7 +132,7 @@ export function getDescendants(matchId: string): string[] {
   return result;
 }
 
-export function cascadeAll(p: BracketPicks): BracketPicks {
+export function cascadeAll(p: BracketPicks, allGrupos?: Record<string, string[]>): BracketPicks {
   const grupos = p.grupos ?? {};
   const terceros = p.terceros ?? [];
 
@@ -120,8 +145,8 @@ export function cascadeAll(p: BracketPicks): BracketPicks {
   for (const match of ALL_MATCHES) {
     const winner = newRes[match.id];
     if (winner === undefined) continue;
-    const teamA = resolveSlot(match.slotA, grupos, newTerceros, newRes);
-    const teamB = resolveSlot(match.slotB, grupos, newTerceros, newRes);
+    const teamA = resolveSlot(match.slotA, grupos, newTerceros, newRes, allGrupos);
+    const teamB = resolveSlot(match.slotB, grupos, newTerceros, newRes, allGrupos);
     // Clear if match unresolvable or stored winner is no longer a participant
     if (teamA === undefined || teamB === undefined || (winner !== teamA && winner !== teamB)) {
       delete newRes[match.id];

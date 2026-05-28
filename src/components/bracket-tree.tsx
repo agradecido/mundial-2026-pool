@@ -189,10 +189,12 @@ export default function BracketTree({
     picks,
     onPick,
     locked,
+    allGrupos,
 }: {
     picks: BracketPicks;
     onPick?: (matchId: string, team: string) => void;
     locked?: boolean;
+    allGrupos?: Record<string, string[]>;
 }) {
     const grupos = picks.grupos ?? {};
     const terceros = picks.terceros ?? [];
@@ -203,8 +205,8 @@ export default function BracketTree({
     // Resolve all matches
     function resolvedMatch(matchId: string, slotA: string, slotB: string) {
         return {
-            teamA: resolveSlot(slotA, grupos, terceros, resultados),
-            teamB: resolveSlot(slotB, grupos, terceros, resultados),
+            teamA: resolveSlot(slotA, grupos, terceros, resultados, allGrupos),
+            teamB: resolveSlot(slotB, grupos, terceros, resultados, allGrupos),
             winner: resultados[matchId],
         };
     }

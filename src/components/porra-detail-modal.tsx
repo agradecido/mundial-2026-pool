@@ -68,6 +68,7 @@ export default function PorraDetailModal({ data, onClose }: Props) {
   const grupos = picks.grupos ?? {};
   const terceros = picks.terceros ?? [];
   const resultados = picks.resultados ?? {};
+  const allGrupos = data.actual.allGrupos;
 
   const campeon = resultados["FINAL"];
   const finalists = SF_MATCHES.map(m => resultados[m.id]);
@@ -79,8 +80,8 @@ export default function PorraDetailModal({ data, onClose }: Props) {
   const d32Pairs = D32_MATCHES.map(m => ({
     id: m.id,
     zone: m.zone,
-    teamA: resolveSlot(m.slotA, grupos, terceros, resultados),
-    teamB: resolveSlot(m.slotB, grupos, terceros, resultados),
+    teamA: resolveSlot(m.slotA, grupos, terceros, resultados, allGrupos),
+    teamB: resolveSlot(m.slotB, grupos, terceros, resultados, allGrupos),
     winner: resultados[m.id],
   }));
 
@@ -140,8 +141,8 @@ export default function PorraDetailModal({ data, onClose }: Props) {
               key={t}
               onClick={() => setTab(t)}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${tab === t
-                  ? "bg-[#00e87a]/15 text-[#00e87a] border border-[#00e87a]/20"
-                  : "text-gray-600 hover:text-gray-400 border border-transparent"
+                ? "bg-[#00e87a]/15 text-[#00e87a] border border-[#00e87a]/20"
+                : "text-gray-600 hover:text-gray-400 border border-transparent"
                 }`}
             >
               {t === "bracket" ? "Listado" : t === "arbol" ? "Árbol" : "Grupos & Terceros"}
@@ -207,7 +208,7 @@ export default function PorraDetailModal({ data, onClose }: Props) {
           )}
 
           {tab === "arbol" && (
-            <BracketTree picks={picks} />
+            <BracketTree picks={picks} allGrupos={allGrupos} />
           )}
 
           {tab === "grupos" && (
