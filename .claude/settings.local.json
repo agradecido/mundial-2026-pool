@@ -4,7 +4,12 @@
       "Bash(npm --version)",
       "Bash(npx create-next-app@latest *)",
       "Bash(npm install *)",
-      "Bash(npx prisma *)"
+      "Bash(npx prisma *)",
+      "Bash(git push *)",
+      "Bash(npm run *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(node *)"
     ]
   }
 }
