@@ -25,10 +25,10 @@ export default async function Header() {
         {/* Nav */}
         <nav className="hidden sm:flex items-center gap-1 text-sm font-medium">
           {[
-            { href: "/partidos", label: "Partidos" },
-            { href: "/llaves",   label: "Porra" },
-            { href: "/porra",    label: "Ranking Porra" },
-            { href: "/ranking",  label: "Ranking" },
+            // { href: "/partidos", label: "Partidos" },
+            { href: "/llaves", label: "Porra" },
+            { href: "/porra", label: "Ranking" },
+            //{ href: "/ranking",  label: "Ranking quiniela" },
             ...(session?.user?.role === "ADMIN"
               ? [{ href: "/admin", label: "Admin" }]
               : []),

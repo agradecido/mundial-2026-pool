@@ -65,9 +65,9 @@ export default async function LlavesPage() {
           ))}
         </div>
         <h2 className="mt-6 text-lg font-semibold text-white">Cómo rellenar la porra</h2>
-        <p className="mt-1 text-xs text-gray-500">1. Selecciona los equipos que quedarán primero y segundo en sus grupos</p>
+        <p className="mt-1 text-xs text-gray-500">1. Selecciona el primero y segundo clasificado de cada grupo</p>
         <p className="mt-1 text-xs text-gray-500">2. Selecciona los 8 mejores terceros</p>
-        <p className="mt-1 text-xs text-gray-500">3. Completa el cuadro de eliminatorias</p>
+        <p className="mt-1 text-xs text-gray-500">3. Ve ronda a ronda haciendo tus predicciones</p>
       </div>
 
       <LlavesSelector grupos={grupos} initialPicks={picks} locked={locked} />
