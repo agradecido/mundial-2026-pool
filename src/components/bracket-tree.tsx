@@ -63,14 +63,14 @@ function TeamRow({
     const isOnPath = onChampionPath && isWinner;
     if (!team) {
         return (
-            <div className="flex items-center gap-1.5 px-2 py-1.5 border border-dashed border-white/[0.12] rounded-md">
-                <span className="text-gray-700 text-[10px] opacity-40">?</span>
-                <span className="text-gray-700 text-[10px] truncate">Por definir</span>
+            <div className="flex items-center gap-1.5 lg:gap-2 px-2 py-1.5 lg:px-3 lg:py-2 border border-dashed border-white/[0.12] rounded-md">
+                <span className="text-gray-700 text-[10px] lg:text-[13px] opacity-40">?</span>
+                <span className="text-gray-700 text-[10px] lg:text-[13px] truncate">Por definir</span>
             </div>
         );
     }
     const editable = !!onPick && !locked;
-    const baseCls = `flex items-center gap-1.5 px-2 py-1.5 rounded-md transition-colors w-full text-left border ${isWinner
+    const baseCls = `flex items-center gap-1.5 lg:gap-2 px-2 py-1.5 lg:px-3 lg:py-2 rounded-md transition-colors w-full text-left border ${isWinner
         ? isOnPath
             ? "bg-[#00e87a]/10 border-[#00e87a]/40"
             : "bg-white/[0.06] border-white/[0.18]"
@@ -78,8 +78,8 @@ function TeamRow({
         } ${editable ? "cursor-pointer hover:bg-white/[0.06] hover:border-white/[0.20]" : ""}`;
     const content = (
         <>
-            <span className={`text-[11px] leading-none shrink-0 transition-opacity ${isWinner ? "opacity-100" : "opacity-40"}`}>{getFlag(team)}</span>
-            <span className={`text-[10px] truncate leading-none ${isWinner ? (isOnPath ? "text-[#00e87a]" : "text-white") : "text-gray-600"
+            <span className={`text-[11px] lg:text-[14px] leading-none shrink-0 transition-opacity ${isWinner ? "opacity-100" : "opacity-40"}`}>{getFlag(team)}</span>
+            <span className={`text-[10px] lg:text-[13px] truncate leading-none ${isWinner ? (isOnPath ? "text-[#00e87a]" : "text-white") : "text-gray-600"
                 }`}>
                 {team}
             </span>
@@ -135,10 +135,10 @@ function MatchCell({
     const connectorEl = connectorSide && connectorSide !== "single" ? (
         <div
             aria-hidden
-            className="absolute right-1 w-3 pointer-events-none"
+            className="absolute right-1 w-3 lg:w-4 pointer-events-none"
             style={{
-                top: connectorSide === "top" ? `${slotHeight / 2}px` : 0,
-                height: `${slotHeight / 2}px`,
+                top: connectorSide === "top" ? `calc(var(--s) * ${slotHeight / BASE_SLOT} / 2)` : 0,
+                height: `calc(var(--s) * ${slotHeight / BASE_SLOT} / 2)`,
                 borderRight: `1px solid ${connectorColor}`,
                 borderTop: connectorSide === "top" ? `1px solid ${connectorColor}` : undefined,
                 borderBottom: connectorSide === "bottom" ? `1px solid ${connectorColor}` : undefined,
@@ -149,10 +149,10 @@ function MatchCell({
     return (
         <div
             data-match={matchId}
-            className="relative flex flex-col justify-center pr-6"
-            style={{ height: `${slotHeight}px` }}
+            className="relative flex flex-col justify-center pr-6 lg:pr-8"
+            style={{ height: `calc(var(--s) * ${slotHeight / BASE_SLOT})` }}
         >
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-1.5 lg:gap-2">
                 <TeamRow matchId={matchId} team={teamA} isWinner={winner === teamA} onChampionPath={onChampionPath} onPick={onPick} locked={locked} />
                 <TeamRow matchId={matchId} team={teamB} isWinner={winner === teamB} onChampionPath={onChampionPath} onPick={onPick} locked={locked} />
             </div>
@@ -170,8 +170,8 @@ interface ColumnProps {
 
 function Column({ label, children }: ColumnProps) {
     return (
-        <div className="flex flex-col min-w-[130px]">
-            <p className="text-[9px] font-semibold text-gray-600 uppercase tracking-widest text-center mb-2 shrink-0">
+        <div className="flex flex-col min-w-[130px] lg:min-w-[160px]">
+            <p className="text-[9px] lg:text-[11px] font-semibold text-gray-600 uppercase tracking-widest text-center mb-2 shrink-0">
                 {label}
             </p>
             <div className="flex flex-col flex-1">
@@ -211,8 +211,8 @@ export default function BracketTree({
         };
     }
 
-    // Total bracket height = 16 D32 matches * BASE_SLOT
-    const totalHeight = 16 * BASE_SLOT;
+    // CSS var --s (set on container) drives slot size responsively; totalHeight follows
+    const totalHeight = 'calc(var(--s) * 16)';
 
     // D32 — 16 matches, each gets BASE_SLOT height
     // D16 — 8 matches, each gets 2×BASE_SLOT
@@ -236,10 +236,10 @@ export default function BracketTree({
     const champion = resultados["FINAL"];
 
     return (
-        <div className="overflow-x-auto scrollbar-none -mx-5 px-5">
+        <div className="overflow-x-auto scrollbar-none -mx-5 px-5 [--s:72px] lg:[--s:90px]">
             <div
                 className="flex gap-0 items-stretch"
-                style={{ minWidth: 920, height: totalHeight }}
+                style={{ minWidth: 1150, height: totalHeight }}
             >
                 {/* ── Column 1: 16avos (D32) ── */}
                 <Column label="16avos">
@@ -359,25 +359,25 @@ export default function BracketTree({
                 </Column>
 
                 {/* ── Column 6: Campeón ── */}
-                <div className="flex flex-col min-w-[140px] items-center justify-center">
-                    <div className={`rounded-xl border px-4 py-4 flex flex-col items-center gap-2 ${champion
+                <div className="flex flex-col min-w-[140px] lg:min-w-[180px] items-center justify-center">
+                    <div className={`rounded-xl border px-4 py-4 lg:px-6 lg:py-6 flex flex-col items-center gap-2 lg:gap-3 ${champion
                         ? "border-[#00e87a]/40 bg-[#00e87a]/5"
                         : "border-dashed border-white/10 bg-white/[0.01]"
                         }`}>
-                        <p className="text-[9px] font-bold uppercase tracking-widest text-amber-400/80">
+                        <p className="text-[9px] lg:text-[11px] font-bold uppercase tracking-widest text-amber-400/80">
                             Campeón del mundo
                         </p>
                         {champion ? (
                             <>
-                                <span className="text-3xl leading-none">{getFlag(champion)}</span>
-                                <span className="text-sm font-bold text-[#00e87a] text-center leading-tight">
+                                <span className="text-3xl lg:text-5xl leading-none">{getFlag(champion)}</span>
+                                <span className="text-sm lg:text-base font-bold text-[#00e87a] text-center leading-tight">
                                     {champion}
                                 </span>
                             </>
                         ) : (
                             <>
-                                <span className="text-3xl leading-none text-gray-700">❓</span>
-                                <span className="text-[10px] text-gray-700 italic text-center">Sin pick</span>
+                                <span className="text-3xl lg:text-5xl leading-none text-gray-700">❓</span>
+                                <span className="text-[10px] lg:text-[13px] text-gray-700 italic text-center">Sin pick</span>
                             </>
                         )}
                     </div>
