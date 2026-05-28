@@ -20,6 +20,7 @@ export interface RankedPorraEntry {
   score:      BracketScore;
   completion: { done: number; total: number };
   campeon:    string | undefined;
+  subcampeon: string | undefined;
 }
 
 interface Props {
@@ -93,16 +94,23 @@ export default function PorraRanking({ entries, currentUserId }: Props) {
                   <p className="text-xs text-gray-600 -mt-0.5">puntos</p>
                 </div>
 
-                {entry.campeon ? (
-                  <div className="flex items-center gap-1.5 border-t border-white/[0.07] pt-3 w-full justify-center text-xs text-gray-400">
-                    <span className="text-base">{getFlag(entry.campeon)}</span>
-                    <span className="truncate">{entry.campeon}</span>
-                  </div>
-                ) : (
-                  <div className="border-t border-white/[0.07] pt-3 w-full text-center text-xs text-gray-700">
-                    Sin campeón
-                  </div>
-                )}
+                <div className="border-t border-white/[0.07] pt-3 w-full space-y-1.5">
+                  <p className="text-[9px] font-semibold text-gray-700 uppercase tracking-widest text-center">Campeón elegido</p>
+                  {entry.campeon ? (
+                    <div className="flex items-center gap-1.5 justify-center text-xs">
+                      <span className="text-base">{getFlag(entry.campeon)}</span>
+                      <span className="truncate font-medium text-gray-300">{entry.campeon}</span>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-gray-700 text-center">Sin pick</p>
+                  )}
+                  {entry.subcampeon && (
+                    <div className="flex items-center gap-1 justify-center text-[10px] text-gray-600">
+                      <span className="text-xs">{getFlag(entry.subcampeon)}</span>
+                      <span className="truncate">{entry.subcampeon}</span>
+                    </div>
+                  )}
+                </div>
 
                 <p className="text-[10px] text-gray-700">
                   {entry.completion.done}/{entry.completion.total} fases
@@ -121,7 +129,7 @@ export default function PorraRanking({ entries, currentUserId }: Props) {
               <tr className="border-b border-white/[0.07]">
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 w-10">#</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Jugador</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 hidden sm:table-cell">Campeón</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Campeón</th>
                 <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-600 hidden sm:table-cell">Fases</th>
                 <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-600">Pts</th>
               </tr>
@@ -155,12 +163,20 @@ export default function PorraRanking({ entries, currentUserId }: Props) {
                         </span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 hidden sm:table-cell">
+                    <td className="px-4 py-3">
                       {entry.campeon ? (
-                        <span className="flex items-center gap-1.5 text-xs text-gray-400">
-                          <span>{getFlag(entry.campeon)}</span>
-                          <span className="truncate max-w-[120px]">{entry.campeon}</span>
-                        </span>
+                        <div className="space-y-0.5">
+                          <span className="flex items-center gap-1.5 text-xs">
+                            <span>{getFlag(entry.campeon)}</span>
+                            <span className="truncate max-w-[120px] text-gray-300">{entry.campeon}</span>
+                          </span>
+                          {entry.subcampeon && (
+                            <span className="flex items-center gap-1 text-[10px] text-gray-600">
+                              <span>{getFlag(entry.subcampeon)}</span>
+                              <span className="truncate max-w-[100px]">{entry.subcampeon}</span>
+                            </span>
+                          )}
+                        </div>
                       ) : (
                         <span className="text-xs text-gray-700">—</span>
                       )}

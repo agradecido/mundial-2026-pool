@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import type { BracketPicks } from "@/lib/bracket";
+import { SF_MATCHES } from "@/lib/bracket";
 import { computeActualBracket, scoreBracket, bracketCompletion } from "@/lib/bracket-scoring";
 import PorraRanking from "@/components/porra-ranking";
 import type { RankedPorraEntry } from "@/components/porra-ranking";
@@ -41,7 +42,9 @@ export default async function PorraRankingPage() {
       const campeon =
         picks.resultados?.["FINAL"] ??
         (picks as Record<string, unknown>).campeon as string | undefined;
-      return { user: r.user, score, completion, campeon };
+      const finalists = SF_MATCHES.map(m => picks.resultados?.[m.id]).filter(Boolean) as string[];
+      const subcampeon = finalists.find(f => f !== campeon);
+      return { user: r.user, score, completion, campeon, subcampeon };
     })
     .sort((a, b) =>
       b.score.total - a.score.total ||
@@ -57,11 +60,9 @@ export default async function PorraRankingPage() {
           <p className="mt-1 text-sm text-gray-500">
             Clasificación del cuadro eliminatorio · haz clic para ver la porra de cada jugador
           </p>
-          {!tournamentStarted && (
-            <p className="mt-2 text-xs text-gray-600">
-              Las puntuaciones empezarán cuando comience el torneo.
-            </p>
-          )}
+          <p className="mt-2 text-xs text-gray-600">
+            Puedes ver las porras haciendo haciendo click en la tarjeta de cada jugador.
+          </p>
         </div>
         <Link
           href="/llaves"
@@ -69,20 +70,6 @@ export default async function PorraRankingPage() {
         >
           Mi porra →
         </Link>
-      </div>
-
-      {/* Scoring legend */}
-      <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-gray-600">
-        {[
-          ["16avos", "1 pt"],
-          ["Octavos", "2 pts"],
-          ["Cuartos", "5 pts"],
-          ["Semis", "7 pts"],
-          ["Final", "10 pts"],
-          ["Campeón", "10 pts"],
-        ].map(([label, pts]) => (
-          <span key={label}>{label} <span className="text-gray-700">{pts}</span></span>
-        ))}
       </div>
 
       {entries.length === 0 ? (
@@ -95,6 +82,21 @@ export default async function PorraRankingPage() {
       ) : (
         <PorraRanking entries={entries} currentUserId={currentUserId} />
       )}
+
+      {/* Scoring legend */}
+      <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-gray-600">Sistema de puntuación:
+        {[
+          ["16avos", "1 pt"],
+          ["Octavos", "2 pts"],
+          ["Cuartos", "5 pts"],
+          ["Semis", "7 pts"],
+          ["Final", "10 pts"],
+          ["Campeón", "10 pts"],
+        ].map(([label, pts]) => (
+          <span key={label}>{label} <span className="text-gray-700">{pts}</span></span>
+        ))}
+      </div>
+
     </div>
   );
 }
