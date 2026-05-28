@@ -28,7 +28,8 @@ export default async function LlavesPage() {
 
   // Lock at first match kickoff
   const first = await prisma.partido.findFirst({ orderBy: { fechaPartido: "asc" } });
-  const locked = !!first && Date.now() >= first.fechaPartido.getTime();
+  const now = new Date();
+  const locked = !!first && now >= first.fechaPartido;
   const lockDate = first?.fechaPartido ?? new Date("2026-06-11");
 
   // Existing bracket picks
