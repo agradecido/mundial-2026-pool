@@ -46,37 +46,53 @@ function buildChampionPath(resultados: Record<string, string>): Set<string> {
 // ── TeamRow ──────────────────────────────────────────────────────────────────
 
 function TeamRow({
+    matchId,
     team,
     isWinner,
     onChampionPath,
+    onPick,
+    locked,
 }: {
+    matchId: string;
     team: string | undefined;
     isWinner: boolean;
     onChampionPath: boolean;
+    onPick?: (matchId: string, team: string) => void;
+    locked?: boolean;
 }) {
     const isOnPath = onChampionPath && isWinner;
     if (!team) {
         return (
-            <div className="flex items-center gap-1.5 px-2 py-1 border border-dashed border-white/[0.08] rounded-md">
-                <span className="text-gray-700 text-[10px]">?</span>
+            <div className="flex items-center gap-1.5 px-2 py-1.5 border border-dashed border-white/[0.12] rounded-md">
+                <span className="text-gray-700 text-[10px] opacity-40">?</span>
                 <span className="text-gray-700 text-[10px] truncate">Por definir</span>
             </div>
         );
     }
-    return (
-        <div className={`flex items-center gap-1.5 px-2 py-1 rounded-md transition-colors ${isWinner
-                ? isOnPath
-                    ? "bg-[#00e87a]/10 border border-[#00e87a]/20"
-                    : "bg-white/[0.04] border border-white/[0.08]"
-                : "border border-transparent"
-            }`}>
-            <span className="text-[11px] leading-none shrink-0">{getFlag(team)}</span>
+    const editable = !!onPick && !locked;
+    const baseCls = `flex items-center gap-1.5 px-2 py-1.5 rounded-md transition-colors w-full text-left border ${isWinner
+        ? isOnPath
+            ? "bg-[#00e87a]/10 border-[#00e87a]/40"
+            : "bg-white/[0.06] border-white/[0.18]"
+        : "bg-white/[0.015] border-white/[0.08]"
+        } ${editable ? "cursor-pointer hover:bg-white/[0.06] hover:border-white/[0.20]" : ""}`;
+    const content = (
+        <>
+            <span className={`text-[11px] leading-none shrink-0 transition-opacity ${isWinner ? "opacity-100" : "opacity-40"}`}>{getFlag(team)}</span>
             <span className={`text-[10px] truncate leading-none ${isWinner ? (isOnPath ? "text-[#00e87a]" : "text-white") : "text-gray-600"
                 }`}>
                 {team}
             </span>
-        </div>
+        </>
     );
+    if (editable) {
+        return (
+            <button type="button" onClick={() => onPick!(matchId, team)} className={baseCls}>
+                {content}
+            </button>
+        );
+    }
+    return <div className={baseCls}>{content}</div>;
 }
 
 // ── MatchCell ────────────────────────────────────────────────────────────────
@@ -91,6 +107,8 @@ interface MatchCellProps {
     slotHeight: number;
     /** Which half of the slot this connector should bridge to (top or bottom) */
     connectorSide?: "top" | "bottom" | "single";
+    onPick?: (matchId: string, team: string) => void;
+    locked?: boolean;
 }
 
 function MatchCell({
@@ -101,25 +119,29 @@ function MatchCell({
     onChampionPath,
     slotHeight,
     connectorSide,
+    onPick,
+    locked,
 }: MatchCellProps) {
-    const borderColor = onChampionPath
-        ? "border-[#00e87a]/30"
-        : "border-white/[0.08]";
-
-    // Connector: a "]"-shaped div on the right side linking to the parent match
+    // Connector geometry (inside this cell's slotHeight × column-width box):
+    //   - Card is centered at y = slotHeight/2
+    //   - Parent (next round) sits at y = slotHeight (upper of pair) or y = 0 (lower of pair)
+    //   - We draw an "L" / reversed "L" using two borders on a small box on the right gutter
+    //
+    //   Upper match (┐):  box [top=slotHeight/2 .. bottom=slotHeight], borderTop + borderRight
+    //                      → horizontal stroke at card-center going right, vertical going down to slot bottom
+    //   Lower match (└):  box [top=0 .. bottom=slotHeight/2], borderBottom + borderRight
+    //                      → horizontal stroke at card-center going right, vertical going up to slot top
+    const connectorColor = onChampionPath ? "#00e87a99" : "rgba(255,255,255,0.22)";
     const connectorEl = connectorSide && connectorSide !== "single" ? (
         <div
             aria-hidden
-            className={`absolute right-0 top-1/2 -translate-y-1/2 w-3 pointer-events-none ${onChampionPath ? "border-[#00e87a]/30" : "border-white/[0.07]"
-                }`}
+            className="absolute right-1 w-3 pointer-events-none"
             style={{
+                top: connectorSide === "top" ? `${slotHeight / 2}px` : 0,
                 height: `${slotHeight / 2}px`,
-                borderRight: "1px solid",
-                borderTop: connectorSide === "top" ? "1px solid" : undefined,
-                borderBottom: connectorSide === "bottom" ? "1px solid" : undefined,
-                top: connectorSide === "top" ? "50%" : undefined,
-                bottom: connectorSide === "bottom" ? "50%" : undefined,
-                transform: connectorSide === "top" ? "translateY(-100%)" : "none",
+                borderRight: `1px solid ${connectorColor}`,
+                borderTop: connectorSide === "top" ? `1px solid ${connectorColor}` : undefined,
+                borderBottom: connectorSide === "bottom" ? `1px solid ${connectorColor}` : undefined,
             }}
         />
     ) : null;
@@ -127,13 +149,12 @@ function MatchCell({
     return (
         <div
             data-match={matchId}
-            className="relative flex flex-col justify-center pr-3"
+            className="relative flex flex-col justify-center pr-6"
             style={{ height: `${slotHeight}px` }}
         >
-            <div className={`flex flex-col gap-0.5 rounded-lg border ${borderColor} bg-[#0c0c18] overflow-hidden`}>
-                <TeamRow team={teamA} isWinner={winner === teamA} onChampionPath={onChampionPath} />
-                <div className={`h-px ${onChampionPath ? "bg-[#00e87a]/15" : "bg-white/[0.05]"}`} />
-                <TeamRow team={teamB} isWinner={winner === teamB} onChampionPath={onChampionPath} />
+            <div className="flex flex-col gap-1.5">
+                <TeamRow matchId={matchId} team={teamA} isWinner={winner === teamA} onChampionPath={onChampionPath} onPick={onPick} locked={locked} />
+                <TeamRow matchId={matchId} team={teamB} isWinner={winner === teamB} onChampionPath={onChampionPath} onPick={onPick} locked={locked} />
             </div>
             {connectorEl}
         </div>
@@ -162,9 +183,17 @@ function Column({ label, children }: ColumnProps) {
 
 // ── BracketTree ──────────────────────────────────────────────────────────────
 
-const BASE_SLOT = 52; // px per slot in D32 (smallest unit)
+const BASE_SLOT = 72; // px per slot in D32 (smallest unit)
 
-export default function BracketTree({ picks }: { picks: BracketPicks }) {
+export default function BracketTree({
+    picks,
+    onPick,
+    locked,
+}: {
+    picks: BracketPicks;
+    onPick?: (matchId: string, team: string) => void;
+    locked?: boolean;
+}) {
     const grupos = picks.grupos ?? {};
     const terceros = picks.terceros ?? [];
     const resultados = picks.resultados ?? {};
@@ -226,6 +255,8 @@ export default function BracketTree({ picks }: { picks: BracketPicks }) {
                                     onChampionPath={championPath.has(m.id)}
                                     slotHeight={slotHeights.D32}
                                     connectorSide={connectorSide(idx)}
+                                    onPick={onPick}
+                                    locked={locked}
                                 />
                             );
                         })}
@@ -247,6 +278,8 @@ export default function BracketTree({ picks }: { picks: BracketPicks }) {
                                     onChampionPath={championPath.has(m.id)}
                                     slotHeight={slotHeights.D16}
                                     connectorSide={connectorSide(idx)}
+                                    onPick={onPick}
+                                    locked={locked}
                                 />
                             );
                         })}
@@ -268,6 +301,8 @@ export default function BracketTree({ picks }: { picks: BracketPicks }) {
                                     onChampionPath={championPath.has(m.id)}
                                     slotHeight={slotHeights.QF}
                                     connectorSide={connectorSide(idx)}
+                                    onPick={onPick}
+                                    locked={locked}
                                 />
                             );
                         })}
@@ -289,6 +324,8 @@ export default function BracketTree({ picks }: { picks: BracketPicks }) {
                                     onChampionPath={championPath.has(m.id)}
                                     slotHeight={slotHeights.SF}
                                     connectorSide={connectorSide(idx)}
+                                    onPick={onPick}
+                                    locked={locked}
                                 />
                             );
                         })}
@@ -311,6 +348,8 @@ export default function BracketTree({ picks }: { picks: BracketPicks }) {
                                     onChampionPath={championPath.has(m.id)}
                                     slotHeight={slotHeights.FINAL}
                                     connectorSide="single"
+                                    onPick={onPick}
+                                    locked={locked}
                                 />
                             );
                         })()}
@@ -320,8 +359,8 @@ export default function BracketTree({ picks }: { picks: BracketPicks }) {
                 {/* ── Column 6: Campeón ── */}
                 <div className="flex flex-col min-w-[140px] items-center justify-center">
                     <div className={`rounded-xl border px-4 py-4 flex flex-col items-center gap-2 ${champion
-                            ? "border-[#00e87a]/40 bg-[#00e87a]/5"
-                            : "border-dashed border-white/10 bg-white/[0.01]"
+                        ? "border-[#00e87a]/40 bg-[#00e87a]/5"
+                        : "border-dashed border-white/10 bg-white/[0.01]"
                         }`}>
                         <p className="text-[9px] font-bold uppercase tracking-widest text-amber-400/80">
                             Campeón del mundo

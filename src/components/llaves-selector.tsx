@@ -4,63 +4,32 @@ import { useState, useTransition, useRef, useEffect } from "react";
 import { getFlag } from "@/lib/flags";
 import { guardarBracket } from "@/app/llaves/actions";
 import {
-  PHASE_MATCHES,
-  resolveSlot, getDescendants, cascadeAll,
+  ALL_MATCHES,
+  getDescendants, cascadeAll,
 } from "@/lib/bracket";
-import type { BracketPicks, Match } from "@/lib/bracket";
+import type { BracketPicks } from "@/lib/bracket";
+import BracketTree from "@/components/bracket-tree";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-type Phase =
-  | "grupos"
-  | "terceros"
-  | "octavos"
-  | "cuartos"
-  | "semifinal"
-  | "final"
-  | "campeon";
+type Phase = "grupos" | "terceros" | "arbol";
 
 const PHASES: Array<{ id: Phase; label: string; hint: string }> = [
   { id: "grupos", label: "Grupos", hint: "2 por grupo" },
   { id: "terceros", label: "Mejores 3°", hint: "8 equipos" },
-  { id: "octavos", label: "Octavos", hint: "16 pasan" },
-  { id: "cuartos", label: "Cuartos", hint: "8 pasan" },
-  { id: "semifinal", label: "Semifinal", hint: "4 pasan" },
-  { id: "final", label: "Final", hint: "2 pasan" },
-  { id: "campeon", label: "Campeón", hint: "1 gana" },
+  { id: "arbol", label: "Eliminatorias", hint: "árbol" },
 ];
 
 const PHASE_LABEL: Record<Phase, string> = {
   grupos: "",
   terceros: "Selecciona los 8 mejores terceros que crees que clasificarán",
-  octavos: "Elige el ganador de cada cruce de dieciseisavos",
-  cuartos: "Elige quién pasa a cuartos de final",
-  semifinal: "Elige los cuatro semifinalistas",
-  final: "Elige los dos finalistas",
-  campeon: "¿Quién ganará el Mundial?",
+  arbol: "Haz click en un equipo para marcarlo como ganador. Click de nuevo para deshacer.",
 };
 
 interface Props {
   grupos: Record<string, string[]>;
   initialPicks: BracketPicks;
   locked: boolean;
-}
-
-// ── Slot description helper ───────────────────────────────────────────────────
-
-function slotDesc(slot: string): string {
-  if (slot.startsWith("W:")) {
-    const id = slot.slice(2);
-    const [round, num] = id.split("-");
-    const names: Record<string, string> = {
-      D32: "16avos", D16: "Oct.", QF: "Ctos.", SF: "Semi",
-    };
-    return `Gan. ${names[round] ?? round}-${num}`;
-  }
-  if (/^1[A-L]$/.test(slot)) return `1° Gr.${slot[1]}`;
-  if (/^2[A-L]$/.test(slot)) return `2° Gr.${slot[1]}`;
-  if (slot.startsWith("3-")) return `3°Mej.${slot.slice(2)}`;
-  return slot;
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -90,15 +59,14 @@ export default function LlavesSelector({ grupos, initialPicks, locked }: Props) 
   function isComplete(ph: Phase): boolean {
     if (ph === "grupos") return gruposLetters.every(g => (picks.grupos?.[g]?.length ?? 0) === 2);
     if (ph === "terceros") return (picks.terceros?.length ?? 0) === 8;
-    const matches = PHASE_MATCHES[ph] ?? [];
-    return matches.every(m => picks.resultados?.[m.id] !== undefined);
+    // arbol: complete = all 31 knockout matches have a result
+    return ALL_MATCHES.every(m => picks.resultados?.[m.id] !== undefined);
   }
 
   function hasPicksInPhase(ph: Phase): boolean {
     if (ph === "grupos") return Object.values(picks.grupos ?? {}).some(g => g.length > 0);
     if (ph === "terceros") return (picks.terceros?.length ?? 0) > 0;
-    const matches = PHASE_MATCHES[ph] ?? [];
-    return matches.some(m => picks.resultados?.[m.id] !== undefined);
+    return Object.keys(picks.resultados ?? {}).length > 0;
   }
 
   // ── Toggles ────────────────────────────────────────────────────────────────
@@ -148,15 +116,10 @@ export default function LlavesSelector({ grupos, initialPicks, locked }: Props) 
 
   function clearPhase(ph: Phase) {
     setPicks(prev => {
-      if (ph === "grupos")   return cascadeAll({ ...prev, grupos: {} });
+      if (ph === "grupos") return cascadeAll({ ...prev, grupos: {} });
       if (ph === "terceros") return cascadeAll({ ...prev, terceros: [] });
-      const matches = PHASE_MATCHES[ph] ?? [];
-      const newRes  = { ...(prev.resultados ?? {}) };
-      for (const m of matches) {
-        delete newRes[m.id];
-        for (const desc of getDescendants(m.id)) delete newRes[desc];
-      }
-      return { ...prev, resultados: newRes };
+      // arbol: wipe all knockout results
+      return { ...prev, resultados: {} };
     });
     setSaved(false);
   }
@@ -232,15 +195,13 @@ export default function LlavesSelector({ grupos, initialPicks, locked }: Props) 
           />
         )}
 
-        {phase !== "grupos" && phase !== "terceros" && (
-          <BracketPanel
-            phase={phase}
-            matches={PHASE_MATCHES[phase] ?? []}
-            grupos={picks.grupos ?? {}}
-            terceros={picks.terceros ?? []}
-            resultados={picks.resultados ?? {}}
+        {phase === "arbol" && (
+          <ArbolPanel
+            picks={picks}
             onPick={pickResult}
             locked={locked}
+            gruposComplete={isComplete("grupos")}
+            tercerosComplete={isComplete("terceros")}
           />
         )}
       </div>
@@ -263,7 +224,7 @@ export default function LlavesSelector({ grupos, initialPicks, locked }: Props) 
             const i = PHASES.findIndex(x => x.id === p);
             return i < PHASES.length - 1 ? PHASES[i + 1].id : p;
           })}
-          disabled={phase === "campeon"}
+          disabled={phase === "arbol"}
           className="text-sm text-gray-600 hover:text-gray-300 disabled:opacity-0 transition-colors"
         >
           Siguiente →
@@ -450,120 +411,27 @@ function TercerosPanel({ available, selected, onToggle, locked }: TercerosProps)
   );
 }
 
-// ── BracketPanel ──────────────────────────────────────────────────────────────
+// ── ArbolPanel ────────────────────────────────────────────────────────────────
 
-interface BracketPanelProps {
-  phase: Phase;
-  matches: Match[];
-  grupos: Record<string, string[]>;
-  terceros: string[];
-  resultados: Record<string, string>;
+interface ArbolPanelProps {
+  picks: BracketPicks;
   onPick: (matchId: string, team: string) => void;
   locked: boolean;
+  gruposComplete: boolean;
+  tercerosComplete: boolean;
 }
 
-function BracketPanel({
-  phase, matches, grupos, terceros, resultados, onPick, locked,
-}: BracketPanelProps) {
-  const isCampeon = phase === "campeon";
-  const zones = [...new Set(matches.map(m => m.zone))].sort();
-
+function ArbolPanel({ picks, onPick, locked, gruposComplete, tercerosComplete }: ArbolPanelProps) {
+  const showWarning = !gruposComplete || !tercerosComplete;
   return (
-    <div className="space-y-5">
-      <p className="text-sm text-gray-500">{PHASE_LABEL[phase]}</p>
-
-      {zones.map(zone => {
-        const zoneMatches = matches.filter(m => m.zone === zone);
-        return (
-          <div key={zone}>
-            {zones.length > 1 && (
-              <p className="text-[10px] font-semibold text-gray-700 uppercase tracking-widest mb-2">
-                Zona {zone}
-              </p>
-            )}
-            <div className={`grid gap-2 ${isCampeon
-              ? "max-w-md"
-              : zoneMatches.length === 1
-                ? "sm:grid-cols-1 max-w-md"
-                : "sm:grid-cols-2"
-              }`}>
-              {zoneMatches.map(match => (
-                <MatchCard
-                  key={match.id}
-                  match={match}
-                  grupos={grupos}
-                  terceros={terceros}
-                  resultados={resultados}
-                  onPick={onPick}
-                  locked={locked}
-                  isCampeon={isCampeon}
-                />
-              ))}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-// ── MatchCard ─────────────────────────────────────────────────────────────────
-
-interface MatchCardProps {
-  match: Match;
-  grupos: Record<string, string[]>;
-  terceros: string[];
-  resultados: Record<string, string>;
-  onPick: (matchId: string, team: string) => void;
-  locked: boolean;
-  isCampeon: boolean;
-}
-
-function MatchCard({
-  match, grupos, terceros, resultados, onPick, locked, isCampeon,
-}: MatchCardProps) {
-  const teamA = resolveSlot(match.slotA, grupos, terceros, resultados);
-  const teamB = resolveSlot(match.slotB, grupos, terceros, resultados);
-  const winner = resultados[match.id];
-  const canPick = !locked && teamA !== undefined && teamB !== undefined;
-
-  function teamBtn(team: string | undefined, slot: string) {
-    const isWinner = winner !== undefined && winner === team;
-    const isLoser = winner !== undefined && winner !== team;
-    const isUnknown = team === undefined;
-
-    return (
-      <button
-        onClick={() => team && canPick && onPick(match.id, team)}
-        disabled={!canPick || isUnknown}
-        className={`flex-1 flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs transition-all min-w-0 ${isWinner && isCampeon
-          ? "bg-yellow-400/20 border border-yellow-400/40 text-white"
-          : isWinner
-            ? "bg-[#00e87a]/20 border border-[#00e87a]/30 text-white"
-            : isLoser
-              ? "opacity-25 border border-transparent text-gray-700"
-              : isUnknown
-                ? "border border-dashed border-white/10 text-gray-700 cursor-default"
-                : "border border-white/[0.07] text-gray-400 hover:border-white/20 hover:text-white"
-          }`}
-      >
-        <span className="text-sm shrink-0">{team ? getFlag(team) : "?"}</span>
-        <span className="truncate text-left flex-1">
-          {team ?? slotDesc(slot)}
-        </span>
-        {isWinner && (
-          <span className="shrink-0 text-xs">{isCampeon ? "🏆" : "✓"}</span>
-        )}
-      </button>
-    );
-  }
-
-  return (
-    <div className={`glass-card p-2.5 flex items-center gap-2 ${!canPick && winner === undefined ? "opacity-50" : ""
-      }`}>
-      {teamBtn(teamA, match.slotA)}
-      <span className="text-[10px] font-bold text-gray-700 shrink-0">vs</span>
-      {teamBtn(teamB, match.slotB)}
+    <div className="space-y-3">
+      <p className="text-sm text-gray-500">{PHASE_LABEL.arbol}</p>
+      {showWarning && (
+        <div className="rounded-lg border border-amber-400/20 bg-amber-400/5 px-3 py-2 text-xs text-amber-300/80">
+          ⚠️ Completa <strong>Grupos</strong> y <strong>Mejores 3°</strong> para que los emparejamientos de 16avos se resuelvan. Los slots sin resolver aparecerán como “Por definir”.
+        </div>
+      )}
+      <BracketTree picks={picks} onPick={onPick} locked={locked} />
     </div>
   );
 }
