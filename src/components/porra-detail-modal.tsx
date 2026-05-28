@@ -4,17 +4,18 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { getFlag } from "@/lib/flags";
 import {
-  D32_MATCHES, D16_MATCHES, QF_MATCHES, SF_MATCHES, FINAL_MATCH,
+  D32_MATCHES, D16_MATCHES, QF_MATCHES, SF_MATCHES,
   resolveSlot,
 } from "@/lib/bracket";
 import type { UserBracketData } from "@/app/porra/actions";
+import BracketTree from "@/components/bracket-tree";
 
 interface Props {
-  data:    UserBracketData;
+  data: UserBracketData;
   onClose: () => void;
 }
 
-type Tab = "bracket" | "grupos";
+type Tab = "bracket" | "arbol" | "grupos";
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -39,9 +40,8 @@ function PhaseSection({ label, teams, columns = 4 }: { label: string; teams: (st
   return (
     <div className="space-y-2">
       <p className="text-[10px] font-semibold text-gray-600 uppercase tracking-widest">{label}</p>
-      <div className={`grid gap-1.5 grid-cols-2 ${
-        columns >= 4 ? "sm:grid-cols-4" : columns === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"
-      }`}>
+      <div className={`grid gap-1.5 grid-cols-2 ${columns >= 4 ? "sm:grid-cols-4" : columns === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"
+        }`}>
         {teams.map((t, i) => <TeamChip key={i} team={t} />)}
       </div>
     </div>
@@ -65,22 +65,22 @@ export default function PorraDetailModal({ data, onClose }: Props) {
   }, [onClose]);
 
   // Derive teams per phase from picks
-  const grupos    = picks.grupos    ?? {};
-  const terceros  = picks.terceros  ?? [];
+  const grupos = picks.grupos ?? {};
+  const terceros = picks.terceros ?? [];
   const resultados = picks.resultados ?? {};
 
-  const campeon      = resultados["FINAL"];
-  const finalists    = SF_MATCHES.map(m => resultados[m.id]);
+  const campeon = resultados["FINAL"];
+  const finalists = SF_MATCHES.map(m => resultados[m.id]);
   const semifinalists = QF_MATCHES.map(m => resultados[m.id]);
   const quarterFinalists = D16_MATCHES.map(m => resultados[m.id]);
-  const r16teams     = D32_MATCHES.map(m => resultados[m.id]);
+  const r16teams = D32_MATCHES.map(m => resultados[m.id]);
 
   // D32 match pairs (resolved slots)
   const d32Pairs = D32_MATCHES.map(m => ({
-    id:     m.id,
-    zone:   m.zone,
-    teamA:  resolveSlot(m.slotA, grupos, terceros, resultados),
-    teamB:  resolveSlot(m.slotB, grupos, terceros, resultados),
+    id: m.id,
+    zone: m.zone,
+    teamA: resolveSlot(m.slotA, grupos, terceros, resultados),
+    teamB: resolveSlot(m.slotB, grupos, terceros, resultados),
     winner: resultados[m.id],
   }));
 
@@ -88,12 +88,12 @@ export default function PorraDetailModal({ data, onClose }: Props) {
   const gruposLetters = Object.keys(grupos).sort();
 
   const scoreItems = [
-    { label: "16avos",   pts: score.dieciseisavos },
-    { label: "Octavos",  pts: score.octavos },
-    { label: "Cuartos",  pts: score.cuartos },
-    { label: "Semis",    pts: score.semifinal },
-    { label: "Final",    pts: score.final },
-    { label: "Campeón",  pts: score.campeon },
+    { label: "16avos", pts: score.dieciseisavos },
+    { label: "Octavos", pts: score.octavos },
+    { label: "Cuartos", pts: score.cuartos },
+    { label: "Semis", pts: score.semifinal },
+    { label: "Final", pts: score.final },
+    { label: "Campeón", pts: score.campeon },
   ] as const;
 
   return (
@@ -135,17 +135,16 @@ export default function PorraDetailModal({ data, onClose }: Props) {
 
         {/* Tabs */}
         <div className="flex gap-1 px-5 pt-3 shrink-0">
-          {(["bracket", "grupos"] as Tab[]).map(t => (
+          {(["bracket", "arbol", "grupos"] as Tab[]).map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                tab === t
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${tab === t
                   ? "bg-[#00e87a]/15 text-[#00e87a] border border-[#00e87a]/20"
                   : "text-gray-600 hover:text-gray-400 border border-transparent"
-              }`}
+                }`}
             >
-              {t === "bracket" ? "Eliminatorias" : "Grupos & Terceros"}
+              {t === "bracket" ? "Listado" : t === "arbol" ? "Árbol" : "Grupos & Terceros"}
             </button>
           ))}
         </div>
@@ -205,6 +204,10 @@ export default function PorraDetailModal({ data, onClose }: Props) {
                 })}
               </div>
             </>
+          )}
+
+          {tab === "arbol" && (
+            <BracketTree picks={picks} />
           )}
 
           {tab === "grupos" && (
