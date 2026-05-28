@@ -11,25 +11,25 @@ import type { BracketScore } from "@/lib/bracket-scoring";
 const MEDALS = ["🥇", "🥈", "🥉"];
 const PODIUM_STYLES = [
   { ring: "ring-yellow-400/40", border: "border-yellow-400/20", text: "text-yellow-400", bg: "bg-yellow-400/10" },
-  { ring: "ring-gray-300/40",   border: "border-gray-300/15",   text: "text-gray-300",   bg: "bg-gray-300/10"  },
+  { ring: "ring-gray-300/40", border: "border-gray-300/15", text: "text-gray-300", bg: "bg-gray-300/10" },
   { ring: "ring-orange-500/40", border: "border-orange-500/20", text: "text-orange-400", bg: "bg-orange-500/10" },
 ];
 
 export interface RankedPorraEntry {
-  user:       { id: string; name: string | null; image: string | null };
-  score:      BracketScore;
+  user: { id: string; name: string | null; image: string | null };
+  score: BracketScore;
   completion: { done: number; total: number };
-  campeon:    string | undefined;
+  campeon: string | undefined;
   subcampeon: string | undefined;
 }
 
 interface Props {
-  entries:       RankedPorraEntry[];
+  entries: RankedPorraEntry[];
   currentUserId: string;
 }
 
 export default function PorraRanking({ entries, currentUserId }: Props) {
-  const [detail, setDetail]   = useState<UserBracketData | null>(null);
+  const [detail, setDetail] = useState<UserBracketData | null>(null);
   const [loading, setLoading] = useState<string | null>(null);
 
   const openDetail = useCallback(async (userId: string) => {
@@ -43,7 +43,7 @@ export default function PorraRanking({ entries, currentUserId }: Props) {
   }, []);
 
   const top3 = entries.slice(0, 3);
-  const rest  = entries.slice(3);
+  const rest = entries.slice(3);
 
   return (
     <>
@@ -55,8 +55,8 @@ export default function PorraRanking({ entries, currentUserId }: Props) {
       {top3.length > 0 && (
         <div className="grid gap-4 sm:grid-cols-3">
           {top3.map((entry, i) => {
-            const c         = PODIUM_STYLES[i];
-            const isMe      = entry.user.id === currentUserId;
+            const c = PODIUM_STYLES[i];
+            const isMe = entry.user.id === currentUserId;
             const isLoading = loading === entry.user.id;
             return (
               <div
@@ -64,7 +64,7 @@ export default function PorraRanking({ entries, currentUserId }: Props) {
                 onClick={() => openDetail(entry.user.id)}
                 className={`glass-card border ${c.border} p-5 flex flex-col items-center text-center gap-3
                   cursor-pointer hover:border-white/20 hover:bg-white/[0.06] transition-all select-none
-                  ${isMe      ? "ring-1 ring-[#00e87a]/25" : ""}
+                  ${isMe ? "ring-1 ring-[#00e87a]/25" : ""}
                   ${isLoading ? "opacity-60" : ""}`}
               >
                 <span className="text-4xl leading-none">{MEDALS[i]}</span>
@@ -104,6 +104,7 @@ export default function PorraRanking({ entries, currentUserId }: Props) {
                   ) : (
                     <p className="text-xs text-gray-700 text-center">Sin pick</p>
                   )}
+                  <p className="text-[8px] font-semibold text-gray-700 uppercase tracking-widest text-center">Subcampeón</p>
                   {entry.subcampeon && (
                     <div className="flex items-center gap-1 justify-center text-[10px] text-gray-600">
                       <span className="text-xs">{getFlag(entry.subcampeon)}</span>
@@ -136,15 +137,15 @@ export default function PorraRanking({ entries, currentUserId }: Props) {
             </thead>
             <tbody>
               {rest.map((entry, i) => {
-                const pos       = i + 4;
-                const isMe      = entry.user.id === currentUserId;
+                const pos = i + 4;
+                const isMe = entry.user.id === currentUserId;
                 const isLoading = loading === entry.user.id;
                 return (
                   <tr
                     key={entry.user.id}
                     onClick={() => openDetail(entry.user.id)}
                     className={`border-b border-white/[0.04] last:border-0 cursor-pointer transition-colors select-none
-                      ${isMe      ? "bg-[#00e87a]/[0.04] hover:bg-[#00e87a]/[0.07]" : "hover:bg-white/[0.03]"}
+                      ${isMe ? "bg-[#00e87a]/[0.04] hover:bg-[#00e87a]/[0.07]" : "hover:bg-white/[0.03]"}
                       ${isLoading ? "opacity-60" : ""}`}
                   >
                     <td className="px-4 py-3 text-gray-600 font-mono text-xs">{pos}</td>

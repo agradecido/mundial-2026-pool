@@ -58,10 +58,7 @@ export default async function PorraRankingPage() {
         <div>
           <h1 className="text-3xl font-bold text-white tracking-tight">Clasificación actual</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Clasificación del cuadro eliminatorio · haz clic para ver la porra de cada jugador
-          </p>
-          <p className="mt-2 text-xs text-gray-600">
-            Puedes ver las porras haciendo haciendo click en la tarjeta de cada jugador.
+            Haz clic para ver la porra de cada jugador
           </p>
         </div>
         <Link
