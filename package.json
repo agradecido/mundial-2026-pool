@@ -10,6 +10,7 @@
     "postinstall": "prisma generate",
     "seed": "tsx prisma/seed.ts",
     "seed:demo": "tsx prisma/seed-demo.ts",
+    "seed:bracket-demo": "tsx prisma/seed-bracket-demo.ts",
     "seed:clean": "tsx prisma/seed-clean-demo.ts"
   },
   "dependencies": {
