@@ -80,20 +80,6 @@ export default async function PorraRankingPage() {
         <PorraRanking entries={entries} currentUserId={currentUserId} />
       )}
 
-      {/* Scoring legend */}
-      <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-gray-600">Sistema de puntuación:
-        {[
-          ["16avos", "1 pt"],
-          ["Octavos", "2 pts"],
-          ["Cuartos", "5 pts"],
-          ["Semis", "7 pts"],
-          ["Final", "10 pts"],
-          ["Campeón", "10 pts"],
-        ].map(([label, pts]) => (
-          <span key={label}>{label} <span className="text-gray-700">{pts}</span></span>
-        ))}
-      </div>
-
     </div>
   );
 }
