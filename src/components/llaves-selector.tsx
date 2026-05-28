@@ -4,12 +4,10 @@ import { useState, useTransition } from "react";
 import { getFlag } from "@/lib/flags";
 import { guardarBracket } from "@/app/llaves/actions";
 import {
-  PHASE_MATCHES, ALL_MATCHES,
+  PHASE_MATCHES,
   resolveSlot, getDescendants, cascadeAll,
 } from "@/lib/bracket";
 import type { BracketPicks, Match } from "@/lib/bracket";
-
-export type { BracketPicks };
 
 // ── Types ────────────────────────────────────────────────────────────────────
 

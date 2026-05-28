@@ -4,8 +4,6 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import type { BracketPicks } from "@/lib/bracket";
 
-export type { BracketPicks };
-
 export async function guardarBracket(picks: BracketPicks) {
   const session = await auth();
   if (!session?.user) return { error: "No autenticado" };

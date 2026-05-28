@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import LlavesSelector from "@/components/llaves-selector";
-import type { BracketPicks } from "@/app/llaves/actions";
+import type { BracketPicks } from "@/lib/bracket";
 
 export default async function LlavesPage() {
   const session = await auth();
@@ -49,7 +49,8 @@ export default async function LlavesPage() {
             timeZone: "Europe/Madrid",
           })}
         </p>
-        <div className="mt-3 flex flex-wrap gap-4 text-xs text-gray-600">
+        <h2 className="mt-6 text-lg font-semibold text-white">Sistema de puntuación</h2>
+        <div className="mt-3 flex flex-wrap gap-4 text-xs text-white">
           {[
             ["Dieciseisavos", "1 pt"],
             ["Octavos", "2 pts"],
@@ -63,6 +64,10 @@ export default async function LlavesPage() {
             </span>
           ))}
         </div>
+        <h2 className="mt-6 text-lg font-semibold text-white">Cómo rellenar la porra</h2>
+        <p className="mt-1 text-xs text-gray-500">1. Selecciona los equipos que quedarán primero y segundo en sus grupos</p>
+        <p className="mt-1 text-xs text-gray-500">2. Selecciona los 8 mejores terceros</p>
+        <p className="mt-1 text-xs text-gray-500">3. Completa el cuadro de eliminatorias</p>
       </div>
 
       <LlavesSelector grupos={grupos} initialPicks={picks} locked={locked} />
