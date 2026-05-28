@@ -5,11 +5,11 @@ import type { BracketPicks } from "@/app/llaves/actions";
 
 export default async function LlavesPage() {
   const session = await auth();
-  const userId  = session!.user.id;
+  const userId = session!.user.id;
 
   // Build groups map from fixtures
   const partidos = await prisma.partido.findMany({
-    where:  { fase: "GRUPOS" },
+    where: { fase: "GRUPOS" },
     select: { equipoLocal: true, equipoVisitante: true, grupo: true },
   });
 
@@ -33,12 +33,12 @@ export default async function LlavesPage() {
 
   // Existing bracket picks
   const bracket = await prisma.pronosticoBracket.findUnique({ where: { userId } });
-  const picks   = (bracket?.picks ?? {}) as BracketPicks;
+  const picks = (bracket?.picks ?? {}) as BracketPicks;
 
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-white tracking-tight">Llaves</h1>
+        <h1 className="text-3xl font-bold text-white tracking-tight">Porra</h1>
         <p className="mt-1 text-sm text-gray-500">
           Predice el camino al título · cierra el{" "}
           {lockDate.toLocaleDateString("es-ES", {
@@ -52,11 +52,11 @@ export default async function LlavesPage() {
         <div className="mt-3 flex flex-wrap gap-4 text-xs text-gray-600">
           {[
             ["Dieciseisavos", "1 pt"],
-            ["Octavos",       "2 pts"],
-            ["Cuartos",       "5 pts"],
-            ["Semifinal",     "7 pts"],
-            ["Final",        "10 pts"],
-            ["Campeón",      "10 pts"],
+            ["Octavos", "2 pts"],
+            ["Cuartos", "5 pts"],
+            ["Semifinal", "7 pts"],
+            ["Final", "10 pts"],
+            ["Campeón", "10 pts"],
           ].map(([label, pts]) => (
             <span key={label}>
               {label} <span className="text-gray-500">{pts}</span>

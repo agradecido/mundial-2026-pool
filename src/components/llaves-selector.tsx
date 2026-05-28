@@ -3,7 +3,11 @@
 import { useState, useTransition } from "react";
 import { getFlag } from "@/lib/flags";
 import { guardarBracket } from "@/app/llaves/actions";
-import type { BracketPicks } from "@/app/llaves/actions";
+import {
+  PHASE_MATCHES, ALL_MATCHES,
+  resolveSlot, getDescendants, cascadeAll,
+} from "@/lib/bracket";
+import type { BracketPicks, Match } from "@/lib/bracket";
 
 export type { BracketPicks };
 
@@ -20,41 +24,45 @@ type Phase =
 
 const PHASES: Array<{ id: Phase; label: string; hint: string }> = [
   { id: "grupos",    label: "Grupos",     hint: "2 por grupo" },
-  { id: "terceros",  label: "Mejores 3°", hint: "8 equipos" },
-  { id: "octavos",   label: "Octavos",    hint: "16 pasan" },
-  { id: "cuartos",   label: "Cuartos",    hint: "8 pasan" },
-  { id: "semifinal", label: "Semifinal",  hint: "4 pasan" },
-  { id: "final",     label: "Final",      hint: "2 pasan" },
-  { id: "campeon",   label: "Campeón",    hint: "1 gana" },
+  { id: "terceros",  label: "Mejores 3°", hint: "8 equipos"  },
+  { id: "octavos",   label: "Octavos",    hint: "16 pasan"   },
+  { id: "cuartos",   label: "Cuartos",    hint: "8 pasan"    },
+  { id: "semifinal", label: "Semifinal",  hint: "4 pasan"    },
+  { id: "final",     label: "Final",      hint: "2 pasan"    },
+  { id: "campeon",   label: "Campeón",    hint: "1 gana"     },
 ];
 
-const PHASE_COUNT: Record<Exclude<Phase, "grupos" | "campeon">, number> = {
-  terceros:  8,
-  octavos:   16,
-  cuartos:   8,
-  semifinal: 4,
-  final:     2,
+const PHASE_LABEL: Record<Phase, string> = {
+  grupos:    "",
+  terceros:  "Selecciona los 8 mejores terceros que crees que clasificarán",
+  octavos:   "Elige el ganador de cada cruce de dieciseisavos",
+  cuartos:   "Elige quién pasa a cuartos de final",
+  semifinal: "Elige los cuatro semifinalistas",
+  final:     "Elige los dos finalistas",
+  campeon:   "¿Quién ganará el Mundial?",
 };
 
 interface Props {
-  grupos: Record<string, string[]>;   // group letter → 4 teams
-  initialPicks: BracketPicks;
-  locked: boolean;
+  grupos:        Record<string, string[]>;
+  initialPicks:  BracketPicks;
+  locked:        boolean;
 }
 
-// ── Cascade ──────────────────────────────────────────────────────────────────
+// ── Slot description helper ───────────────────────────────────────────────────
 
-function cascade(p: BracketPicks): BracketPicks {
-  const grupoPicks = Object.values(p.grupos ?? {}).flat();
-  // terceros can only be teams not already in top-2
-  const terceros  = (p.terceros  ?? []).filter(t => !grupoPicks.includes(t));
-  const d32       = [...grupoPicks, ...terceros];
-  const octavos   = (p.octavos   ?? []).filter(t => d32.includes(t));
-  const cuartos   = (p.cuartos   ?? []).filter(t => octavos.includes(t));
-  const semifinal = (p.semifinal ?? []).filter(t => cuartos.includes(t));
-  const final_    = (p.final     ?? []).filter(t => semifinal.includes(t));
-  const campeon   = p.campeon && final_.includes(p.campeon) ? p.campeon : undefined;
-  return { ...p, terceros, octavos, cuartos, semifinal, final: final_, campeon };
+function slotDesc(slot: string): string {
+  if (slot.startsWith("W:")) {
+    const id = slot.slice(2);
+    const [round, num] = id.split("-");
+    const names: Record<string, string> = {
+      D32: "16avos", D16: "Oct.", QF: "Ctos.", SF: "Semi",
+    };
+    return `Gan. ${names[round] ?? round}-${num}`;
+  }
+  if (/^1[A-L]$/.test(slot)) return `1° Gr.${slot[1]}`;
+  if (/^2[A-L]$/.test(slot)) return `2° Gr.${slot[1]}`;
+  if (slot.startsWith("3-"))  return `3°Mej.${slot.slice(2)}`;
+  return slot;
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -68,39 +76,13 @@ export default function LlavesSelector({ grupos, initialPicks, locked }: Props) 
 
   const gruposLetters = Object.keys(grupos).sort();
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
-
-  function d32(p: BracketPicks) {
-    return [...Object.values(p.grupos ?? {}).flat(), ...(p.terceros ?? [])];
-  }
-
-  function available(ph: Phase): string[] {
-    switch (ph) {
-      case "grupos":   return [];
-      case "terceros": return Object.values(picks.grupos ?? {}).flat().length > 0
-        ? Object.entries(grupos).flatMap(([g, teams]) =>
-            teams.filter(t => !(picks.grupos?.[g] ?? []).includes(t))
-          )
-        : [];
-      case "octavos":   return d32(picks);
-      case "cuartos":   return picks.octavos   ?? [];
-      case "semifinal": return picks.cuartos   ?? [];
-      case "final":     return picks.semifinal ?? [];
-      case "campeon":   return picks.final     ?? [];
-    }
-  }
-
-  function selected(ph: Phase): string[] {
-    if (ph === "campeon") return picks.campeon ? [picks.campeon] : [];
-    if (ph === "grupos")  return [];
-    return (picks[ph] ?? []) as string[];
-  }
+  // ── isComplete ─────────────────────────────────────────────────────────────
 
   function isComplete(ph: Phase): boolean {
-    if (ph === "grupos")
-      return gruposLetters.every(g => (picks.grupos?.[g]?.length ?? 0) === 2);
-    if (ph === "campeon") return !!picks.campeon;
-    return selected(ph).length === PHASE_COUNT[ph as keyof typeof PHASE_COUNT];
+    if (ph === "grupos")   return gruposLetters.every(g => (picks.grupos?.[g]?.length ?? 0) === 2);
+    if (ph === "terceros") return (picks.terceros?.length ?? 0) === 8;
+    const matches = PHASE_MATCHES[ph] ?? [];
+    return matches.every(m => picks.resultados?.[m.id] !== undefined);
   }
 
   // ── Toggles ────────────────────────────────────────────────────────────────
@@ -108,31 +90,40 @@ export default function LlavesSelector({ grupos, initialPicks, locked }: Props) 
   function toggleGroup(group: string, team: string) {
     if (locked) return;
     setPicks(prev => {
-      const cur = prev.grupos?.[group] ?? [];
+      const cur     = prev.grupos?.[group] ?? [];
       const updated = cur.includes(team)
         ? cur.filter(t => t !== team)
-        : cur.length < 2
-          ? [...cur, team]
-          : cur;
-      return cascade({ ...prev, grupos: { ...(prev.grupos ?? {}), [group]: updated } });
+        : cur.length < 2 ? [...cur, team] : cur;
+      return cascadeAll({ ...prev, grupos: { ...(prev.grupos ?? {}), [group]: updated } });
     });
     setSaved(false);
   }
 
-  function togglePhase(ph: Exclude<Phase, "grupos">, team: string) {
+  function toggleTercero(team: string) {
     if (locked) return;
     setPicks(prev => {
-      if (ph === "campeon") {
-        return cascade({ ...prev, campeon: prev.campeon === team ? undefined : team });
-      }
-      const cur = (prev[ph] ?? []) as string[];
-      const limit = PHASE_COUNT[ph as keyof typeof PHASE_COUNT];
+      const cur     = prev.terceros ?? [];
       const updated = cur.includes(team)
         ? cur.filter(t => t !== team)
-        : cur.length < limit
-          ? [...cur, team]
-          : cur;
-      return cascade({ ...prev, [ph]: updated });
+        : cur.length < 8 ? [...cur, team] : cur;
+      return cascadeAll({ ...prev, terceros: updated });
+    });
+    setSaved(false);
+  }
+
+  function pickResult(matchId: string, team: string) {
+    if (locked) return;
+    setPicks(prev => {
+      const newRes = { ...(prev.resultados ?? {}) };
+      if (newRes[matchId] === team) {
+        // toggle off
+        delete newRes[matchId];
+      } else {
+        newRes[matchId] = team;
+      }
+      // always clear descendants when a result changes
+      for (const desc of getDescendants(matchId)) delete newRes[desc];
+      return { ...prev, resultados: newRes };
     });
     setSaved(false);
   }
@@ -148,9 +139,16 @@ export default function LlavesSelector({ grupos, initialPicks, locked }: Props) 
     });
   }
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+  // ── Derived ────────────────────────────────────────────────────────────────
 
   const completedCount = PHASES.filter(p => isComplete(p.id)).length;
+
+  // Terceros: teams that finished 3rd in their group (not in top-2 of any group)
+  const tercerosAvailable = Object.entries(grupos).flatMap(([g, teams]) =>
+    teams.filter(t => !(picks.grupos?.[g] ?? []).includes(t))
+  );
+
+  // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <div className="space-y-6">
@@ -194,15 +192,24 @@ export default function LlavesSelector({ grupos, initialPicks, locked }: Props) 
           />
         )}
 
-        {phase !== "grupos" && (
-          <KnockoutPanel
-            phase={phase}
-            available={available(phase)}
-            selected={selected(phase)}
-            limit={phase === "campeon" ? 1 : PHASE_COUNT[phase as keyof typeof PHASE_COUNT]}
-            onToggle={(t) => togglePhase(phase as Exclude<Phase, "grupos">, t)}
+        {phase === "terceros" && (
+          <TercerosPanel
+            available={tercerosAvailable}
+            selected={picks.terceros ?? []}
+            onToggle={toggleTercero}
             locked={locked}
-            isCampeon={phase === "campeon"}
+          />
+        )}
+
+        {phase !== "grupos" && phase !== "terceros" && (
+          <BracketPanel
+            phase={phase}
+            matches={PHASE_MATCHES[phase] ?? []}
+            grupos={picks.grupos ?? {}}
+            terceros={picks.terceros ?? []}
+            resultados={picks.resultados ?? {}}
+            onPick={pickResult}
+            locked={locked}
           />
         )}
       </div>
@@ -256,14 +263,14 @@ export default function LlavesSelector({ grupos, initialPicks, locked }: Props) 
   );
 }
 
-// ── Sub-components ────────────────────────────────────────────────────────────
+// ── GruposPanel ───────────────────────────────────────────────────────────────
 
 interface GruposProps {
-  grupos: Record<string, string[]>;
+  grupos:        Record<string, string[]>;
   gruposLetters: string[];
-  picks: Record<string, string[]>;
-  onToggle: (group: string, team: string) => void;
-  locked: boolean;
+  picks:         Record<string, string[]>;
+  onToggle:      (group: string, team: string) => void;
+  locked:        boolean;
 }
 
 function GruposPanel({ grupos, gruposLetters, picks, onToggle, locked }: GruposProps) {
@@ -271,7 +278,7 @@ function GruposPanel({ grupos, gruposLetters, picks, onToggle, locked }: GruposP
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {gruposLetters.map(letra => {
         const teams    = grupos[letra] ?? [];
-        const selected = picks[letra] ?? [];
+        const selected = picks[letra]  ?? [];
         return (
           <div key={letra} className="glass-card p-3">
             <div className="flex items-center gap-2 mb-2.5">
@@ -285,8 +292,10 @@ function GruposPanel({ grupos, gruposLetters, picks, onToggle, locked }: GruposP
             </div>
             <div className="space-y-1">
               {teams.map(team => {
-                const on  = selected.includes(team);
-                const off = !on && selected.length >= 2;
+                const idx        = selected.indexOf(team);
+                const on         = idx !== -1;
+                const off        = !on && selected.length >= 2;
+                const orderLabel = idx === 0 ? "1°" : idx === 1 ? "2°" : null;
                 return (
                   <button
                     key={team}
@@ -302,7 +311,11 @@ function GruposPanel({ grupos, gruposLetters, picks, onToggle, locked }: GruposP
                   >
                     <span className="text-sm">{getFlag(team)}</span>
                     <span className="truncate flex-1 text-left">{team}</span>
-                    {on && <span className="text-[#00e87a] text-[10px]">✓</span>}
+                    {orderLabel && (
+                      <span className="text-[10px] text-[#00e87a] font-bold tabular-nums shrink-0">
+                        {orderLabel}
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -314,35 +327,20 @@ function GruposPanel({ grupos, gruposLetters, picks, onToggle, locked }: GruposP
   );
 }
 
-interface KnockoutProps {
-  phase: Phase;
+// ── TercerosPanel ─────────────────────────────────────────────────────────────
+
+interface TercerosProps {
   available: string[];
-  selected: string[];
-  limit: number;
-  onToggle: (team: string) => void;
-  locked: boolean;
-  isCampeon: boolean;
+  selected:  string[];
+  onToggle:  (team: string) => void;
+  locked:    boolean;
 }
 
-function KnockoutPanel({ phase, available, selected, limit, onToggle, locked, isCampeon }: KnockoutProps) {
-  const PHASE_LABEL: Record<Phase, string> = {
-    grupos:    "",
-    terceros:  "Selecciona los 8 mejores terceros que crees que clasificarán",
-    octavos:   "Selecciona los 16 equipos que pasarán a octavos de final",
-    cuartos:   "Selecciona los 8 equipos que llegarán a cuartos de final",
-    semifinal: "Selecciona los 4 semifinalistas",
-    final:     "Selecciona los 2 finalistas",
-    campeon:   "¿Quién ganará el Mundial?",
-  };
-
+function TercerosPanel({ available, selected, onToggle, locked }: TercerosProps) {
   if (available.length === 0) {
     return (
       <div className="glass-card p-12 text-center">
-        <p className="text-gray-600 text-sm">
-          {phase === "terceros"
-            ? "Selecciona primero los clasificados de cada grupo"
-            : "Completa la fase anterior para continuar"}
-        </p>
+        <p className="text-gray-600 text-sm">Selecciona primero los clasificados de cada grupo</p>
       </div>
     );
   }
@@ -350,44 +348,154 @@ function KnockoutPanel({ phase, available, selected, limit, onToggle, locked, is
   return (
     <div className="space-y-4">
       <p className="text-sm text-gray-500">
-        {PHASE_LABEL[phase]}
-        {!isCampeon && (
-          <span className="ml-2 text-gray-700 tabular-nums">
-            ({selected.length}/{limit})
-          </span>
-        )}
+        Selecciona los 8 mejores terceros que crees que clasificarán
+        <span className="ml-2 text-gray-700 tabular-nums">({selected.length}/8)</span>
       </p>
-
-      <div className={`grid gap-2 ${isCampeon ? "grid-cols-1 sm:grid-cols-2 max-w-sm" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4"}`}>
+      <div className="grid gap-2 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
         {available.map(team => {
           const on  = selected.includes(team);
-          const off = !on && selected.length >= limit;
+          const off = !on && selected.length >= 8;
           return (
             <button
               key={team}
               onClick={() => onToggle(team)}
               disabled={locked || off}
               className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all ${
-                isCampeon && on
-                  ? "bg-yellow-400/15 border border-yellow-400/30 text-white"
-                  : on
-                    ? "bg-[#00e87a]/15 border border-[#00e87a]/25 text-white"
-                    : off
-                      ? "opacity-20 cursor-not-allowed border border-white/[0.04] text-gray-700"
-                      : "border border-white/[0.07] text-gray-400 hover:border-white/20 hover:text-white bg-white/[0.02]"
+                on
+                  ? "bg-[#00e87a]/15 border border-[#00e87a]/25 text-white"
+                  : off
+                    ? "opacity-20 cursor-not-allowed border border-white/[0.04] text-gray-700"
+                    : "border border-white/[0.07] text-gray-400 hover:border-white/20 hover:text-white bg-white/[0.02]"
               }`}
             >
               <span className="text-lg shrink-0">{getFlag(team)}</span>
               <span className="truncate text-left text-xs flex-1">{team}</span>
-              {on && (
-                <span className={`shrink-0 text-xs ${isCampeon ? "text-yellow-400" : "text-[#00e87a]"}`}>
-                  {isCampeon ? "🏆" : "✓"}
-                </span>
-              )}
+              {on && <span className="shrink-0 text-xs text-[#00e87a]">✓</span>}
             </button>
           );
         })}
       </div>
+    </div>
+  );
+}
+
+// ── BracketPanel ──────────────────────────────────────────────────────────────
+
+interface BracketPanelProps {
+  phase:      Phase;
+  matches:    Match[];
+  grupos:     Record<string, string[]>;
+  terceros:   string[];
+  resultados: Record<string, string>;
+  onPick:     (matchId: string, team: string) => void;
+  locked:     boolean;
+}
+
+function BracketPanel({
+  phase, matches, grupos, terceros, resultados, onPick, locked,
+}: BracketPanelProps) {
+  const isCampeon = phase === "campeon";
+  const zones     = [...new Set(matches.map(m => m.zone))].sort();
+
+  return (
+    <div className="space-y-5">
+      <p className="text-sm text-gray-500">{PHASE_LABEL[phase]}</p>
+
+      {zones.map(zone => {
+        const zoneMatches = matches.filter(m => m.zone === zone);
+        return (
+          <div key={zone}>
+            {zones.length > 1 && (
+              <p className="text-[10px] font-semibold text-gray-700 uppercase tracking-widest mb-2">
+                Zona {zone}
+              </p>
+            )}
+            <div className={`grid gap-2 ${
+              isCampeon
+                ? "max-w-md"
+                : zoneMatches.length === 1
+                  ? "sm:grid-cols-1 max-w-md"
+                  : "sm:grid-cols-2"
+            }`}>
+              {zoneMatches.map(match => (
+                <MatchCard
+                  key={match.id}
+                  match={match}
+                  grupos={grupos}
+                  terceros={terceros}
+                  resultados={resultados}
+                  onPick={onPick}
+                  locked={locked}
+                  isCampeon={isCampeon}
+                />
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── MatchCard ─────────────────────────────────────────────────────────────────
+
+interface MatchCardProps {
+  match:      Match;
+  grupos:     Record<string, string[]>;
+  terceros:   string[];
+  resultados: Record<string, string>;
+  onPick:     (matchId: string, team: string) => void;
+  locked:     boolean;
+  isCampeon:  boolean;
+}
+
+function MatchCard({
+  match, grupos, terceros, resultados, onPick, locked, isCampeon,
+}: MatchCardProps) {
+  const teamA  = resolveSlot(match.slotA, grupos, terceros, resultados);
+  const teamB  = resolveSlot(match.slotB, grupos, terceros, resultados);
+  const winner = resultados[match.id];
+  const canPick = !locked && teamA !== undefined && teamB !== undefined;
+
+  function teamBtn(team: string | undefined, slot: string) {
+    const isWinner  = winner !== undefined && winner === team;
+    const isLoser   = winner !== undefined && winner !== team;
+    const isUnknown = team === undefined;
+
+    return (
+      <button
+        onClick={() => team && canPick && onPick(match.id, team)}
+        disabled={!canPick || isUnknown}
+        className={`flex-1 flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs transition-all min-w-0 ${
+          isWinner && isCampeon
+            ? "bg-yellow-400/20 border border-yellow-400/40 text-white"
+            : isWinner
+              ? "bg-[#00e87a]/20 border border-[#00e87a]/30 text-white"
+              : isLoser
+                ? "opacity-25 border border-transparent text-gray-700"
+                : isUnknown
+                  ? "border border-dashed border-white/10 text-gray-700 cursor-default"
+                  : "border border-white/[0.07] text-gray-400 hover:border-white/20 hover:text-white"
+        }`}
+      >
+        <span className="text-sm shrink-0">{team ? getFlag(team) : "?"}</span>
+        <span className="truncate text-left flex-1">
+          {team ?? slotDesc(slot)}
+        </span>
+        {isWinner && (
+          <span className="shrink-0 text-xs">{isCampeon ? "🏆" : "✓"}</span>
+        )}
+      </button>
+    );
+  }
+
+  return (
+    <div className={`glass-card p-2.5 flex items-center gap-2 ${
+      !canPick && winner === undefined ? "opacity-50" : ""
+    }`}>
+      {teamBtn(teamA, match.slotA)}
+      <span className="text-[10px] font-bold text-gray-700 shrink-0">vs</span>
+      {teamBtn(teamB, match.slotB)}
     </div>
   );
 }
