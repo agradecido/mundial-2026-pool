@@ -71,6 +71,7 @@ export default async function QuinielaRankingPage() {
             image: u.image,
             ultimoAcceso: u.ultimoAcceso ? u.ultimoAcceso.toISOString() : null,
             numPronosticos: u.pronosticos.length,
+            bracketDone: 0,
         }));
 
     return (
@@ -86,7 +87,8 @@ export default async function QuinielaRankingPage() {
                 <PreTournamentList
                     entries={preTournamentEntries}
                     currentUserId={currentUserId}
-                    subtitle="El ranking y las votaciones de cada jugador se mostrarán 16 minutos antes de que empiece el Mundial. Mientras tanto, participantes ordenados por última actividad."
+                    mode="quiniela"
+                    subtitle="El ranking se mostrará cuando empiece el Mundial. Participantes ordenados por pronósticos de quiniela completados."
                 />
             ) : (
                 <RankingView ranking={ranking} currentUserId={currentUserId} />
