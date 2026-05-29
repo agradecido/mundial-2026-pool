@@ -150,6 +150,14 @@ export function cascadeAll(p: BracketPicks, allGrupos?: Record<string, string[]>
       const qualified = grupos[group] ?? [];
       return qualified.length === 2; // Keep only if group has exactly 2 qualified
     });
+    // Deduplicate: at most one tercero per group (preserve selection order)
+    const seenGroups = new Set<string>();
+    newTerceros = newTerceros.filter(t => {
+      const group = teamGroupMap[t];
+      if (seenGroups.has(group)) return false;
+      seenGroups.add(group);
+      return true;
+    });
   }
 
   // Validate each stored result against the (possibly updated) teams

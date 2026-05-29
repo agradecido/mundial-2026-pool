@@ -1,12 +1,11 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import RankingView from "@/components/ranking-view";
-import PorraRanking from "@/components/porra-ranking";
 import type { BracketPicks } from "@/lib/bracket";
 import { SF_MATCHES } from "@/lib/bracket";
 import { computeActualBracket, scoreBracket, bracketCompletion } from "@/lib/bracket-scoring";
 import type { RankedPorraEntry } from "@/components/porra-ranking";
 import RankingTabs from "@/components/ranking-tabs";
+import type { PreTournamentEntry } from "@/components/pre-tournament-list";
 
 export default async function RankingPage({
   searchParams,
@@ -25,6 +24,7 @@ export default async function RankingPage({
       name: true,
       image: true,
       fechaRegistro: true,
+      ultimoAcceso: true,
       pronosticos: {
         select: { puntosGanados: true },
       },
@@ -101,6 +101,27 @@ export default async function RankingPage({
       b.completion.done - a.completion.done
     );
 
+  // Detect if tournament has started (first match kicked off)
+  const firstPartido = await prisma.partido.findFirst({
+    orderBy: { fechaPartido: "asc" },
+    select: { fechaPartido: true },
+  });
+  const tournamentStarted =
+    !!firstPartido && firstPartido.fechaPartido.getTime() <= Date.now();
+
+  const preTournamentEntries: PreTournamentEntry[] = [...users]
+    .sort((a, b) => {
+      const ta = a.ultimoAcceso?.getTime() ?? 0;
+      const tb = b.ultimoAcceso?.getTime() ?? 0;
+      return tb - ta;
+    })
+    .map((u) => ({
+      id: u.id,
+      name: u.name,
+      image: u.image,
+      ultimoAcceso: u.ultimoAcceso ? u.ultimoAcceso.toISOString() : null,
+    }));
+
   return (
     <div className="space-y-8">
       <div>
@@ -115,6 +136,8 @@ export default async function RankingPage({
         quinielaRanking={quinielaRanking}
         porraEntries={porraEntries}
         currentUserId={currentUserId}
+        tournamentStarted={tournamentStarted}
+        preTournamentEntries={preTournamentEntries}
       />
     </div>
   );

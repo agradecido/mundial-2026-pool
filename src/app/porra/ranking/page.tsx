@@ -6,6 +6,8 @@ import { SF_MATCHES } from "@/lib/bracket";
 import { computeActualBracket, scoreBracket, bracketCompletion } from "@/lib/bracket-scoring";
 import PorraRanking from "@/components/porra-ranking";
 import type { RankedPorraEntry } from "@/components/porra-ranking";
+import PreTournamentList from "@/components/pre-tournament-list";
+import type { PreTournamentEntry } from "@/components/pre-tournament-list";
 
 export default async function PorraRankingPage() {
   const session = await auth();
@@ -15,6 +17,7 @@ export default async function PorraRankingPage() {
     prisma.user.findMany({
       select: {
         id: true, name: true, image: true,
+        ultimoAcceso: true,
         bracketPicks: true,
       },
       orderBy: { fechaRegistro: "asc" },
@@ -59,6 +62,19 @@ export default async function PorraRankingPage() {
       b.completion.done - a.completion.done
     );
 
+  const preTournamentEntries: PreTournamentEntry[] = [...usuarios]
+    .sort((a, b) => {
+      const ta = a.ultimoAcceso?.getTime() ?? 0;
+      const tb = b.ultimoAcceso?.getTime() ?? 0;
+      return tb - ta;
+    })
+    .map(u => ({
+      id: u.id,
+      name: u.name,
+      image: u.image,
+      ultimoAcceso: u.ultimoAcceso ? u.ultimoAcceso.toISOString() : null,
+    }));
+
   return (
     <div className="space-y-10">
       {/* Header */}
@@ -85,7 +101,13 @@ export default async function PorraRankingPage() {
         </div>
       </div>
 
-      {entries.length === 0 ? (
+      {!tournamentStarted ? (
+        <PreTournamentList
+          entries={preTournamentEntries}
+          currentUserId={currentUserId}
+          subtitle="El ranking se mostrará cuando empiece el Mundial. Mientras tanto, participantes ordenados por última actividad."
+        />
+      ) : entries.length === 0 ? (
         <div className="glass-card p-16 text-center space-y-4">
           <p className="text-gray-600 text-sm">Nadie ha rellenado la porra todavía</p>
           <Link href="/porra" className="inline-block text-sm text-[#00e87a] hover:underline">

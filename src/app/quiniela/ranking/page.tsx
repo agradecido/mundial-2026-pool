@@ -1,25 +1,37 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import RankingView from "@/components/ranking-view";
+import PreTournamentList from "@/components/pre-tournament-list";
+import type { PreTournamentEntry } from "@/components/pre-tournament-list";
 
 export default async function QuinielaRankingPage() {
     const session = await auth();
     const currentUserId = session!.user.id;
 
-    const users = await prisma.user.findMany({
-        select: {
-            id: true,
-            name: true,
-            image: true,
-            fechaRegistro: true,
-            pronosticos: {
-                select: { puntosGanados: true },
+    const [users, firstPartido] = await Promise.all([
+        prisma.user.findMany({
+            select: {
+                id: true,
+                name: true,
+                image: true,
+                fechaRegistro: true,
+                ultimoAcceso: true,
+                pronosticos: {
+                    select: { puntosGanados: true },
+                },
+                prediccionFutura: {
+                    select: { puntosCampeon: true, puntosSubcampeon: true },
+                },
             },
-            prediccionFutura: {
-                select: { puntosCampeon: true, puntosSubcampeon: true },
-            },
-        },
-    });
+        }),
+        prisma.partido.findFirst({
+            orderBy: { fechaPartido: "asc" },
+            select: { fechaPartido: true },
+        }),
+    ]);
+
+    const tournamentStarted =
+        !!firstPartido && firstPartido.fechaPartido.getTime() <= Date.now();
 
     const ranking = users
         .map((u) => {
@@ -45,6 +57,19 @@ export default async function QuinielaRankingPage() {
         })
         .map(({ fechaRegistro: _, ...u }) => u); // drop non-serializable Date
 
+    const preTournamentEntries: PreTournamentEntry[] = [...users]
+        .sort((a, b) => {
+            const ta = a.ultimoAcceso?.getTime() ?? 0;
+            const tb = b.ultimoAcceso?.getTime() ?? 0;
+            return tb - ta;
+        })
+        .map((u) => ({
+            id: u.id,
+            name: u.name,
+            image: u.image,
+            ultimoAcceso: u.ultimoAcceso ? u.ultimoAcceso.toISOString() : null,
+        }));
+
     return (
         <div className="space-y-10">
             <div>
@@ -54,7 +79,15 @@ export default async function QuinielaRankingPage() {
                 </p>
             </div>
 
-            <RankingView ranking={ranking} currentUserId={currentUserId} />
+            {!tournamentStarted ? (
+                <PreTournamentList
+                    entries={preTournamentEntries}
+                    currentUserId={currentUserId}
+                    subtitle="El ranking se mostrará cuando empiece el Mundial. Mientras tanto, participantes ordenados por última actividad."
+                />
+            ) : (
+                <RankingView ranking={ranking} currentUserId={currentUserId} />
+            )}
         </div>
     );
 }

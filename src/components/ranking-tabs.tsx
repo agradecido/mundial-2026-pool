@@ -4,6 +4,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import RankingView from "@/components/ranking-view";
 import PorraRanking from "@/components/porra-ranking";
 import type { RankedPorraEntry } from "@/components/porra-ranking";
+import PreTournamentList from "@/components/pre-tournament-list";
+import type { PreTournamentEntry } from "@/components/pre-tournament-list";
 
 interface QuinielaEntry {
     id: string;
@@ -19,9 +21,18 @@ interface Props {
     quinielaRanking: QuinielaEntry[];
     porraEntries: RankedPorraEntry[];
     currentUserId: string;
+    tournamentStarted: boolean;
+    preTournamentEntries: PreTournamentEntry[];
 }
 
-export default function RankingTabs({ activeTab, quinielaRanking, porraEntries, currentUserId }: Props) {
+export default function RankingTabs({
+    activeTab,
+    quinielaRanking,
+    porraEntries,
+    currentUserId,
+    tournamentStarted,
+    preTournamentEntries,
+}: Props) {
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -72,7 +83,15 @@ export default function RankingTabs({ activeTab, quinielaRanking, porraEntries, 
                             Puntos de partidos + predicciones especiales
                         </p>
                     </div>
-                    <RankingView ranking={quinielaRanking} currentUserId={currentUserId} />
+                    {tournamentStarted ? (
+                        <RankingView ranking={quinielaRanking} currentUserId={currentUserId} />
+                    ) : (
+                        <PreTournamentList
+                            entries={preTournamentEntries}
+                            currentUserId={currentUserId}
+                            subtitle="El ranking se mostrará cuando empiece el Mundial. Mientras tanto, participantes ordenados por última actividad."
+                        />
+                    )}
                 </div>
             ) : (
                 <div>
@@ -82,7 +101,13 @@ export default function RankingTabs({ activeTab, quinielaRanking, porraEntries, 
                             Puntos del bracket completo
                         </p>
                     </div>
-                    {porraEntries.length === 0 ? (
+                    {!tournamentStarted ? (
+                        <PreTournamentList
+                            entries={preTournamentEntries}
+                            currentUserId={currentUserId}
+                            subtitle="El ranking se mostrará cuando empiece el Mundial. Mientras tanto, participantes ordenados por última actividad."
+                        />
+                    ) : porraEntries.length === 0 ? (
                         <div className="glass-card p-16 text-center space-y-4">
                             <p className="text-gray-600 text-sm">Nadie ha rellenado la porra todavía</p>
                         </div>

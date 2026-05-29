@@ -25,6 +25,26 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.id = user.id;
         token.role = user.role;
       }
+
+      // Throttled last-access tracking: update User.ultimoAcceso at most once
+      // every 5 minutes per user, persisting the last sync timestamp in the JWT.
+      const userId = token.id as string | undefined;
+      if (userId) {
+        const now = Date.now();
+        const lastSync = (token.lastAccessSync as number | undefined) ?? 0;
+        if (now - lastSync > 5 * 60 * 1000) {
+          try {
+            await prisma.user.update({
+              where: { id: userId },
+              data: { ultimoAcceso: new Date(now) },
+            });
+            token.lastAccessSync = now;
+          } catch {
+            // Ignore — don't break auth if DB is momentarily unavailable
+          }
+        }
+      }
+
       return token;
     },
     session({ session, token }) {

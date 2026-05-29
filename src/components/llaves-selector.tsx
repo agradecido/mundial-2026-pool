@@ -139,12 +139,18 @@ export default function LlavesSelector({ grupos, initialPicks, locked, oddsMap }
   const completedCount = PHASES.filter(p => isComplete(p.id)).length;
 
   // Terceros: teams that finished 3rd in their group (not in top-2 of any group)
-  // ONLY from groups where the user has already selected exactly 2 qualified teams
+  // ONLY from groups where the user has already selected exactly 2 qualified teams.
+  // At most ONE tercero per group: if one is already selected, only show it (for deselection).
   const tercerosAvailable = Object.entries(grupos).flatMap(([g, teams]) => {
     const qualified = picks.grupos?.[g] ?? [];
     // Only allow third-place picks from groups that have exactly 2 qualified
     if (qualified.length !== 2) return [];
-    return teams.filter(t => !qualified.includes(t));
+    const notQualified = teams.filter(t => !qualified.includes(t));
+    // If a team from this group is already selected as tercero, show only that one
+    // so the user can deselect it but cannot add a second tercero from the same group.
+    const selectedFromGroup = notQualified.find(t => (picks.terceros ?? []).includes(t));
+    if (selectedFromGroup) return [selectedFromGroup];
+    return notQualified;
   });
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -397,7 +403,7 @@ function TercerosPanel({ available, selected, onToggle, locked }: TercerosProps)
         <span className="ml-2 text-gray-700 tabular-nums">({selected.length}/8)</span>
       </p>
       <p className="text-xs text-gray-600">
-        💡 Solo aparecen disponibles los equipos de grupos que ya tienen sus 2 clasificados definidos
+        💡 Solo aparecen los equipos de grupos con 2 clasificados definidos · máximo un tercero por grupo
       </p>
       <div className="grid gap-2 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
         {available.map(team => {

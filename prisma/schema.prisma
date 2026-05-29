@@ -53,6 +53,7 @@ model User {
   image            String?
   role             Role      @default(JUGADOR)
   fechaRegistro    DateTime  @default(now())
+  ultimoAcceso     DateTime?
   welcomeModalViews Int      @default(0)
 
   accounts         Account[]
