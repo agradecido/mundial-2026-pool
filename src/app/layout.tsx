@@ -4,6 +4,7 @@ import { Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/header";
 import BottomTabBar from "@/components/bottom-tab-bar";
+import WelcomeModal from "@/components/welcome-modal";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -33,6 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {children}
         </main>
         <BottomTabBar />
+        <WelcomeModal />
       </body>
     </html>
   );
