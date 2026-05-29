@@ -69,12 +69,20 @@ export default async function PorraRankingPage() {
             Clasificación del bracket completo
           </p>
         </div>
-        <Link
-          href="/porra"
-          className="shrink-0 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs text-gray-400 hover:border-white/20 hover:text-white transition-colors"
-        >
-          Mi porra →
-        </Link>
+        <div className="flex gap-2 shrink-0">
+          <Link
+            href="/porra/stats"
+            className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs text-gray-400 hover:border-white/20 hover:text-white transition-colors"
+          >
+            📊 Consenso
+          </Link>
+          <Link
+            href="/porra"
+            className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs text-gray-400 hover:border-white/20 hover:text-white transition-colors"
+          >
+            Mi porra →
+          </Link>
+        </div>
       </div>
 
       {entries.length === 0 ? (
