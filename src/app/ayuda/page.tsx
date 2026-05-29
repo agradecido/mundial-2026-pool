@@ -106,6 +106,19 @@ export default function AyudaPage() {
                         no al predecir correctamente el resultado de un partido individual.
                     </p>
                 </div>
+
+                <Link
+                    href="/porra/stats"
+                    className="flex items-center justify-between rounded-lg border border-[#00e87a]/20 bg-[#00e87a]/5 px-4 py-3 transition-all hover:border-[#00e87a]/40 hover:bg-[#00e87a]/10"
+                >
+                    <div>
+                        <p className="text-sm font-semibold text-[#00e87a]">📊 Página de consenso</p>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                            Una vez enviada tu porra, puedes ver qué predicen el resto de participantes: campeón favorito, finalistas, clasificados por grupo y más.
+                        </p>
+                    </div>
+                    <span className="text-gray-500 text-sm shrink-0 ml-3">→</span>
+                </Link>
             </section>
 
 
@@ -202,6 +215,18 @@ export default function AyudaPage() {
                             <span className="text-gray-300">{desc}</span>
                         </div>
                     ))}
+                </div>
+            </section>
+
+
+            {/* ── Perfil ────────────────────────────────────────────────────── */}
+            <section className="space-y-4">
+                <h3 className="text-lg font-semibold text-white">Tu perfil</h3>
+                <div className="glass-card p-5">
+                    <p className="text-sm text-gray-300 leading-relaxed">
+                        Puedes cambiar tu nombre visible en cualquier momento haciendo clic en tu nombre
+                        en la <strong className="text-white">esquina superior derecha</strong> de la pantalla.
+                    </p>
                 </div>
             </section>
 

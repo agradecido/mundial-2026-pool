@@ -124,6 +124,12 @@ export default function WelcomeModal() {
                         </div>
                     </div>
 
+                    <div className="rounded-lg border border-white/10 bg-white/5 px-4 py-3">
+                        <p className="text-xs text-gray-400 text-center">
+                            Puedes cambiar tu nombre visible haciendo clic en tu nombre en la <strong className="text-white">esquina superior derecha</strong>
+                        </p>
+                    </div>
+
                     <div className="rounded-lg border border-amber-400/20 bg-amber-400/5 px-4 py-3">
                         <p className="text-xs text-amber-300/90 text-center">
                             Visita la sección de <strong>Ayuda</strong> para conocer todas las reglas y sistemas de puntuación
