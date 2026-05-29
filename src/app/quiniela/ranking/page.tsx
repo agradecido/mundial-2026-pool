@@ -59,6 +59,8 @@ export default async function QuinielaRankingPage() {
 
     const preTournamentEntries: PreTournamentEntry[] = [...users]
         .sort((a, b) => {
+            if (b.pronosticos.length !== a.pronosticos.length)
+                return b.pronosticos.length - a.pronosticos.length;
             const ta = a.ultimoAcceso?.getTime() ?? 0;
             const tb = b.ultimoAcceso?.getTime() ?? 0;
             return tb - ta;
@@ -68,6 +70,7 @@ export default async function QuinielaRankingPage() {
             name: u.name,
             image: u.image,
             ultimoAcceso: u.ultimoAcceso ? u.ultimoAcceso.toISOString() : null,
+            numPronosticos: u.pronosticos.length,
         }));
 
     return (

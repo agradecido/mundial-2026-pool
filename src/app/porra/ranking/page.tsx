@@ -19,6 +19,7 @@ export default async function PorraRankingPage() {
         id: true, name: true, image: true,
         ultimoAcceso: true,
         bracketPicks: true,
+        pronosticos: { select: { id: true } },
       },
       orderBy: { fechaRegistro: "asc" },
     }),
@@ -64,6 +65,8 @@ export default async function PorraRankingPage() {
 
   const preTournamentEntries: PreTournamentEntry[] = [...usuarios]
     .sort((a, b) => {
+      if (b.pronosticos.length !== a.pronosticos.length)
+        return b.pronosticos.length - a.pronosticos.length;
       const ta = a.ultimoAcceso?.getTime() ?? 0;
       const tb = b.ultimoAcceso?.getTime() ?? 0;
       return tb - ta;
@@ -73,6 +76,7 @@ export default async function PorraRankingPage() {
       name: u.name,
       image: u.image,
       ultimoAcceso: u.ultimoAcceso ? u.ultimoAcceso.toISOString() : null,
+      numPronosticos: u.pronosticos.length,
     }));
 
   return (
@@ -105,7 +109,7 @@ export default async function PorraRankingPage() {
         <PreTournamentList
           entries={preTournamentEntries}
           currentUserId={currentUserId}
-          subtitle="El ranking se mostrará cuando empiece el Mundial. Mientras tanto, participantes ordenados por última actividad."
+          subtitle="El ranking se mostrará cuando empiece el Mundial. Mientras tanto, participantes ordenados por actividad."
         />
       ) : entries.length === 0 ? (
         <div className="glass-card p-16 text-center space-y-4">

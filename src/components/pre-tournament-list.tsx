@@ -7,6 +7,7 @@ export interface PreTournamentEntry {
     name: string | null;
     image: string | null;
     ultimoAcceso: string | null; // ISO string (serializable across server/client)
+    numPronosticos: number;
 }
 
 interface Props {
@@ -15,17 +16,6 @@ interface Props {
     subtitle?: string;
 }
 
-function formatDate(iso: string | null): string {
-    if (!iso) return "Sin actividad";
-    const d = new Date(iso);
-    return d.toLocaleString("es-ES", {
-        day: "2-digit",
-        month: "short",
-        hour: "2-digit",
-        minute: "2-digit",
-        timeZone: "Europe/Madrid",
-    });
-}
 
 export default function PreTournamentList({ entries, currentUserId, subtitle }: Props) {
     if (entries.length === 0) {
@@ -70,8 +60,8 @@ export default function PreTournamentList({ entries, currentUserId, subtitle }: 
                                         {isMe && <span className="ml-1.5 text-xs text-gray-500">(tú)</span>}
                                     </p>
                                 </div>
-                                <span className="text-xs text-gray-500 font-mono tabular-nums shrink-0">
-                                    {formatDate(u.ultimoAcceso)}
+                                <span className="text-xs text-gray-500 tabular-nums shrink-0">
+                                    {u.numPronosticos} / 104
                                 </span>
                             </li>
                         );
