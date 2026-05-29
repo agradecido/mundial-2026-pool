@@ -17,6 +17,7 @@ interface Props {
     golesVisitanteReal: number | null;
   };
   pronostico: { golesLocal: number; golesVisitante: number } | null;
+  odds?: { home: number; draw: number; away: number } | null;
 }
 
 function isLocked(fechaPartido: string, estado: EstadoPartido) {
@@ -52,7 +53,7 @@ function CheckIcon() {
   );
 }
 
-export default function PartidoCard({ partido, pronostico }: Props) {
+export default function PartidoCard({ partido, pronostico, odds }: Props) {
   const locked = isLocked(partido.fechaPartido, partido.estado);
   const [local, setLocal] = useState<string>(
     pronostico != null ? String(pronostico.golesLocal) : "0"
@@ -184,6 +185,15 @@ export default function PartidoCard({ partido, pronostico }: Props) {
               <span className="text-xs text-red-400">{error}</span>
             )}
             <span className="text-xs text-gray-600">{formatFecha(partido.fechaPartido)}</span>
+            {odds && (
+              <span className="text-[10px] text-gray-600 font-mono tabular-nums" title="Cuotas medias (1 / X / 2)">
+                <span className="text-gray-500">{odds.home.toFixed(2)}</span>
+                <span className="mx-1 text-gray-700">·</span>
+                <span className="text-gray-500">{odds.draw.toFixed(2)}</span>
+                <span className="mx-1 text-gray-700">·</span>
+                <span className="text-gray-500">{odds.away.toFixed(2)}</span>
+              </span>
+            )}
           </div>
         </div>
       </div>

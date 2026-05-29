@@ -30,11 +30,12 @@ interface Props {
   grupos: Record<string, string[]>;
   initialPicks: BracketPicks;
   locked: boolean;
+  oddsMap?: Record<string, { first: number; draw: number; second: number }>;
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export default function LlavesSelector({ grupos, initialPicks, locked }: Props) {
+export default function LlavesSelector({ grupos, initialPicks, locked, oddsMap }: Props) {
   const [picks, setPicks] = useState<BracketPicks>(initialPicks);
   const [phase, setPhase] = useState<Phase>("grupos");
   const [saved, setSaved] = useState(false);
@@ -207,6 +208,7 @@ export default function LlavesSelector({ grupos, initialPicks, locked }: Props) 
             gruposComplete={isComplete("grupos")}
             tercerosComplete={isComplete("terceros")}
             allGrupos={grupos}
+            oddsMap={oddsMap}
           />
         )}
       </div>
@@ -439,9 +441,10 @@ interface ArbolPanelProps {
   gruposComplete: boolean;
   tercerosComplete: boolean;
   allGrupos: Record<string, string[]>;
+  oddsMap?: Record<string, { first: number; draw: number; second: number }>;
 }
 
-function ArbolPanel({ picks, onPick, locked, gruposComplete, tercerosComplete, allGrupos }: ArbolPanelProps) {
+function ArbolPanel({ picks, onPick, locked, gruposComplete, tercerosComplete, allGrupos, oddsMap }: ArbolPanelProps) {
   const showWarning = !gruposComplete || !tercerosComplete;
   return (
     <div className="space-y-3">
@@ -451,7 +454,7 @@ function ArbolPanel({ picks, onPick, locked, gruposComplete, tercerosComplete, a
           ⚠️ Completa <strong>Grupos</strong> y <strong>Mejores 3°</strong> para que los emparejamientos de 16avos se resuelvan. Los slots sin resolver aparecerán como “Por definir”.
         </div>
       )}
-      <BracketTree picks={picks} onPick={onPick} locked={locked} allGrupos={allGrupos} />
+      <BracketTree picks={picks} onPick={onPick} locked={locked} allGrupos={allGrupos} oddsMap={oddsMap} />
     </div>
   );
 }

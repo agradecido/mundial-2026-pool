@@ -2,16 +2,22 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import LlavesSelector from "@/components/llaves-selector";
 import type { BracketPicks } from "@/lib/bracket";
+import { getMundialOdds, buildPairOddsLookup } from "@/lib/odds-api";
 
 export default async function LlavesPage() {
   const session = await auth();
   const userId = session!.user.id;
 
   // Build groups map from fixtures
-  const partidos = await prisma.partido.findMany({
-    where: { fase: "GRUPOS" },
-    select: { equipoLocal: true, equipoVisitante: true, grupo: true },
-  });
+  const [partidos, oddsEvents] = await Promise.all([
+    prisma.partido.findMany({
+      where: { fase: "GRUPOS" },
+      select: { equipoLocal: true, equipoVisitante: true, grupo: true },
+    }),
+    getMundialOdds(),
+  ]);
+
+  const oddsMap = buildPairOddsLookup(oddsEvents);
 
   const gruposMap: Record<string, Set<string>> = {};
   for (const p of partidos) {
@@ -56,7 +62,7 @@ export default async function LlavesPage() {
         </p>
       </div>
 
-      <LlavesSelector grupos={grupos} initialPicks={picks} locked={locked} />
+      <LlavesSelector grupos={grupos} initialPicks={picks} locked={locked} oddsMap={oddsMap} />
     </div>
   );
 }

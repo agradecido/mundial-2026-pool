@@ -109,6 +109,7 @@ interface MatchCellProps {
     connectorSide?: "top" | "bottom" | "single";
     onPick?: (matchId: string, team: string) => void;
     locked?: boolean;
+    odds?: { first: number; draw: number; second: number } | null;
 }
 
 function MatchCell({
@@ -121,6 +122,7 @@ function MatchCell({
     connectorSide,
     onPick,
     locked,
+    odds,
 }: MatchCellProps) {
     // Connector geometry (inside this cell's slotHeight × column-width box):
     //   - Card is centered at y = slotHeight/2
@@ -154,8 +156,13 @@ function MatchCell({
         >
             <div className="flex flex-col gap-0.5 lg:gap-1 p-1.5 lg:p-2 rounded-lg border border-white/[0.08] bg-white/[0.02] hover:border-white/[0.14] transition-colors">
                 <TeamRow matchId={matchId} team={teamA} isWinner={winner === teamA} onChampionPath={onChampionPath} onPick={onPick} locked={locked} />
-                <div className="flex items-center justify-center py-0.5">
+                <div className="flex items-center justify-center gap-1.5 py-0.5">
                     <span className="text-[8px] lg:text-[9px] font-bold text-gray-700 tracking-wider">VS</span>
+                    {odds && (
+                        <span className="text-[8px] lg:text-[9px] text-gray-500 tabular-nums">
+                            {odds.first.toFixed(2)} · {odds.draw.toFixed(2)} · {odds.second.toFixed(2)}
+                        </span>
+                    )}
                 </div>
                 <TeamRow matchId={matchId} team={teamB} isWinner={winner === teamB} onChampionPath={onChampionPath} onPick={onPick} locked={locked} />
             </div>
@@ -193,11 +200,13 @@ export default function BracketTree({
     onPick,
     locked,
     allGrupos,
+    oddsMap,
 }: {
     picks: BracketPicks;
     onPick?: (matchId: string, team: string) => void;
     locked?: boolean;
     allGrupos?: Record<string, string[]>;
+    oddsMap?: Record<string, { first: number; draw: number; second: number }>;
 }) {
     const grupos = picks.grupos ?? {};
     const terceros = picks.terceros ?? [];
@@ -212,6 +221,11 @@ export default function BracketTree({
             teamB: resolveSlot(slotB, grupos, terceros, resultados, allGrupos),
             winner: resultados[matchId],
         };
+    }
+
+    function oddsFor(a: string | undefined, b: string | undefined) {
+        if (!a || !b || !oddsMap) return null;
+        return oddsMap[`${a}|${b}`] ?? null;
     }
 
     // CSS var --s (set on container) drives slot size responsively; totalHeight follows
@@ -261,6 +275,7 @@ export default function BracketTree({
                                     connectorSide={connectorSide(idx)}
                                     onPick={onPick}
                                     locked={locked}
+                                    odds={oddsFor(teamA, teamB)}
                                 />
                             );
                         })}
@@ -284,6 +299,7 @@ export default function BracketTree({
                                     connectorSide={connectorSide(idx)}
                                     onPick={onPick}
                                     locked={locked}
+                                    odds={oddsFor(teamA, teamB)}
                                 />
                             );
                         })}
@@ -307,6 +323,7 @@ export default function BracketTree({
                                     connectorSide={connectorSide(idx)}
                                     onPick={onPick}
                                     locked={locked}
+                                    odds={oddsFor(teamA, teamB)}
                                 />
                             );
                         })}
@@ -330,6 +347,7 @@ export default function BracketTree({
                                     connectorSide={connectorSide(idx)}
                                     onPick={onPick}
                                     locked={locked}
+                                    odds={oddsFor(teamA, teamB)}
                                 />
                             );
                         })}
@@ -354,6 +372,7 @@ export default function BracketTree({
                                     connectorSide="single"
                                     onPick={onPick}
                                     locked={locked}
+                                    odds={oddsFor(teamA, teamB)}
                                 />
                             );
                         })()}

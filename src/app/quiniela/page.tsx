@@ -2,19 +2,29 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import PartidosTabs from "@/components/partidos-tabs";
 import ResetQuinielaButton from "@/components/reset-quiniela-button";
+import { getMundialOdds, buildOddsMap } from "@/lib/odds-api";
 
 export default async function PartidosPage() {
   const session = await auth();
   const userId = session!.user.id;
 
-  const [partidos, pronosticos] = await Promise.all([
+  const [partidos, pronosticos, oddsEvents] = await Promise.all([
     prisma.partido.findMany({ orderBy: { fechaPartido: "asc" } }),
     prisma.pronostico.findMany({ where: { userId } }),
+    getMundialOdds(),
   ]);
 
   const pronosticoMap = Object.fromEntries(
     pronosticos.map((p) => [p.partidoId, { golesLocal: p.golesLocal, golesVisitante: p.golesVisitante }])
   );
+
+  const oddsByTeams = buildOddsMap(oddsEvents);
+  // Mapa partidoId → cuotas h2h (si están disponibles para ese partido)
+  const oddsMap: Record<string, { home: number; draw: number; away: number }> = {};
+  for (const p of partidos) {
+    const odds = oddsByTeams.get(`${p.equipoLocal}|${p.equipoVisitante}`);
+    if (odds) oddsMap[p.id] = odds;
+  }
 
   const serializedPartidos = partidos.map((p) => ({
     ...p,
@@ -51,7 +61,7 @@ export default async function PartidosPage() {
         </div>
       </div>
 
-      <PartidosTabs partidos={serializedPartidos} pronosticoMap={pronosticoMap} />
+      <PartidosTabs partidos={serializedPartidos} pronosticoMap={pronosticoMap} oddsMap={oddsMap} />
     </div>
   );
 }

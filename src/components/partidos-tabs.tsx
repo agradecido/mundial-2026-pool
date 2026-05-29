@@ -33,6 +33,7 @@ export interface SerializedPartido {
 interface Props {
   partidos: SerializedPartido[];
   pronosticoMap: Record<string, { golesLocal: number; golesVisitante: number }>;
+  oddsMap?: Record<string, { home: number; draw: number; away: number }>;
 }
 
 function getDayKey(iso: string): string {
@@ -57,7 +58,7 @@ function formatDayHeader(iso: string): string {
   });
 }
 
-export default function PartidosTabs({ partidos, pronosticoMap }: Props) {
+export default function PartidosTabs({ partidos, pronosticoMap, oddsMap }: Props) {
   const [tab, setTab] = useState<"grupos" | "fecha">("fecha");
 
   // ── Grupos view ──────────────────────────────────────────────
@@ -95,8 +96,8 @@ export default function PartidosTabs({ partidos, pronosticoMap }: Props) {
             key={t}
             onClick={() => setTab(t)}
             className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${tab === t
-                ? "bg-[#00e87a]/15 text-[#00e87a] border border-[#00e87a]/20"
-                : "text-gray-500 hover:text-gray-300"
+              ? "bg-[#00e87a]/15 text-[#00e87a] border border-[#00e87a]/20"
+              : "text-gray-500 hover:text-gray-300"
               }`}
           >
             {t === "grupos" ? "Por grupos" : "Por fecha"}
@@ -122,7 +123,7 @@ export default function PartidosTabs({ partidos, pronosticoMap }: Props) {
                   </div>
                   <div className="space-y-1.5">
                     {porGrupo[letra].map((p) => (
-                       <PartidoCard key={`${p.id}-${pronosticoMap[p.id] ? 1 : 0}`} partido={p} pronostico={pronosticoMap[p.id] ?? null} />
+                      <PartidoCard key={`${p.id}-${pronosticoMap[p.id] ? 1 : 0}`} partido={p} pronostico={pronosticoMap[p.id] ?? null} odds={oddsMap?.[p.id] ?? null} />
                     ))}
                   </div>
                 </div>
@@ -141,7 +142,7 @@ export default function PartidosTabs({ partidos, pronosticoMap }: Props) {
                 )}
                 <div className="space-y-1.5">
                   {porFase[fase].map((p) => (
-                    <PartidoCard key={`${p.id}-${pronosticoMap[p.id] ? 1 : 0}`} partido={p} pronostico={pronosticoMap[p.id] ?? null} />
+                    <PartidoCard key={`${p.id}-${pronosticoMap[p.id] ? 1 : 0}`} partido={p} pronostico={pronosticoMap[p.id] ?? null} odds={oddsMap?.[p.id] ?? null} />
                   ))}
                 </div>
               </div>
@@ -163,7 +164,7 @@ export default function PartidosTabs({ partidos, pronosticoMap }: Props) {
                 <div className="glass-card p-4">
                   <div className="space-y-1.5">
                     {dayPartidos.map((p) => (
-                      <PartidoCard key={`${p.id}-${pronosticoMap[p.id] ? 1 : 0}`} partido={p} pronostico={pronosticoMap[p.id] ?? null} />
+                      <PartidoCard key={`${p.id}-${pronosticoMap[p.id] ? 1 : 0}`} partido={p} pronostico={pronosticoMap[p.id] ?? null} odds={oddsMap?.[p.id] ?? null} />
                     ))}
                   </div>
                 </div>
