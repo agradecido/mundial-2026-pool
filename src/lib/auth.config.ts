@@ -8,6 +8,7 @@ export const authConfig: NextAuthConfig = {
       clientSecret: process.env.AUTH_GOOGLE_SECRET,
     }),
   ],
+  trustHost: true,
   pages: {
     signIn: "/login",
   },
