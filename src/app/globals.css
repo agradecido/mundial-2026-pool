@@ -15,6 +15,15 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* ── Global cursor ───────────────────────────────── */
+button,
+a,
+[role="button"],
+label[for],
+select {
+  cursor: pointer;
+}
+
 /* ── Base dark layer ─────────────────────────────── */
 html {
   background-color: #070711;
