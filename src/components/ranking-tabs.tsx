@@ -89,7 +89,7 @@ export default function RankingTabs({
                         <PreTournamentList
                             entries={preTournamentEntries}
                             currentUserId={currentUserId}
-                            subtitle="El ranking se mostrará cuando empiece el Mundial. Mientras tanto, participantes ordenados por última actividad."
+                            subtitle="El ranking se mostrará cuando empiece el Mundial. Mientras tanto, participantes ordenados actividad."
                         />
                     )}
                 </div>
@@ -105,7 +105,7 @@ export default function RankingTabs({
                         <PreTournamentList
                             entries={preTournamentEntries}
                             currentUserId={currentUserId}
-                            subtitle="El ranking se mostrará cuando empiece el Mundial. Mientras tanto, participantes ordenados por última actividad."
+                            subtitle="El ranking se mostrará cuando empiece el Mundial. Mientras tanto, participantes ordenados actividad."
                         />
                     ) : porraEntries.length === 0 ? (
                         <div className="glass-card p-16 text-center space-y-4">
