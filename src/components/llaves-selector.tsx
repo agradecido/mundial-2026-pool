@@ -21,9 +21,9 @@ const PHASES: Array<{ id: Phase; label: string; hint: string }> = [
 ];
 
 const PHASE_LABEL: Record<Phase, string> = {
-  grupos: "",
+  grupos: "Selecciona los dos primeros clasificados de cada grupo",
   terceros: "Selecciona los 8 mejores terceros que crees que clasificarán",
-  arbol: "Haz click en un equipo para marcarlo como ganador. Click de nuevo para deshacer.",
+  arbol: "Haz click en un equipo para marcarlo como ganador. Click de nuevo para deshacer. Y cuando termines no te olvides de guardar tu porra :)",
 };
 
 interface Props {
@@ -310,53 +310,58 @@ interface GruposProps {
 
 function GruposPanel({ grupos, gruposLetters, picks, onToggle, locked }: GruposProps) {
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      {gruposLetters.map(letra => {
-        const teams = grupos[letra] ?? [];
-        const selected = picks[letra] ?? [];
-        return (
-          <div key={letra} className="glass-card p-3">
-            <div className="flex items-center gap-2 mb-2.5">
-              <span className="flex h-5 w-5 items-center justify-center rounded-md bg-[#00e87a]/10 text-[10px] font-bold text-[#00e87a]">
-                {letra}
-              </span>
-              <span className="text-xs font-semibold text-gray-400">Grupo {letra}</span>
-              <span className="ml-auto text-[10px] text-gray-700 tabular-nums">
-                {selected.length}/2
-              </span>
+    <div className="space-y-4">
+      <p className="text-sm text-gray-500">
+        Selecciona los dos primeros de cada grupo. Si aciertas el orden, ganarás un punto extra.
+      </p>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {gruposLetters.map(letra => {
+          const teams = grupos[letra] ?? [];
+          const selected = picks[letra] ?? [];
+          return (
+            <div key={letra} className="glass-card p-3">
+              <div className="flex items-center gap-2 mb-2.5">
+                <span className="flex h-5 w-5 items-center justify-center rounded-md bg-[#00e87a]/10 text-[10px] font-bold text-[#00e87a]">
+                  {letra}
+                </span>
+                <span className="text-xs font-semibold text-gray-400">Grupo {letra}</span>
+                <span className="ml-auto text-[10px] text-gray-700 tabular-nums">
+                  {selected.length}/2
+                </span>
+              </div>
+              <div className="space-y-1">
+                {teams.map(team => {
+                  const idx = selected.indexOf(team);
+                  const on = idx !== -1;
+                  const off = !on && selected.length >= 2;
+                  const orderLabel = idx === 0 ? "1°" : idx === 1 ? "2°" : null;
+                  return (
+                    <button
+                      key={team}
+                      onClick={() => onToggle(letra, team)}
+                      disabled={locked || off}
+                      className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs transition-all ${on
+                        ? "bg-[#00e87a]/15 border border-[#00e87a]/25 text-white"
+                        : off
+                          ? "opacity-25 cursor-not-allowed text-gray-600"
+                          : "border border-white/[0.06] text-gray-400 hover:border-white/15 hover:text-gray-200"
+                        }`}
+                    >
+                      <span className="text-sm">{getFlag(team)}</span>
+                      <span className="truncate flex-1 text-left">{team}</span>
+                      {orderLabel && (
+                        <span className="text-[10px] text-[#00e87a] font-bold tabular-nums shrink-0">
+                          {orderLabel}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-            <div className="space-y-1">
-              {teams.map(team => {
-                const idx = selected.indexOf(team);
-                const on = idx !== -1;
-                const off = !on && selected.length >= 2;
-                const orderLabel = idx === 0 ? "1°" : idx === 1 ? "2°" : null;
-                return (
-                  <button
-                    key={team}
-                    onClick={() => onToggle(letra, team)}
-                    disabled={locked || off}
-                    className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs transition-all ${on
-                      ? "bg-[#00e87a]/15 border border-[#00e87a]/25 text-white"
-                      : off
-                        ? "opacity-25 cursor-not-allowed text-gray-600"
-                        : "border border-white/[0.06] text-gray-400 hover:border-white/15 hover:text-gray-200"
-                      }`}
-                  >
-                    <span className="text-sm">{getFlag(team)}</span>
-                    <span className="truncate flex-1 text-left">{team}</span>
-                    {orderLabel && (
-                      <span className="text-[10px] text-[#00e87a] font-bold tabular-nums shrink-0">
-                        {orderLabel}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -397,10 +402,10 @@ function TercerosPanel({ available, selected, onToggle, locked }: TercerosProps)
               onClick={() => onToggle(team)}
               disabled={locked || off}
               className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all ${on
-                  ? "bg-[#00e87a]/15 border border-[#00e87a]/25 text-white"
-                  : off
-                    ? "opacity-20 cursor-not-allowed border border-white/[0.04] text-gray-700"
-                    : "border border-white/[0.07] text-gray-400 hover:border-white/20 hover:text-white bg-white/[0.02]"
+                ? "bg-[#00e87a]/15 border border-[#00e87a]/25 text-white"
+                : off
+                  ? "opacity-20 cursor-not-allowed border border-white/[0.04] text-gray-700"
+                  : "border border-white/[0.07] text-gray-400 hover:border-white/20 hover:text-white bg-white/[0.02]"
                 }`}
             >
               <span className="text-lg shrink-0">{getFlag(team)}</span>

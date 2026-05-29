@@ -29,7 +29,7 @@ export default async function Home() {
           href="/porra"
           className="rounded-xl border border-white/10 bg-white/5 px-6 py-2.5 text-sm font-medium text-gray-300 hover:border-white/20 hover:text-white transition-colors"
         >
-          Clasificación
+          Jugadores
         </Link>
       </div>
     </div>

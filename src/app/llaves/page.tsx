@@ -50,21 +50,6 @@ export default async function LlavesPage() {
             timeZone: "Europe/Madrid",
           })}
         </p>
-        <h2 className="mt-6 text-lg font-semibold text-white">Sistema de puntuación</h2>
-        <div className="mt-3 flex flex-wrap gap-4 text-xs text-white">
-          {[
-            ["Dieciseisavos", "1 pt"],
-            ["Octavos", "2 pts"],
-            ["Cuartos", "5 pts"],
-            ["Semifinal", "7 pts"],
-            ["Final", "10 pts"],
-            ["Campeón", "10 pts"],
-          ].map(([label, pts]) => (
-            <span key={label}>
-              {label} <span className="text-gray-500">{pts}</span>
-            </span>
-          ))}
-        </div>
       </div>
 
       <LlavesSelector grupos={grupos} initialPicks={picks} locked={locked} />
