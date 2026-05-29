@@ -7,13 +7,13 @@ import type { UserDetail } from "@/app/ranking/actions";
 import type { Fase } from "@prisma/client";
 
 const FASE_LABEL: Record<Fase, string> = {
-  GRUPOS:        "Fase de Grupos",
+  GRUPOS: "Fase de Grupos",
   DIECISEISAVOS: "Dieciseisavos",
-  OCTAVOS:       "Octavos de Final",
-  CUARTOS:       "Cuartos de Final",
-  SEMIFINAL:     "Semifinales",
+  OCTAVOS: "Octavos de Final",
+  CUARTOS: "Cuartos de Final",
+  SEMIFINAL: "Semifinales",
   TERCER_PUESTO: "Tercer Puesto",
-  FINAL:         "Final",
+  FINAL: "Final",
 };
 
 function ptsBadge(pts: number) {
@@ -46,10 +46,10 @@ export default function UserDetailModal({ detail, position, onClose }: Props) {
   }, [onClose]);
 
   // Stats
-  const exactos     = detail.pronosticos.filter((p) => p.puntosGanados === 5 || p.puntosGanados === 10).length;
-  const tendencias  = detail.pronosticos.filter((p) => p.puntosGanados === 3 || p.puntosGanados === 6).length;
+  const exactos = detail.pronosticos.filter((p) => p.puntosGanados === 5 || p.puntosGanados === 10).length;
+  const tendencias = detail.pronosticos.filter((p) => p.puntosGanados === 3 || p.puntosGanados === 6).length;
   const consolacion = detail.pronosticos.filter((p) => p.puntosGanados === 1 || p.puntosGanados === 2).length;
-  const fallos      = detail.pronosticos.filter((p) => p.puntosGanados === 0).length;
+  const fallos = detail.pronosticos.filter((p) => p.puntosGanados === 0).length;
   const ptsPartidos = detail.pronosticos.reduce((s, p) => s + p.puntosGanados, 0);
   const pf = detail.prediccionFutura;
   const ptsEspeciales = pf ? pf.puntosCampeon + pf.puntosSubcampeon : 0;
@@ -105,10 +105,10 @@ export default function UserDetailModal({ detail, position, onClose }: Props) {
         {/* ── Stats bar ── */}
         <div className="grid grid-cols-4 gap-px bg-white/[0.05] border-b border-white/[0.06] shrink-0">
           {[
-            { label: "Exactos",   value: exactos,     pts: ptsPartidos - tendencias * 3 - consolacion, icon: "⭐", cls: "text-yellow-400" },
-            { label: "Tendencia", value: tendencias,  icon: "✓",  cls: "text-[#00e87a]" },
-            { label: "Consolac.", value: consolacion, icon: "·",  cls: "text-gray-400" },
-            { label: "Fallos",    value: fallos,      icon: "✗",  cls: "text-red-400/70" },
+            { label: "Exactos", value: exactos, pts: ptsPartidos - tendencias * 3 - consolacion, icon: "⭐", cls: "text-yellow-400" },
+            { label: "Tendencia", value: tendencias, icon: "✓", cls: "text-[#00e87a]" },
+            { label: "Consolac.", value: consolacion, icon: "·", cls: "text-gray-400" },
+            { label: "Fallos", value: fallos, icon: "✗", cls: "text-red-400/70" },
           ].map(({ label, value, icon, cls }) => (
             <div key={label} className="bg-[#0c0c18] px-3 py-3 text-center">
               <p className={`text-xl font-bold tabular-nums ${cls}`}>{value}</p>
@@ -131,7 +131,7 @@ export default function UserDetailModal({ detail, position, onClose }: Props) {
               </div>
               <div className="space-y-2">
                 {[
-                  { label: "Campeón",    valor: pf.campeonPronostico,    pts: pf.puntosCampeon,    max: 20 },
+                  { label: "Campeón", valor: pf.campeonPronostico, pts: pf.puntosCampeon, max: 20 },
                   { label: "Subcampeón", valor: pf.subcampeonPronostico, pts: pf.puntosSubcampeon, max: 15 },
                 ].map(({ label, valor, pts, max }) => (
                   <div key={label} className="flex items-center gap-3 text-sm">
