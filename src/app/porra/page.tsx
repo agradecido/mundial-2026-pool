@@ -26,11 +26,12 @@ export default async function LlavesPage() {
       .map(([k, v]) => [k, [...v].sort()])
   );
 
-  // Lock at first match kickoff
+  // Lock 15 minutes before first match
   const first = await prisma.partido.findFirst({ orderBy: { fechaPartido: "asc" } });
   const now = new Date();
-  const locked = !!first && now >= first.fechaPartido;
-  const lockDate = first?.fechaPartido ?? new Date("2026-06-11");
+  const limite = first ? new Date(first.fechaPartido.getTime() - 15 * 60 * 1000) : null;
+  const locked = !!limite && now >= limite;
+  const lockDate = limite ?? new Date("2026-06-11");
 
   // Existing bracket picks
   const bracket = await prisma.pronosticoBracket.findUnique({ where: { userId } });
@@ -49,6 +50,9 @@ export default async function LlavesPage() {
             minute: "2-digit",
             timeZone: "Europe/Madrid",
           })}
+        </p>
+        <p className="mt-0.5 text-xs text-gray-600">
+          Puedes modificar tu porra hasta 15 minutos antes del inicio del mundial
         </p>
       </div>
 

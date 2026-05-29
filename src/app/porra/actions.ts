@@ -19,9 +19,10 @@ export async function guardarBracket(picks: BracketPicks) {
   const session = await auth();
   if (!session?.user) return { error: "No autenticado" };
 
-  // Lock at first match kickoff
+  // Lock 15 minutes before first match
   const first = await prisma.partido.findFirst({ orderBy: { fechaPartido: "asc" } });
-  if (first && Date.now() >= first.fechaPartido.getTime()) {
+  const limite = first ? new Date(first.fechaPartido.getTime() - 15 * 60 * 1000) : null;
+  if (limite && Date.now() >= limite.getTime()) {
     return { error: "La porra está cerrada — el torneo ya ha comenzado" };
   }
 

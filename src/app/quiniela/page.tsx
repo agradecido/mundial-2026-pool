@@ -29,7 +29,12 @@ export default async function PartidosPage() {
       <div className="flex items-end justify-between">
         <div>
           <h1 className="text-3xl font-bold text-white tracking-tight">Quiniela</h1>
-          <p className="mt-1 text-sm text-gray-500">Pronostica el marcador de cada partido</p>
+          <p className="mt-1 text-sm text-gray-500">
+            Pronostica el marcador de cada partido
+          </p>
+          <p className="mt-0.5 text-xs text-gray-600">
+            Puedes modificar tu pronóstico hasta 15 minutos antes del inicio de cada partido
+          </p>
         </div>
         <div className="text-right">
           <p className="text-xs text-gray-600 mb-1">{totalPronosticos} / 104 pronósticos</p>
