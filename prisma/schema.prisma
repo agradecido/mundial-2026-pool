@@ -53,6 +53,7 @@ model User {
   image            String?
   role             Role      @default(JUGADOR)
   fechaRegistro    DateTime  @default(now())
+  welcomeModalViews Int      @default(0)
 
   accounts         Account[]
   sessions         Session[]

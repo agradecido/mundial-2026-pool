@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { getWelcomeModalViews, incrementWelcomeModalViews } from "@/app/actions/welcome-modal";
 
 const MAX_VIEWS = 2;
-const STORAGE_KEY = "welcome-modal-views";
 
 export default function WelcomeModal() {
     const [isOpen, setIsOpen] = useState(false);
@@ -12,19 +12,21 @@ export default function WelcomeModal() {
 
     useEffect(() => {
         // Check if we should show the modal
-        const viewsStr = localStorage.getItem(STORAGE_KEY);
-        const views = viewsStr ? parseInt(viewsStr, 10) : 0;
+        async function checkModalViews() {
+            const views = await getWelcomeModalViews();
 
-        if (views < MAX_VIEWS) {
-            // Show modal after a brief delay for better UX
-            const timer = setTimeout(() => {
-                setIsOpen(true);
+            if (views !== null && views < MAX_VIEWS) {
+                // Show modal after a brief delay for better UX
+                setTimeout(() => {
+                    setIsOpen(true);
+                }, 500);
+
                 // Increment view count
-                localStorage.setItem(STORAGE_KEY, String(views + 1));
-            }, 500);
-
-            return () => clearTimeout(timer);
+                await incrementWelcomeModalViews();
+            }
         }
+
+        checkModalViews();
     }, []);
 
     const handleClose = () => {

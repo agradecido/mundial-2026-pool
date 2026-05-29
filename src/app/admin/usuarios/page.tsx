@@ -9,7 +9,14 @@ export default async function AdminUsuariosPage() {
 
     const usuarios = await prisma.user.findMany({
         orderBy: { fechaRegistro: "asc" },
-        include: {
+        select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+            role: true,
+            fechaRegistro: true,
+            welcomeModalViews: true,
             _count: { select: { pronosticos: true } },
             pronosticos: { select: { puntosGanados: true } },
             prediccionFutura: {
@@ -25,6 +32,7 @@ export default async function AdminUsuariosPage() {
         image: u.image,
         role: u.role,
         fechaRegistro: u.fechaRegistro.toISOString(),
+        welcomeModalViews: u.welcomeModalViews,
         _count: u._count,
         totalPuntos:
             u.pronosticos.reduce((s, p) => s + p.puntosGanados, 0) +

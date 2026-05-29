@@ -51,3 +51,15 @@ export async function eliminarUsuario(userId: string) {
     revalidatePath("/ranking");
     return { ok: true };
 }
+
+export async function resetearModalBienvenida(userId: string) {
+    await requireAdmin();
+
+    await prisma.user.update({
+        where: { id: userId },
+        data: { welcomeModalViews: 0 },
+    });
+
+    revalidatePath("/admin/usuarios");
+    return { ok: true };
+}
