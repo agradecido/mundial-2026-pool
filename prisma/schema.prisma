@@ -4,6 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("PORRA_POSTGRES_URL_NON_POOLING")
 }
 
 // --- NextAuth.js required tables ---
