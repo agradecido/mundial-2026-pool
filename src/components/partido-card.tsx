@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useEffect, useRef } from "react";
+import { useState, useTransition, useRef } from "react";
 import { guardarPronostico } from "@/app/quiniela/actions";
 import { getFlag } from "@/lib/flags";
 import type { EstadoPartido, Fase } from "@prisma/client";
@@ -46,39 +46,18 @@ export default function PartidoCard({ partido, pronostico }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  const isInitialMount = useRef(true);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // ── Autoguardado con debounce ─────────────────────
-  useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      return;
+  // ── Núcleo de guardado ────────────────────────────
+  function doSave(localVal: string, visitanteVal: string) {
+    if (locked || localVal === "" || visitanteVal === "") return;
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
     }
-    if (locked || local === "" || visitante === "") return;
-
-    const timer = setTimeout(() => {
-      setError(null);
-      startTransition(async () => {
-        const res = await guardarPronostico(partido.id, Number(local), Number(visitante));
-        if (res.error) {
-          setError(res.error);
-        } else {
-          setSaved(true);
-          setTimeout(() => setSaved(false), 2000);
-        }
-      });
-    }, 800);
-
-    return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [local, visitante]);
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (local === "" || visitante === "") return;
     setError(null);
     startTransition(async () => {
-      const res = await guardarPronostico(partido.id, Number(local), Number(visitante));
+      const res = await guardarPronostico(partido.id, Number(localVal), Number(visitanteVal));
       if (res.error) {
         setError(res.error);
       } else {
@@ -86,6 +65,18 @@ export default function PartidoCard({ partido, pronostico }: Props) {
         setTimeout(() => setSaved(false), 2000);
       }
     });
+  }
+
+  // Debounce corto para cambios rápidos de teclado
+  function scheduleAutoSave(localVal: string, visitanteVal: string) {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    if (locked || localVal === "" || visitanteVal === "") return;
+    timerRef.current = setTimeout(() => doSave(localVal, visitanteVal), 300);
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    doSave(local, visitante);
   }
 
   const flagLocal = getFlag(partido.equipoLocal);
@@ -131,7 +122,14 @@ export default function PartidoCard({ partido, pronostico }: Props) {
                 min={0}
                 max={20}
                 value={local}
-                onChange={(e) => { setLocal(e.target.value); setError(null); setSaved(false); }}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setLocal(v);
+                  setError(null);
+                  setSaved(false);
+                  scheduleAutoSave(v, visitante);
+                }}
+                onBlur={(e) => doSave(e.target.value, visitante)}
                 className="score-input"
               />
               <span className="text-[#00e87a] font-bold text-lg">:</span>
@@ -140,7 +138,14 @@ export default function PartidoCard({ partido, pronostico }: Props) {
                 min={0}
                 max={20}
                 value={visitante}
-                onChange={(e) => { setVisitante(e.target.value); setError(null); setSaved(false); }}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setVisitante(v);
+                  setError(null);
+                  setSaved(false);
+                  scheduleAutoSave(local, v);
+                }}
+                onBlur={(e) => doSave(local, e.target.value)}
                 className="score-input"
               />
               <button

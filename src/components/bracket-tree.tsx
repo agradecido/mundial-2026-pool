@@ -149,13 +149,13 @@ function MatchCell({
     return (
         <div
             data-match={matchId}
-            className="relative flex flex-col justify-center pr-6 lg:pr-8"
+            className="relative flex flex-col justify-center pr-6 lg:pr-8 py-1"
             style={{ height: `calc(var(--s) * ${slotHeight / BASE_SLOT})` }}
         >
             <div className="flex flex-col gap-0.5 lg:gap-1 p-1.5 lg:p-2 rounded-lg border border-white/[0.08] bg-white/[0.02] hover:border-white/[0.14] transition-colors">
                 <TeamRow matchId={matchId} team={teamA} isWinner={winner === teamA} onChampionPath={onChampionPath} onPick={onPick} locked={locked} />
                 <div className="flex items-center justify-center py-0.5">
-                  <span className="text-[8px] lg:text-[9px] font-bold text-gray-700 tracking-wider">VS</span>
+                    <span className="text-[8px] lg:text-[9px] font-bold text-gray-700 tracking-wider">VS</span>
                 </div>
                 <TeamRow matchId={matchId} team={teamB} isWinner={winner === teamB} onChampionPath={onChampionPath} onPick={onPick} locked={locked} />
             </div>
@@ -239,7 +239,7 @@ export default function BracketTree({
     const champion = resultados["FINAL"];
 
     return (
-        <div className="overflow-x-auto scrollbar-none -mx-5 px-5 [--s:72px] lg:[--s:90px]">
+        <div className="overflow-x-auto scrollbar-none -mx-5 px-5 [--s:96px] lg:[--s:112px]">
             <div
                 className="flex gap-0 items-stretch"
                 style={{ minWidth: 1150, height: totalHeight }}
