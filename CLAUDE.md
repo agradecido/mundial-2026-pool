@@ -21,7 +21,7 @@ El torneo cuenta con **48 selecciones y 104 partidos**, incluyendo la nueva rond
 * `src/app/`: Rutas de la aplicación, páginas y Server Actions.
   * `/porra`: Editor y ranking del bracket completo (llaves)
   * `/quiniela`: Editor y ranking de pronósticos partido a partido
-  * `/ranking`: Vista general que redirige al ranking de Quiniela
+  * `/ranking`: Vista unificada con tabs para ambos rankings
 * `src/lib/scoring.ts`: **ARCHIVO CRÍTICO.** Lógica de cálculo de puntos para la Quiniela (partido a partido).
 * `src/lib/bracket-scoring.ts`: **ARCHIVO CRÍTICO.** Lógica de cálculo de puntos para la Porra (bracket).
 * `prisma/schema.prisma`: Definición del esquema de datos.
@@ -67,7 +67,6 @@ Sistema donde el usuario predice **el marcador exacto** de cada uno de los 104 p
 **Predicciones especiales** (cierran día 1, suman en el ranking de Quiniela):
 - Campeón: 20 pts
 - Subcampeón: 15 pts
-- Bota de Oro: 15 pts
 
 **Modelos Prisma:** `Pronostico` (partido a partido) + `PrediccionFutura` (especiales)
 

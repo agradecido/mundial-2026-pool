@@ -13,7 +13,7 @@ export default async function AdminUsuariosPage() {
             _count: { select: { pronosticos: true } },
             pronosticos: { select: { puntosGanados: true } },
             prediccionFutura: {
-                select: { puntosCampeon: true, puntosSubcampeon: true, puntosBota: true },
+                select: { puntosCampeon: true, puntosSubcampeon: true },
             },
         },
     });
@@ -30,8 +30,7 @@ export default async function AdminUsuariosPage() {
             u.pronosticos.reduce((s, p) => s + p.puntosGanados, 0) +
             (u.prediccionFutura
                 ? u.prediccionFutura.puntosCampeon +
-                u.prediccionFutura.puntosSubcampeon +
-                u.prediccionFutura.puntosBota
+                u.prediccionFutura.puntosSubcampeon
                 : 0),
     }));
 

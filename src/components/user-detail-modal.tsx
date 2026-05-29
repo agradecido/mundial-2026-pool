@@ -52,7 +52,7 @@ export default function UserDetailModal({ detail, position, onClose }: Props) {
   const fallos      = detail.pronosticos.filter((p) => p.puntosGanados === 0).length;
   const ptsPartidos = detail.pronosticos.reduce((s, p) => s + p.puntosGanados, 0);
   const pf = detail.prediccionFutura;
-  const ptsEspeciales = pf ? pf.puntosCampeon + pf.puntosSubcampeon + pf.puntosBota : 0;
+  const ptsEspeciales = pf ? pf.puntosCampeon + pf.puntosSubcampeon : 0;
 
   // Group by fase
   const byFase = detail.pronosticos.reduce<Record<string, typeof detail.pronosticos>>((acc, p) => {
@@ -133,7 +133,6 @@ export default function UserDetailModal({ detail, position, onClose }: Props) {
                 {[
                   { label: "Campeón",    valor: pf.campeonPronostico,    pts: pf.puntosCampeon,    max: 20 },
                   { label: "Subcampeón", valor: pf.subcampeonPronostico, pts: pf.puntosSubcampeon, max: 15 },
-                  { label: "Bota de Oro",valor: pf.botaOroPronostico,    pts: pf.puntosBota,       max: 15 },
                 ].map(({ label, valor, pts, max }) => (
                   <div key={label} className="flex items-center gap-3 text-sm">
                     <span className="text-gray-600 w-24 shrink-0">{label}</span>

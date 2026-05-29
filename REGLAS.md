@@ -58,11 +58,10 @@ Si clavas el marcador exacto, **no sumas además** los puntos por tendencia ni p
 
 ## Las apuestas gordas
 
-Antes de que arranque el torneo, eliges tres cosas que valen muchísimos puntos:
+Antes de que arranque el torneo, eliges dos cosas que valen muchísimos puntos:
 
 - **Campeón** → 20 puntos
 - **Subcampeón** → 15 puntos
-- **Bota de Oro** (máximo goleador) → 15 puntos
 
 Se bloquean el **Día 1 del torneo**. Piénsalas bien, porque después no las podrás cambiar.
 
@@ -91,7 +90,7 @@ Si dos personas terminan con los mismos puntos, gana quien tenga:
 - Marcador exacto = el mejor premio.
 - Desde **dieciseisavos, todos los puntos x2** (incluido el 3.º y 4.º puesto).
 - Pronósticos cerrados **15 minutos antes** del partido.
-- Campeón, subcampeón y bota de oro se eligen **antes del Mundial**.
+- Campeón y subcampeón se eligen **antes del Mundial**.
 - Empate en el ranking → manda quien tenga más marcadores exactos.
 
 ---

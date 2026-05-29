@@ -22,7 +22,6 @@ export async function getUserDetail(userId: string) {
           botaOroPronostico: true,
           puntosCampeon: true,
           puntosSubcampeon: true,
-          puntosBota: true,
         },
       },
       pronosticos: {

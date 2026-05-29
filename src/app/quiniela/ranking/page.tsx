@@ -16,7 +16,7 @@ export default async function QuinielaRankingPage() {
                 select: { puntosGanados: true },
             },
             prediccionFutura: {
-                select: { puntosCampeon: true, puntosSubcampeon: true, puntosBota: true },
+                select: { puntosCampeon: true, puntosSubcampeon: true },
             },
         },
     });
@@ -26,7 +26,7 @@ export default async function QuinielaRankingPage() {
             const puntosPartidos = u.pronosticos.reduce((s, p) => s + p.puntosGanados, 0);
             const pf = u.prediccionFutura;
             const puntosEspeciales = pf
-                ? pf.puntosCampeon + pf.puntosSubcampeon + pf.puntosBota
+                ? pf.puntosCampeon + pf.puntosSubcampeon
                 : 0;
             const total = puntosPartidos + puntosEspeciales;
             const exactos = u.pronosticos.filter(
