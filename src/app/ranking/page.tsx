@@ -109,7 +109,13 @@ export default async function RankingPage({
   const tournamentStarted =
     !!firstPartido && firstPartido.fechaPartido.getTime() <= Date.now();
 
-  const preTournamentEntries: PreTournamentEntry[] = [...users]
+  const withBracketDone = users.map((u) => {
+    const picks = (u.bracketPicks?.picks ?? {}) as BracketPicks;
+    const done = bracketCompletion(picks, gruposLetters).done;
+    return { ...u, bracketDone: done };
+  });
+
+  const preTournamentQuinielaEntries: PreTournamentEntry[] = [...withBracketDone]
     .sort((a, b) => {
       if (b.pronosticos.length !== a.pronosticos.length)
         return b.pronosticos.length - a.pronosticos.length;
@@ -123,6 +129,24 @@ export default async function RankingPage({
       image: u.image,
       ultimoAcceso: u.ultimoAcceso ? u.ultimoAcceso.toISOString() : null,
       numPronosticos: u.pronosticos.length,
+      bracketDone: u.bracketDone,
+    }));
+
+  const preTournamentPorraEntries: PreTournamentEntry[] = [...withBracketDone]
+    .sort((a, b) => {
+      if (b.bracketDone !== a.bracketDone)
+        return b.bracketDone - a.bracketDone;
+      const ta = a.ultimoAcceso?.getTime() ?? 0;
+      const tb = b.ultimoAcceso?.getTime() ?? 0;
+      return tb - ta;
+    })
+    .map((u) => ({
+      id: u.id,
+      name: u.name,
+      image: u.image,
+      ultimoAcceso: u.ultimoAcceso ? u.ultimoAcceso.toISOString() : null,
+      numPronosticos: u.pronosticos.length,
+      bracketDone: u.bracketDone,
     }));
 
   return (
@@ -140,7 +164,8 @@ export default async function RankingPage({
         porraEntries={porraEntries}
         currentUserId={currentUserId}
         tournamentStarted={tournamentStarted}
-        preTournamentEntries={preTournamentEntries}
+        preTournamentQuinielaEntries={preTournamentQuinielaEntries}
+        preTournamentPorraEntries={preTournamentPorraEntries}
       />
     </div>
   );

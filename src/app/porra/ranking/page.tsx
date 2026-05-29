@@ -109,7 +109,7 @@ export default async function PorraRankingPage() {
         <PreTournamentList
           entries={preTournamentEntries}
           currentUserId={currentUserId}
-          subtitle="El ranking se mostrará cuando empiece el Mundial. Mientras tanto, participantes ordenados por actividad."
+          subtitle="El ranking y las votaciones de cada jugador se mostrarán 16 minutos antes de que empiece el Mundial. Mientras tanto, participantes ordenados por actividad."
         />
       ) : entries.length === 0 ? (
         <div className="glass-card p-16 text-center space-y-4">

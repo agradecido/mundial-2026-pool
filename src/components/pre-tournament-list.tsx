@@ -8,16 +8,18 @@ export interface PreTournamentEntry {
     image: string | null;
     ultimoAcceso: string | null; // ISO string (serializable across server/client)
     numPronosticos: number;
+    bracketDone: number;
 }
 
 interface Props {
     entries: PreTournamentEntry[];
     currentUserId: string;
+    mode: "quiniela" | "porra";
     subtitle?: string;
 }
 
 
-export default function PreTournamentList({ entries, currentUserId, subtitle }: Props) {
+export default function PreTournamentList({ entries, currentUserId, mode, subtitle }: Props) {
     if (entries.length === 0) {
         return (
             <div className="glass-card p-16 text-center text-gray-600">
@@ -61,7 +63,9 @@ export default function PreTournamentList({ entries, currentUserId, subtitle }: 
                                     </p>
                                 </div>
                                 <span className="text-xs text-gray-500 tabular-nums shrink-0">
-                                    {u.numPronosticos} / 104
+                                    {mode === "porra"
+                                        ? `${u.bracketDone} / 7`
+                                        : `${u.numPronosticos} / 104`}
                                 </span>
                             </li>
                         );

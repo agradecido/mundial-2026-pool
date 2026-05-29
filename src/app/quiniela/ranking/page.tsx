@@ -86,7 +86,7 @@ export default async function QuinielaRankingPage() {
                 <PreTournamentList
                     entries={preTournamentEntries}
                     currentUserId={currentUserId}
-                    subtitle="El ranking se mostrará cuando empiece el Mundial. Mientras tanto, participantes ordenados por última actividad."
+                    subtitle="El ranking y las votaciones de cada jugador se mostrarán 16 minutos antes de que empiece el Mundial. Mientras tanto, participantes ordenados por última actividad."
                 />
             ) : (
                 <RankingView ranking={ranking} currentUserId={currentUserId} />

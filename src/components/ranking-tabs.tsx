@@ -22,7 +22,8 @@ interface Props {
     porraEntries: RankedPorraEntry[];
     currentUserId: string;
     tournamentStarted: boolean;
-    preTournamentEntries: PreTournamentEntry[];
+    preTournamentQuinielaEntries: PreTournamentEntry[];
+    preTournamentPorraEntries: PreTournamentEntry[];
 }
 
 export default function RankingTabs({
@@ -31,7 +32,8 @@ export default function RankingTabs({
     porraEntries,
     currentUserId,
     tournamentStarted,
-    preTournamentEntries,
+    preTournamentQuinielaEntries,
+    preTournamentPorraEntries,
 }: Props) {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -87,9 +89,10 @@ export default function RankingTabs({
                         <RankingView ranking={quinielaRanking} currentUserId={currentUserId} />
                     ) : (
                         <PreTournamentList
-                            entries={preTournamentEntries}
+                            entries={preTournamentQuinielaEntries}
                             currentUserId={currentUserId}
-                            subtitle="El ranking se mostrará cuando empiece el Mundial. Mientras tanto, participantes ordenados actividad."
+                            mode="quiniela"
+                            subtitle="El ranking y las votaciones de cada jugador se mostrarán 16 minutos antes de que empiece el Mundial. Participantes ordenados por pronósticos de quiniela completados."
                         />
                     )}
                 </div>
@@ -103,9 +106,10 @@ export default function RankingTabs({
                     </div>
                     {!tournamentStarted ? (
                         <PreTournamentList
-                            entries={preTournamentEntries}
+                            entries={preTournamentPorraEntries}
                             currentUserId={currentUserId}
-                            subtitle="El ranking se mostrará cuando empiece el Mundial. Mientras tanto, participantes ordenados actividad."
+                            mode="porra"
+                            subtitle="El ranking y las votaciones de cada jugador se mostrarán 16 minutos antes de que empiece el Mundial. Participantes ordenados por secciones de porra completadas."
                         />
                     ) : porraEntries.length === 0 ? (
                         <div className="glass-card p-16 text-center space-y-4">
