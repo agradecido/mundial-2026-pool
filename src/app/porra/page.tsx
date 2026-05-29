@@ -11,12 +11,13 @@ export default async function PorraRankingPage() {
   const session = await auth();
   const currentUserId = session!.user.id;
 
-  const [porraRecords, partidos] = await Promise.all([
-    prisma.pronosticoBracket.findMany({
-      include: {
-        user: { select: { id: true, name: true, image: true } },
+  const [usuarios, partidos] = await Promise.all([
+    prisma.user.findMany({
+      select: {
+        id: true, name: true, image: true,
+        bracketPicks: true,
       },
-      orderBy: { updatedAt: "asc" },
+      orderBy: { fechaRegistro: "asc" },
     }),
     prisma.partido.findMany({
       select: {
@@ -34,8 +35,15 @@ export default async function PorraRankingPage() {
   const actual = computeActualBracket(partidos);
   const tournamentStarted = Object.keys(actual.resultados).length > 0 || actual.terceros.length > 0;
 
-  const entries: RankedPorraEntry[] = porraRecords
-    .map(r => {
+  const emptyScore = { total: 0, dieciseisavos: 0, octavos: 0, cuartos: 0, semifinal: 0, final: 0, campeon: 0 };
+  const emptyCompletion = { done: 0, total: 7 };
+
+  const entries: RankedPorraEntry[] = usuarios
+    .map(u => {
+      const r = u.bracketPicks;
+      if (!r) {
+        return { user: { id: u.id, name: u.name, image: u.image }, score: emptyScore, completion: emptyCompletion, campeon: undefined, subcampeon: undefined };
+      }
       const picks = r.picks as BracketPicks;
       const score = scoreBracket(picks, actual);
       const completion = bracketCompletion(picks, gruposLetters);
@@ -44,7 +52,7 @@ export default async function PorraRankingPage() {
         (picks as Record<string, unknown>).campeon as string | undefined;
       const finalists = SF_MATCHES.map(m => picks.resultados?.[m.id]).filter(Boolean) as string[];
       const subcampeon = finalists.find(f => f !== campeon);
-      return { user: r.user, score, completion, campeon, subcampeon };
+      return { user: { id: u.id, name: u.name, image: u.image }, score, completion, campeon, subcampeon };
     })
     .sort((a, b) =>
       b.score.total - a.score.total ||
