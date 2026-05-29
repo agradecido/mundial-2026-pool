@@ -20,7 +20,7 @@ export default async function Header() {
       {/* top accent line */}
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#00e87a]/60 to-transparent" />
 
-      <div className="mx-auto max-w-5xl px-4">
+      <div className="mx-auto max-w-[1400px] px-4">
         {/* Main row */}
         <div className="flex items-center justify-between py-3">
           {/* Logo */}

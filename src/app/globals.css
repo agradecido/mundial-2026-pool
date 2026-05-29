@@ -21,6 +21,24 @@ html {
   color-scheme: dark;
 }
 
+/* Scale up the whole UI on desktop by bumping the root font-size.
+   Tailwind's rem-based spacing/sizing scales proportionally. */
+@media (min-width: 1024px) {
+  html {
+    font-size: 18px;
+  }
+}
+@media (min-width: 1280px) {
+  html {
+    font-size: 19px;
+  }
+}
+@media (min-width: 1536px) {
+  html {
+    font-size: 20px;
+  }
+}
+
 body {
   background-color: #070711;
   background-image:

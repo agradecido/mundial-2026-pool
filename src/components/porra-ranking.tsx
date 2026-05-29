@@ -67,53 +67,53 @@ export default function PorraRanking({ entries, currentUserId }: Props) {
                   ${isMe ? "ring-1 ring-[#00e87a]/25" : ""}
                   ${isLoading ? "opacity-60" : ""}`}
               >
-                <span className="text-4xl leading-none">{MEDALS[i]}</span>
+                <span className="text-5xl leading-none">{MEDALS[i]}</span>
 
                 {entry.user.image ? (
                   <Image
                     src={entry.user.image}
                     alt=""
-                    width={60}
-                    height={60}
+                    width={80}
+                    height={80}
                     className={`rounded-full ring-2 ${c.ring}`}
                   />
                 ) : (
-                  <div className={`w-[60px] h-[60px] rounded-full ${c.bg} ring-2 ${c.ring} flex items-center justify-center text-xl font-bold ${c.text}`}>
+                  <div className={`w-[80px] h-[80px] rounded-full ${c.bg} ring-2 ${c.ring} flex items-center justify-center text-2xl font-bold ${c.text}`}>
                     {entry.user.name?.[0] ?? "?"}
                   </div>
                 )}
 
                 <div>
-                  <p className="text-sm font-semibold text-white leading-snug">
+                  <p className="text-base font-semibold text-white leading-snug">
                     {entry.user.name ?? "—"}
-                    {isMe && <span className="ml-1.5 text-[10px] font-medium text-[#00e87a]">tú</span>}
+                    {isMe && <span className="ml-1.5 text-xs font-medium text-[#00e87a]">tú</span>}
                   </p>
-                  <p className={`text-3xl font-bold mt-1.5 tabular-nums ${c.text}`}>
+                  <p className={`text-4xl font-bold mt-1.5 tabular-nums ${c.text}`}>
                     {isLoading ? "…" : entry.score.total}
                   </p>
-                  <p className="text-xs text-gray-600 -mt-0.5">puntos</p>
+                  <p className="text-sm text-gray-600 -mt-0.5">puntos</p>
                 </div>
 
                 <div className="border-t border-white/[0.07] pt-3 w-full space-y-1.5">
-                  <p className="text-[9px] font-semibold text-gray-700 uppercase tracking-widest text-center">Campeón elegido</p>
+                  <p className="text-xs font-semibold text-gray-600 uppercase tracking-widest text-center">Campeón elegido</p>
                   {entry.campeon ? (
-                    <div className="flex items-center gap-1.5 justify-center text-xs">
-                      <span className="text-base">{getFlag(entry.campeon)}</span>
+                    <div className="flex items-center gap-1.5 justify-center text-sm">
+                      <span className="text-lg">{getFlag(entry.campeon)}</span>
                       <span className="truncate font-medium text-gray-300">{entry.campeon}</span>
                     </div>
                   ) : (
-                    <p className="text-xs text-gray-700 text-center">Sin pick</p>
+                    <p className="text-sm text-gray-700 text-center">Sin pick</p>
                   )}
-                  <p className="text-[8px] font-semibold text-gray-700 uppercase tracking-widest text-center">Subcampeón</p>
+                  <p className="text-xs font-semibold text-gray-600 uppercase tracking-widest text-center">Subcampeón</p>
                   {entry.subcampeon && (
-                    <div className="flex items-center gap-1 justify-center text-[10px] text-gray-600">
-                      <span className="text-xs">{getFlag(entry.subcampeon)}</span>
+                    <div className="flex items-center gap-1 justify-center text-xs text-gray-500">
+                      <span className="text-sm">{getFlag(entry.subcampeon)}</span>
                       <span className="truncate">{entry.subcampeon}</span>
                     </div>
                   )}
                 </div>
 
-                <p className="text-[10px] text-gray-700">
+                <p className="text-xs text-gray-600">
                   {entry.completion.done}/{entry.completion.total} fases
                 </p>
               </div>
@@ -125,14 +125,14 @@ export default function PorraRanking({ entries, currentUserId }: Props) {
       {/* Table */}
       {rest.length > 0 && (
         <div className="glass-card overflow-hidden !p-0">
-          <table className="w-full text-sm">
+          <table className="w-full text-base">
             <thead>
               <tr className="border-b border-white/[0.07]">
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 w-10">#</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Jugador</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Campeón</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-600 hidden sm:table-cell">Fases</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-600">Pts</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold uppercase tracking-wider text-gray-600 w-12">#</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold uppercase tracking-wider text-gray-600">Jugador</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold uppercase tracking-wider text-gray-600">Campeón</th>
+                <th className="px-4 py-3 text-right text-sm font-semibold uppercase tracking-wider text-gray-600 hidden sm:table-cell">Fases</th>
+                <th className="px-4 py-3 text-right text-sm font-semibold uppercase tracking-wider text-gray-600">Pts</th>
               </tr>
             </thead>
             <tbody>
@@ -148,44 +148,44 @@ export default function PorraRanking({ entries, currentUserId }: Props) {
                       ${isMe ? "bg-[#00e87a]/[0.04] hover:bg-[#00e87a]/[0.07]" : "hover:bg-white/[0.03]"}
                       ${isLoading ? "opacity-60" : ""}`}
                   >
-                    <td className="px-4 py-3 text-gray-600 font-mono text-xs">{pos}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2.5">
+                    <td className="px-4 py-3.5 text-gray-600 font-mono text-sm">{pos}</td>
+                    <td className="px-4 py-3.5">
+                      <div className="flex items-center gap-3">
                         {entry.user.image ? (
-                          <Image src={entry.user.image} alt="" width={28} height={28} className="rounded-full shrink-0" />
+                          <Image src={entry.user.image} alt="" width={36} height={36} className="rounded-full shrink-0" />
                         ) : (
-                          <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold text-gray-400 shrink-0">
+                          <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-sm font-bold text-gray-400 shrink-0">
                             {entry.user.name?.[0] ?? "?"}
                           </div>
                         )}
                         <span className={`font-medium truncate ${isMe ? "text-[#00e87a]" : "text-gray-200"}`}>
                           {entry.user.name ?? "—"}
-                          {isMe && <span className="ml-1.5 text-[10px] text-gray-500">(tú)</span>}
+                          {isMe && <span className="ml-1.5 text-xs text-gray-500">(tú)</span>}
                         </span>
                       </div>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3.5">
                       {entry.campeon ? (
                         <div className="space-y-0.5">
-                          <span className="flex items-center gap-1.5 text-xs">
+                          <span className="flex items-center gap-1.5 text-sm">
                             <span>{getFlag(entry.campeon)}</span>
-                            <span className="truncate max-w-[120px] text-gray-300">{entry.campeon}</span>
+                            <span className="truncate max-w-[140px] text-gray-300">{entry.campeon}</span>
                           </span>
                           {entry.subcampeon && (
-                            <span className="flex items-center gap-1 text-[10px] text-gray-600">
+                            <span className="flex items-center gap-1 text-xs text-gray-600">
                               <span>{getFlag(entry.subcampeon)}</span>
-                              <span className="truncate max-w-[100px]">{entry.subcampeon}</span>
+                              <span className="truncate max-w-[120px]">{entry.subcampeon}</span>
                             </span>
                           )}
                         </div>
                       ) : (
-                        <span className="text-xs text-gray-700">—</span>
+                        <span className="text-sm text-gray-700">—</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-right text-gray-500 text-xs hidden sm:table-cell tabular-nums">
+                    <td className="px-4 py-3.5 text-right text-gray-500 text-sm hidden sm:table-cell tabular-nums">
                       {entry.completion.done}/{entry.completion.total}
                     </td>
-                    <td className="px-4 py-3 text-right font-bold tabular-nums text-white">
+                    <td className="px-4 py-3.5 text-right font-bold tabular-nums text-white">
                       {isLoading ? "…" : entry.score.total}
                     </td>
                   </tr>

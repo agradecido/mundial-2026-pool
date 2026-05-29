@@ -10,7 +10,7 @@ const MEDALS = ["🥇", "🥈", "🥉"];
 
 const PODIUM = [
   { ring: "ring-yellow-400/40", border: "border-yellow-400/20", text: "text-yellow-400", bg: "bg-yellow-400/10" },
-  { ring: "ring-gray-300/40",   border: "border-gray-300/15",   text: "text-gray-300",   bg: "bg-gray-300/10" },
+  { ring: "ring-gray-300/40", border: "border-gray-300/15", text: "text-gray-300", bg: "bg-gray-300/10" },
   { ring: "ring-orange-500/40", border: "border-orange-500/20", text: "text-orange-400", bg: "bg-orange-500/10" },
 ];
 
@@ -29,7 +29,7 @@ interface Props {
 }
 
 export default function RankingView({ ranking, currentUserId }: Props) {
-  const [detail, setDetail]   = useState<UserDetail | null>(null);
+  const [detail, setDetail] = useState<UserDetail | null>(null);
   const [loading, setLoading] = useState<string | null>(null); // userId being loaded
 
   const openDetail = useCallback(async (userId: string) => {
@@ -77,28 +77,28 @@ export default function RankingView({ ranking, currentUserId }: Props) {
                   ${isMe ? "ring-1 ring-[#00e87a]/25" : ""}
                   ${isLoading ? "opacity-60" : ""}`}
               >
-                <span className="text-4xl leading-none">{MEDALS[i]}</span>
+                <span className="text-5xl leading-none">{MEDALS[i]}</span>
 
                 {user.image ? (
-                  <Image src={user.image} alt="" width={60} height={60} className={`rounded-full ring-2 ${c.ring}`} />
+                  <Image src={user.image} alt="" width={80} height={80} className={`rounded-full ring-2 ${c.ring}`} />
                 ) : (
-                  <div className={`w-[60px] h-[60px] rounded-full ${c.bg} ring-2 ${c.ring} flex items-center justify-center text-xl font-bold ${c.text}`}>
+                  <div className={`w-[80px] h-[80px] rounded-full ${c.bg} ring-2 ${c.ring} flex items-center justify-center text-2xl font-bold ${c.text}`}>
                     {user.name?.[0] ?? "?"}
                   </div>
                 )}
 
                 <div>
-                  <p className="text-sm font-semibold text-white leading-snug">
+                  <p className="text-base font-semibold text-white leading-snug">
                     {user.name ?? "—"}
-                    {isMe && <span className="ml-1.5 text-[10px] font-medium text-[#00e87a]">tú</span>}
+                    {isMe && <span className="ml-1.5 text-xs font-medium text-[#00e87a]">tú</span>}
                   </p>
-                  <p className={`text-3xl font-bold mt-1.5 tabular-nums ${c.text}`}>
+                  <p className={`text-4xl font-bold mt-1.5 tabular-nums ${c.text}`}>
                     {isLoading ? "…" : user.total}
                   </p>
-                  <p className="text-xs text-gray-600 -mt-0.5">puntos</p>
+                  <p className="text-sm text-gray-600 -mt-0.5">puntos</p>
                 </div>
 
-                <div className="flex gap-4 text-xs text-gray-500 border-t border-white/[0.07] pt-3 w-full justify-center">
+                <div className="flex gap-4 text-sm text-gray-500 border-t border-white/[0.07] pt-3 w-full justify-center">
                   <span>⭐ {user.exactos} exactos</span>
                   <span>✓ {user.tendencias} tend.</span>
                 </div>
@@ -111,14 +111,14 @@ export default function RankingView({ ranking, currentUserId }: Props) {
       {/* ── Resto del ranking ── */}
       {rest.length > 0 && (
         <div className="glass-card overflow-hidden !p-0">
-          <table className="w-full text-sm">
+          <table className="w-full text-base">
             <thead>
               <tr className="border-b border-white/[0.07]">
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 w-10">#</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Jugador</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-600">Pts</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-600 hidden sm:table-cell">Exactos</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-600 hidden sm:table-cell">Tend.</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold uppercase tracking-wider text-gray-600 w-12">#</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold uppercase tracking-wider text-gray-600">Jugador</th>
+                <th className="px-4 py-3 text-right text-sm font-semibold uppercase tracking-wider text-gray-600">Pts</th>
+                <th className="px-4 py-3 text-right text-sm font-semibold uppercase tracking-wider text-gray-600 hidden sm:table-cell">Exactos</th>
+                <th className="px-4 py-3 text-right text-sm font-semibold uppercase tracking-wider text-gray-600 hidden sm:table-cell">Tend.</th>
               </tr>
             </thead>
             <tbody>
@@ -133,27 +133,27 @@ export default function RankingView({ ranking, currentUserId }: Props) {
                       ${isMe ? "bg-[#00e87a]/[0.04] hover:bg-[#00e87a]/[0.07]" : "hover:bg-white/[0.03]"}
                       ${isLoading ? "opacity-60" : ""}`}
                   >
-                    <td className="px-4 py-3 text-gray-600 font-mono text-xs">{i + 4}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2.5">
+                    <td className="px-4 py-3.5 text-gray-600 font-mono text-sm">{i + 4}</td>
+                    <td className="px-4 py-3.5">
+                      <div className="flex items-center gap-3">
                         {user.image ? (
-                          <Image src={user.image} alt="" width={28} height={28} className="rounded-full" />
+                          <Image src={user.image} alt="" width={36} height={36} className="rounded-full" />
                         ) : (
-                          <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold text-gray-400">
+                          <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-sm font-bold text-gray-400">
                             {user.name?.[0] ?? "?"}
                           </div>
                         )}
                         <span className={`font-medium ${isMe ? "text-[#00e87a]" : "text-gray-200"}`}>
                           {user.name ?? "—"}
-                          {isMe && <span className="ml-1.5 text-[10px] text-gray-500">(tú)</span>}
+                          {isMe && <span className="ml-1.5 text-xs text-gray-500">(tú)</span>}
                         </span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-right font-bold text-white tabular-nums">
+                    <td className="px-4 py-3.5 text-right font-bold text-white tabular-nums">
                       {isLoading ? "…" : user.total}
                     </td>
-                    <td className="px-4 py-3 text-right text-gray-500 hidden sm:table-cell tabular-nums">{user.exactos}</td>
-                    <td className="px-4 py-3 text-right text-gray-500 hidden sm:table-cell tabular-nums">{user.tendencias}</td>
+                    <td className="px-4 py-3.5 text-right text-gray-500 hidden sm:table-cell tabular-nums">{user.exactos}</td>
+                    <td className="px-4 py-3.5 text-right text-gray-500 hidden sm:table-cell tabular-nums">{user.tendencias}</td>
                   </tr>
                 );
               })}

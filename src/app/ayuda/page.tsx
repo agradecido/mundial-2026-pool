@@ -1,6 +1,6 @@
 export default function AyudaPage() {
     return (
-        <div className="space-y-10 max-w-2xl">
+        <div className="space-y-10 max-w-[600px] mx-auto">
             <div>
                 <h1 className="text-3xl font-bold text-white tracking-tight">Ayuda</h1>
                 <p className="mt-1 text-sm text-gray-500">Reglas y sistema de puntuación</p>

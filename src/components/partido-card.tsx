@@ -72,16 +72,16 @@ export default function PartidoCard({ partido, pronostico }: Props) {
         {/* Row 1: Teams */}
         <div className="flex items-center gap-2">
           <div className="flex flex-1 items-center gap-2 min-w-0">
-            <span className="text-xl shrink-0">{flagLocal}</span>
-            <span className="truncate text-sm font-semibold text-gray-200">
+            <span className="text-2xl shrink-0">{flagLocal}</span>
+            <span className="truncate text-base lg:text-lg font-semibold text-gray-200">
               {partido.equipoLocal}
             </span>
           </div>
           <div className="flex flex-1 items-center justify-end gap-2 min-w-0">
-            <span className="truncate text-sm font-semibold text-gray-200 text-right">
+            <span className="truncate text-base lg:text-lg font-semibold text-gray-200 text-right">
               {partido.equipoVisitante}
             </span>
-            <span className="text-xl shrink-0">{flagVisitante}</span>
+            <span className="text-2xl shrink-0">{flagVisitante}</span>
           </div>
         </div>
 

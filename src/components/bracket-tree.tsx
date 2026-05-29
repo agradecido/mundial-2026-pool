@@ -78,8 +78,8 @@ function TeamRow({
         } ${editable ? "cursor-pointer hover:bg-white/[0.06] hover:border-white/[0.20]" : ""}`;
     const content = (
         <>
-            <span className={`text-[11px] lg:text-[14px] leading-none shrink-0 transition-opacity ${isWinner ? "opacity-100" : "opacity-40"}`}>{getFlag(team)}</span>
-            <span className={`text-[10px] lg:text-[13px] truncate leading-none ${isWinner ? (isOnPath ? "text-[#00e87a]" : "text-white") : "text-gray-600"
+            <span className={`text-[11px] lg:text-[14px] leading-none shrink-0 transition-opacity ${isWinner ? "opacity-100" : "opacity-60"}`}>{getFlag(team)}</span>
+            <span className={`text-[10px] lg:text-[13px] truncate leading-none ${isWinner ? (isOnPath ? "text-[#00e87a]" : "text-white") : "text-gray-400"
                 }`}>
                 {team}
             </span>
