@@ -1,6 +1,6 @@
 import { auth, signOut } from "@/lib/auth";
-import Image from "next/image";
 import Link from "next/link";
+import UserMenu from "@/components/user-menu";
 
 export default async function Header() {
   const session = await auth();
@@ -49,33 +49,14 @@ export default async function Header() {
 
           {/* User */}
           {session?.user && (
-            <div className="flex items-center gap-2.5">
-              {session.user.image && (
-                <Image
-                  src={session.user.image}
-                  alt=""
-                  width={32}
-                  height={32}
-                  className="rounded-full ring-2 ring-[#00e87a]/30"
-                />
-              )}
-              <span className="hidden sm:block text-sm text-gray-300 max-w-[120px] truncate">
-                {session.user.name}
-              </span>
-              <form
-                action={async () => {
-                  "use server";
-                  await signOut({ redirectTo: "/login" });
-                }}
-              >
-                <button
-                  type="submit"
-                  className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-gray-400 hover:border-white/20 hover:text-white transition-colors"
-                >
-                  Salir
-                </button>
-              </form>
-            </div>
+            <UserMenu
+              name={session.user.name}
+              image={session.user.image}
+              signOutAction={async () => {
+                "use server";
+                await signOut({ redirectTo: "/login" });
+              }}
+            />
           )}
         </div>
 

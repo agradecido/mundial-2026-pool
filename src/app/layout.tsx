@@ -5,6 +5,7 @@ import "./globals.css";
 import Header from "@/components/header";
 import BottomTabBar from "@/components/bottom-tab-bar";
 import WelcomeModal from "@/components/welcome-modal";
+import NicknameModal from "@/components/nickname-modal";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -35,6 +36,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </main>
         <BottomTabBar />
         <WelcomeModal />
+        <NicknameModal />
       </body>
     </html>
   );

@@ -54,6 +54,7 @@ model User {
   role             Role      @default(JUGADOR)
   fechaRegistro    DateTime  @default(now())
   ultimoAcceso     DateTime?
+  hasChosenNickname Boolean  @default(false)
   welcomeModalViews Int      @default(0)
 
   accounts         Account[]
