@@ -79,18 +79,6 @@ export default async function Header() {
           )}
         </div>
 
-        {/* Nav — mobile second row */}
-        <nav className="flex sm:hidden items-center justify-center gap-1 pb-2 text-sm font-medium">
-          {navLinks.map(({ href, label }) => (
-            <Link
-              key={href}
-              href={href}
-              className="rounded-lg px-3 py-1.5 text-gray-400 transition-colors hover:bg-white/5 hover:text-white"
-            >
-              {label}
-            </Link>
-          ))}
-        </nav>
       </div>
     </header>
   );

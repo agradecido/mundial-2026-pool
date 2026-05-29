@@ -78,6 +78,11 @@ body {
   cursor: not-allowed;
 }
 
+/* ── iOS safe area support ───────────────────────── */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
 /* ── Neon save button ────────────────────────────── */
 .btn-save {
   display: flex;
