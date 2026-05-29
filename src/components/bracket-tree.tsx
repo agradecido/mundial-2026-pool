@@ -64,8 +64,8 @@ function TeamRow({
     if (!team) {
         return (
             <div className="flex items-center gap-1.5 lg:gap-2 px-2 py-1.5 lg:px-3 lg:py-2 border border-dashed border-white/[0.12] rounded-md">
-                <span className="text-gray-700 text-[10px] lg:text-[13px] opacity-40">?</span>
-                <span className="text-gray-700 text-[10px] lg:text-[13px] truncate">Por definir</span>
+                <span className="text-gray-700 text-[12px] lg:text-[15px] opacity-40">?</span>
+                <span className="text-gray-700 text-[12px] lg:text-[15px] truncate">Por definir</span>
             </div>
         );
     }
@@ -78,8 +78,8 @@ function TeamRow({
         } ${editable ? "cursor-pointer hover:bg-white/[0.06] hover:border-white/[0.20]" : ""}`;
     const content = (
         <>
-            <span className={`text-[11px] lg:text-[14px] leading-none shrink-0 transition-opacity ${isWinner ? "opacity-100" : "opacity-60"}`}>{getFlag(team)}</span>
-            <span className={`text-[10px] lg:text-[13px] truncate leading-none ${isWinner ? (isOnPath ? "text-[#00e87a]" : "text-white") : "text-gray-400"
+            <span className={`text-[13px] lg:text-[16px] leading-none shrink-0 transition-opacity ${isWinner ? "opacity-100" : "opacity-60"}`}>{getFlag(team)}</span>
+            <span className={`text-[12px] lg:text-[15px] truncate leading-none ${isWinner ? (isOnPath ? "text-[#00e87a]" : "text-white") : "text-gray-400"
                 }`}>
                 {team}
             </span>
