@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useRef } from "react";
+import { useState, useTransition } from "react";
 import { guardarPronostico } from "@/app/quiniela/actions";
 import { getFlag } from "@/lib/flags";
 import type { EstadoPartido, Fase } from "@prisma/client";
@@ -34,6 +34,24 @@ function formatFecha(iso: string) {
   });
 }
 
+function CheckIcon() {
+  return (
+    <svg
+      width="26"
+      height="26"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="3"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  );
+}
+
 export default function PartidoCard({ partido, pronostico }: Props) {
   const locked = isLocked(partido.fechaPartido, partido.estado);
   const [local, setLocal] = useState<string>(
@@ -46,37 +64,18 @@ export default function PartidoCard({ partido, pronostico }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // ── Núcleo de guardado ────────────────────────────
-  function doSave(localVal: string, visitanteVal: string) {
-    if (locked || localVal === "" || visitanteVal === "") return;
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (local === "" || visitante === "") return;
     setError(null);
     startTransition(async () => {
-      const res = await guardarPronostico(partido.id, Number(localVal), Number(visitanteVal));
+      const res = await guardarPronostico(partido.id, Number(local), Number(visitante));
       if (res.error) {
         setError(res.error);
       } else {
         setSaved(true);
-        setTimeout(() => setSaved(false), 2000);
       }
     });
-  }
-
-  // Debounce corto para cambios rápidos de teclado
-  function scheduleAutoSave(localVal: string, visitanteVal: string) {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    if (locked || localVal === "" || visitanteVal === "") return;
-    timerRef.current = setTimeout(() => doSave(localVal, visitanteVal), 300);
-  }
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    doSave(local, visitante);
   }
 
   const flagLocal = getFlag(partido.equipoLocal);
@@ -123,13 +122,10 @@ export default function PartidoCard({ partido, pronostico }: Props) {
                 max={20}
                 value={local}
                 onChange={(e) => {
-                  const v = e.target.value;
-                  setLocal(v);
+                  setLocal(e.target.value);
                   setError(null);
                   setSaved(false);
-                  scheduleAutoSave(v, visitante);
                 }}
-                onBlur={(e) => doSave(e.target.value, visitante)}
                 className="score-input"
               />
               <span className="text-[#00e87a] font-bold text-lg">:</span>
@@ -139,22 +135,34 @@ export default function PartidoCard({ partido, pronostico }: Props) {
                 max={20}
                 value={visitante}
                 onChange={(e) => {
-                  const v = e.target.value;
-                  setVisitante(v);
+                  setVisitante(e.target.value);
                   setError(null);
                   setSaved(false);
-                  scheduleAutoSave(local, v);
                 }}
-                onBlur={(e) => doSave(local, e.target.value)}
                 className="score-input"
               />
-              <button
-                type="submit"
-                disabled={pending || local === "" || visitante === ""}
-                className={`btn-save px-3 py-2 ${saved ? "animate-saved" : ""}`}
-              >
-                {pending ? "…" : saved ? "✓" : "OK"}
-              </button>
+
+              {/* Botón OK / check */}
+              {saved ? (
+                <span
+                  className="flex items-center justify-center w-[3rem] h-[3rem] text-[#00e87a] shrink-0"
+                  style={{ filter: "drop-shadow(0 0 10px rgba(0,232,122,0.7))" }}
+                >
+                  <CheckIcon />
+                </span>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={pending || local === "" || visitante === ""}
+                  className="btn-save w-[3rem] h-[3rem] shrink-0 text-sm font-bold tracking-wide disabled:opacity-40"
+                >
+                  {pending ? (
+                    <span className="animate-pulse">…</span>
+                  ) : (
+                    "OK"
+                  )}
+                </button>
+              )}
             </form>
           )}
 
