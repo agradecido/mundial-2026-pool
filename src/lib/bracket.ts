@@ -138,7 +138,19 @@ export function cascadeAll(p: BracketPicks, allGrupos?: Record<string, string[]>
 
   // Remove terceros that are already in a grupo's top-2
   const grupoPicks = Object.values(grupos).flat();
-  const newTerceros = terceros.filter(t => !grupoPicks.includes(t));
+  let newTerceros = terceros.filter(t => !grupoPicks.includes(t));
+
+  // Also remove terceros from groups that don't have exactly 2 qualified teams
+  // (only if we have allGrupos to determine which group each team belongs to)
+  if (allGrupos) {
+    const teamGroupMap = buildTeamGroupMap(allGrupos);
+    newTerceros = newTerceros.filter(t => {
+      const group = teamGroupMap[t];
+      if (!group) return false; // Unknown team, remove it
+      const qualified = grupos[group] ?? [];
+      return qualified.length === 2; // Keep only if group has exactly 2 qualified
+    });
+  }
 
   // Validate each stored result against the (possibly updated) teams
   const newRes = { ...(p.resultados ?? {}) };

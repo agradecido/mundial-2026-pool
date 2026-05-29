@@ -122,7 +122,7 @@ export default function PartidosTabs({ partidos, pronosticoMap }: Props) {
                   </div>
                   <div className="space-y-1.5">
                     {porGrupo[letra].map((p) => (
-                      <PartidoCard key={p.id} partido={p} pronostico={pronosticoMap[p.id] ?? null} />
+                       <PartidoCard key={`${p.id}-${pronosticoMap[p.id] ? 1 : 0}`} partido={p} pronostico={pronosticoMap[p.id] ?? null} />
                     ))}
                   </div>
                 </div>
@@ -141,7 +141,7 @@ export default function PartidosTabs({ partidos, pronosticoMap }: Props) {
                 )}
                 <div className="space-y-1.5">
                   {porFase[fase].map((p) => (
-                    <PartidoCard key={p.id} partido={p} pronostico={pronosticoMap[p.id] ?? null} />
+                    <PartidoCard key={`${p.id}-${pronosticoMap[p.id] ? 1 : 0}`} partido={p} pronostico={pronosticoMap[p.id] ?? null} />
                   ))}
                 </div>
               </div>
@@ -163,7 +163,7 @@ export default function PartidosTabs({ partidos, pronosticoMap }: Props) {
                 <div className="glass-card p-4">
                   <div className="space-y-1.5">
                     {dayPartidos.map((p) => (
-                      <PartidoCard key={p.id} partido={p} pronostico={pronosticoMap[p.id] ?? null} />
+                      <PartidoCard key={`${p.id}-${pronosticoMap[p.id] ? 1 : 0}`} partido={p} pronostico={pronosticoMap[p.id] ?? null} />
                     ))}
                   </div>
                 </div>

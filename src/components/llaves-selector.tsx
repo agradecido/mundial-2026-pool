@@ -138,9 +138,13 @@ export default function LlavesSelector({ grupos, initialPicks, locked }: Props) 
   const completedCount = PHASES.filter(p => isComplete(p.id)).length;
 
   // Terceros: teams that finished 3rd in their group (not in top-2 of any group)
-  const tercerosAvailable = Object.entries(grupos).flatMap(([g, teams]) =>
-    teams.filter(t => !(picks.grupos?.[g] ?? []).includes(t))
-  );
+  // ONLY from groups where the user has already selected exactly 2 qualified teams
+  const tercerosAvailable = Object.entries(grupos).flatMap(([g, teams]) => {
+    const qualified = picks.grupos?.[g] ?? [];
+    // Only allow third-place picks from groups that have exactly 2 qualified
+    if (qualified.length !== 2) return [];
+    return teams.filter(t => !qualified.includes(t));
+  });
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
@@ -379,7 +383,7 @@ function TercerosPanel({ available, selected, onToggle, locked }: TercerosProps)
   if (available.length === 0) {
     return (
       <div className="glass-card p-12 text-center">
-        <p className="text-gray-600 text-sm">Selecciona primero los clasificados de cada grupo</p>
+        <p className="text-gray-600 text-sm">Completa primero los 2 clasificados de cada grupo para poder seleccionar terceros</p>
       </div>
     );
   }
@@ -389,6 +393,9 @@ function TercerosPanel({ available, selected, onToggle, locked }: TercerosProps)
       <p className="text-sm text-gray-500">
         Selecciona los 8 mejores terceros <span className="text-gray-700">en orden</span> — el primero en que hagas click será el mejor tercero, el último el peor
         <span className="ml-2 text-gray-700 tabular-nums">({selected.length}/8)</span>
+      </p>
+      <p className="text-xs text-gray-600">
+        💡 Solo aparecen disponibles los equipos de grupos que ya tienen sus 2 clasificados definidos
       </p>
       <div className="grid gap-2 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
         {available.map(team => {

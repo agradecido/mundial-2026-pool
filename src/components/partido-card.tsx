@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect, useRef } from "react";
 import { guardarPronostico } from "@/app/quiniela/actions";
 import { getFlag } from "@/lib/flags";
 import type { EstadoPartido, Fase } from "@prisma/client";
@@ -37,14 +37,41 @@ function formatFecha(iso: string) {
 export default function PartidoCard({ partido, pronostico }: Props) {
   const locked = isLocked(partido.fechaPartido, partido.estado);
   const [local, setLocal] = useState<string>(
-    pronostico != null ? String(pronostico.golesLocal) : ""
+    pronostico != null ? String(pronostico.golesLocal) : "0"
   );
   const [visitante, setVisitante] = useState<string>(
-    pronostico != null ? String(pronostico.golesVisitante) : ""
+    pronostico != null ? String(pronostico.golesVisitante) : "0"
   );
   const [saved, setSaved] = useState(!!pronostico);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+
+  const isInitialMount = useRef(true);
+
+  // ── Autoguardado con debounce ─────────────────────
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    if (locked || local === "" || visitante === "") return;
+
+    const timer = setTimeout(() => {
+      setError(null);
+      startTransition(async () => {
+        const res = await guardarPronostico(partido.id, Number(local), Number(visitante));
+        if (res.error) {
+          setError(res.error);
+        } else {
+          setSaved(true);
+          setTimeout(() => setSaved(false), 2000);
+        }
+      });
+    }, 800);
+
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [local, visitante]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -106,7 +133,6 @@ export default function PartidoCard({ partido, pronostico }: Props) {
                 value={local}
                 onChange={(e) => { setLocal(e.target.value); setError(null); setSaved(false); }}
                 className="score-input"
-                placeholder="0"
               />
               <span className="text-[#00e87a] font-bold text-lg">:</span>
               <input
@@ -116,12 +142,11 @@ export default function PartidoCard({ partido, pronostico }: Props) {
                 value={visitante}
                 onChange={(e) => { setVisitante(e.target.value); setError(null); setSaved(false); }}
                 className="score-input"
-                placeholder="0"
               />
               <button
                 type="submit"
                 disabled={pending || local === "" || visitante === ""}
-                className={`btn-save ${saved ? "animate-saved" : ""}`}
+                className={`btn-save px-3 py-2 ${saved ? "animate-saved" : ""}`}
               >
                 {pending ? "…" : saved ? "✓" : "OK"}
               </button>

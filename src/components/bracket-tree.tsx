@@ -63,14 +63,14 @@ function TeamRow({
     const isOnPath = onChampionPath && isWinner;
     if (!team) {
         return (
-            <div className="flex items-center gap-1.5 lg:gap-2 px-2 py-1.5 lg:px-3 lg:py-2 border border-dashed border-white/[0.12] rounded-md">
-                <span className="text-gray-700 text-[12px] lg:text-[15px] opacity-40">?</span>
-                <span className="text-gray-700 text-[12px] lg:text-[15px] truncate">Por definir</span>
+            <div className="flex items-center gap-1.5 lg:gap-2 px-1.5 py-1 lg:px-2 lg:py-1 border border-dashed border-white/[0.12] rounded-md">
+                <span className="text-gray-700 text-[10px] lg:text-[13px] opacity-40">?</span>
+                <span className="text-gray-700 text-[10px] lg:text-[13px] truncate">Por definir</span>
             </div>
         );
     }
     const editable = !!onPick && !locked;
-    const baseCls = `flex items-center gap-1.5 lg:gap-2 px-2 py-1.5 lg:px-3 lg:py-2 rounded-md transition-colors w-full text-left border ${isWinner
+    const baseCls = `flex items-center gap-1.5 lg:gap-2 px-1.5 py-1 lg:px-2 lg:py-1 rounded-md transition-colors w-full text-left border ${isWinner
         ? isOnPath
             ? "bg-[#00e87a]/10 border-[#00e87a]/40"
             : "bg-white/[0.06] border-white/[0.18]"
@@ -78,8 +78,8 @@ function TeamRow({
         } ${editable ? "cursor-pointer hover:bg-white/[0.06] hover:border-white/[0.20]" : ""}`;
     const content = (
         <>
-            <span className={`text-[13px] lg:text-[16px] leading-none shrink-0 transition-opacity ${isWinner ? "opacity-100" : "opacity-60"}`}>{getFlag(team)}</span>
-            <span className={`text-[12px] lg:text-[15px] truncate leading-none ${isWinner ? (isOnPath ? "text-[#00e87a]" : "text-white") : "text-gray-400"
+            <span className={`text-[11px] lg:text-[14px] leading-none shrink-0 transition-opacity ${isWinner ? "opacity-100" : "opacity-60"}`}>{getFlag(team)}</span>
+            <span className={`text-[10px] lg:text-[13px] truncate leading-none ${isWinner ? (isOnPath ? "text-[#00e87a]" : "text-white") : "text-gray-400"
                 }`}>
                 {team}
             </span>
@@ -152,8 +152,11 @@ function MatchCell({
             className="relative flex flex-col justify-center pr-6 lg:pr-8"
             style={{ height: `calc(var(--s) * ${slotHeight / BASE_SLOT})` }}
         >
-            <div className="flex flex-col gap-1.5 lg:gap-2">
+            <div className="flex flex-col gap-0.5 lg:gap-1 p-1.5 lg:p-2 rounded-lg border border-white/[0.08] bg-white/[0.02] hover:border-white/[0.14] transition-colors">
                 <TeamRow matchId={matchId} team={teamA} isWinner={winner === teamA} onChampionPath={onChampionPath} onPick={onPick} locked={locked} />
+                <div className="flex items-center justify-center py-0.5">
+                  <span className="text-[8px] lg:text-[9px] font-bold text-gray-700 tracking-wider">VS</span>
+                </div>
                 <TeamRow matchId={matchId} team={teamB} isWinner={winner === teamB} onChampionPath={onChampionPath} onPick={onPick} locked={locked} />
             </div>
             {connectorEl}
@@ -244,9 +247,8 @@ export default function BracketTree({
                 {/* ── Column 1: 16avos (D32) ── */}
                 <Column label="16avos">
                     <div className="flex flex-col" style={{ height: totalHeight }}>
-                        {D32_MATCHES.map((m) => {
+                        {D32_MATCHES.map((m, idx) => {
                             const { teamA, teamB, winner } = resolvedMatch(m.id, m.slotA, m.slotB);
-                            const idx = D32_MATCHES.indexOf(m);
                             return (
                                 <MatchCell
                                     key={m.id}

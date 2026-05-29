@@ -29,3 +29,28 @@ export async function guardarPronostico(
   revalidatePath("/quiniela/ranking");
   return { ok: true };
 }
+
+export async function resetearPronosticosFuturos() {
+  const session = await auth();
+  if (!session?.user?.id) return { error: "No autenticado" };
+
+  const ahora = new Date();
+  const limite = new Date(ahora.getTime() + 15 * 60 * 1000);
+
+  // Partidos que aún están abiertos para pronóstico
+  const partidosAbiertos = await prisma.partido.findMany({
+    where: { estado: "PROGRAMADO", fechaPartido: { gt: limite } },
+    select: { id: true },
+  });
+
+  const { count } = await prisma.pronostico.deleteMany({
+    where: {
+      userId: session.user.id,
+      partidoId: { in: partidosAbiertos.map((p) => p.id) },
+    },
+  });
+
+  revalidatePath("/quiniela");
+  revalidatePath("/quiniela/ranking");
+  return { ok: true, count };
+}

@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import PartidosTabs from "@/components/partidos-tabs";
+import ResetQuinielaButton from "@/components/reset-quiniela-button";
 
 export default async function PartidosPage() {
   const session = await auth();
@@ -36,14 +37,17 @@ export default async function PartidosPage() {
             Puedes modificar tu pronóstico hasta 15 minutos antes del inicio de cada partido
           </p>
         </div>
-        <div className="text-right">
-          <p className="text-xs text-gray-600 mb-1">{totalPronosticos} / 104 pronósticos</p>
-          <div className="w-32 h-1.5 rounded-full bg-white/10 overflow-hidden">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-[#00e87a] to-emerald-400 transition-all"
-              style={{ width: `${pct}%` }}
-            />
+        <div className="flex flex-col items-end gap-3">
+          <div className="text-right">
+            <p className="text-xs text-gray-600 mb-1">{totalPronosticos} / 104 pronósticos</p>
+            <div className="w-32 h-1.5 rounded-full bg-white/10 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-[#00e87a] to-emerald-400 transition-all"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
           </div>
+          <ResetQuinielaButton />
         </div>
       </div>
 
