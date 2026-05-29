@@ -25,6 +25,7 @@ export async function guardarPronostico(
     update: { golesLocal, golesVisitante },
   });
 
-  revalidatePath("/partidos");
+  revalidatePath("/quiniela");
+  revalidatePath("/quiniela/ranking");
   return { ok: true };
 }

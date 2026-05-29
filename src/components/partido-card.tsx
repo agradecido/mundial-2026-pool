@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { guardarPronostico } from "@/app/partidos/actions";
+import { guardarPronostico } from "@/app/quiniela/actions";
 import { getFlag } from "@/lib/flags";
 import type { EstadoPartido, Fase } from "@prisma/client";
 

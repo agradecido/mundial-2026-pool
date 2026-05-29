@@ -3,7 +3,11 @@
 Este archivo proporciona la guía definitiva de arquitectura, reglas de negocio y comandos para cualquier agente de IA (Claude Code, GitHub Copilot, etc.) que trabaje en este repositorio. **Confía en estas instrucciones y no busques en otros archivos a menos que encuentres un error.**
 
 ## 1. Contexto del Proyecto
-Plataforma web fullstack para gestionar una quiniela (porra/prode) de amigos para el Mundial de Fútbol 2026. El torneo cuenta con **48 selecciones y 104 partidos**, incluyendo la nueva ronda de dieciseisavos de final. Toda la interfaz de usuario (UI) y los nombres de las entidades en la base de datos están en español.
+Plataforma web fullstack para gestionar **dos competiciones independientes** de amigos para el Mundial de Fútbol 2026:
+- **Porra**: Predicción del bracket completo (clasificados + eliminatorias hasta la final). Se rellena una vez antes del torneo.
+- **Quiniela**: Pronósticos partido a partido del marcador exacto de los 104 partidos del torneo.
+
+El torneo cuenta con **48 selecciones y 104 partidos**, incluyendo la nueva ronda de dieciseisavos de final. Toda la interfaz de usuario (UI) y los nombres de las entidades en la base de datos están en español.
 
 ## 2. Stack Tecnológico & Arquitectura
 * **Framework:** Next.js (App Router) + TypeScript (Strict Mode).
@@ -15,34 +19,77 @@ Plataforma web fullstack para gestionar una quiniela (porra/prode) de amigos par
 
 ### Estructura de Carpetas Clave
 * `src/app/`: Rutas de la aplicación, páginas y Server Actions.
-* `src/lib/scoring.ts`: **ARCHIVO CRÍTICO.** Contiene la lógica aislada y testeable de cálculo de puntos. Cualquier cambio en las puntuaciones debe hacerse exclusivamente aquí.
+  * `/porra`: Editor y ranking del bracket completo (llaves)
+  * `/quiniela`: Editor y ranking de pronósticos partido a partido
+  * `/ranking`: Vista general que redirige al ranking de Quiniela
+* `src/lib/scoring.ts`: **ARCHIVO CRÍTICO.** Lógica de cálculo de puntos para la Quiniela (partido a partido).
+* `src/lib/bracket-scoring.ts`: **ARCHIVO CRÍTICO.** Lógica de cálculo de puntos para la Porra (bracket).
 * `prisma/schema.prisma`: Definición del esquema de datos.
 
 ---
 
 ## 3. Reglas de Negocio Críticas (Strict Business Rules)
 
-### 3.1. Definición de Resultado Oficial
+### 3.1. Dos Competiciones Independientes
+
+#### 3.1.1. Porra (Bracket Completo)
+Sistema donde el usuario predice **una sola vez** el camino completo al título:
+- Clasificados de cada grupo (1º y 2º)
+- Los 8 mejores terceros
+- Ganador de cada partido eliminatorio (dieciseisavos → final)
+
+**Cierre:** Se bloquea el día 1 del torneo (primera patada).
+
+**Puntuación:**
+- **Clasificados:** 1 pt por cada acertado (top-2 de grupo + terceros)
+- **Eliminatorias:** Puntos por cada equipo que avanza:
+  - Dieciseisavos: 2 pts
+  - Octavos: 5 pts
+  - Cuartos: 7 pts
+  - Semifinal: 10 pts
+  - Final/Campeón: 10 pts
+
+**Modelo Prisma:** `PronosticoBracket` (campo JSON `picks`)
+
+#### 3.1.2. Quiniela (Partido a Partido)
+Sistema donde el usuario predice **el marcador exacto** de cada uno de los 104 partidos, durante todo el torneo.
+
+**Cierre por partido:** 15 minutos antes del inicio de cada partido.
+
+**Puntuación jerárquica** (se otorga solo el puntaje más alto que corresponda):
+| Condición | Fase de Grupos | Fase Eliminatoria (×2) |
+|---|:--------------:|:----------------------:|
+| **Marcador exacto** | 5 pts | 10 pts |
+| **Tendencia correcta** | 3 pts | 6 pts |
+| **Consolación** (goles exactos de UN equipo) | 1 pt | 2 pts |
+| **Fallo total** | 0 pts | 0 pts |
+
+**Predicciones especiales** (cierran día 1, suman en el ranking de Quiniela):
+- Campeón: 20 pts
+- Subcampeón: 15 pts
+- Bota de Oro: 15 pts
+
+**Modelos Prisma:** `Pronostico` (partido a partido) + `PrediccionFutura` (especiales)
+
+### 3.2. Definición de Resultado Oficial (Quiniela)
 * El resultado válido es el marcador al finalizar el tiempo oficial de juego: **90 minutos reglamentarios + 30 minutos de prórroga** (si se disputa).
 * **Exclusión:** Las tandas de penales de desempate final **NO** cuentan para el marcador de la quiniela.
 
-### 3.2. Sistema de Puntuación Jerárquico (No Acumulable por Partido)
-El usuario recibe únicamente el puntaje más alto que le corresponda por partido. El multiplicador $x2$ se aplica automáticamente desde la fase de **Dieciseisavos** en adelante basándose en el campo `fase`.
-
-| # | Condición / Criterio | Fase de Grupos | Fase Eliminatoria ($x2$) |
-|---|----------------------|:--------------:|:------------------------:|
-| 1 | **Marcador exacto** (goles de ambos equipos correctos) | **5 pts** | **10 pts** |
-| 2 | **Tendencia correcta** (ganador o empate acertado) | **3 pts** | **6 pts** |
-| 3 | **Consolación:** tendencia errónea, pero goles de un equipo exactos | **1 pt** | **2 pts** |
-| 4 | **Fallo total** | **0 pts** | **0 pts** |
-
 ### 3.3. Bloqueo de Seguridad Obligatorio (Hard Deadline)
-* El sistema debe impedir la creación, modificación o eliminación de un pronóstico si faltan **menos de 15 minutos** para el comienzo del partido (`fechaPartido`).
+* **Porra:** Se bloquea al inicio del primer partido del torneo.
+* **Quiniela:** Cada pronóstico se bloquea **15 minutos antes** del inicio de su partido (`fechaPartido`).
 * **Seguridad:** Esta validación **debe ejecutarse obligatoriamente en el Backend** (Server Actions o API Routes). El bloqueo en el Frontend es meramente para experiencia de usuario (UX).
 
-### 3.4. Predicciones Especiales y Desempates
-* Las predicciones a largo plazo se bloquean el Día 1 del torneo: Campeón (20 pts), Subcampeón (15 pts), Bota de Oro (15 pts).
-* **Desempate en el Ranking:** (1) Más marcadores exactos acertados -> (2) Más tendencias acertadas -> (3) Fecha de registro más antigua.
+### 3.4. Ranking y Desempates
+Cada competición tiene su propio ranking independiente:
+
+**Ranking Porra:**
+- Suma de puntos del bracket (clasificados + eliminatorias)
+- Desempate: (1) Mayor % de completitud → (2) Fecha de registro más antigua
+
+**Ranking Quiniela:**
+- Suma de puntos de partidos (`Pronostico.puntosGanados`) + predicciones especiales (`PrediccionFutura`)
+- Desempate: (1) Más marcadores exactos → (2) Más tendencias acertadas → (3) Fecha de registro más antigua
 
 ---
 

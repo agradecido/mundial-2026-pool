@@ -48,10 +48,11 @@ export async function actualizarPartido(
 
     revalidatePath("/admin/partidos");
     revalidatePath(`/admin/partidos/${id}`);
-    revalidatePath("/partidos");
+    revalidatePath("/quiniela");
+    revalidatePath("/quiniela/ranking");
     revalidatePath("/porra");
+    revalidatePath("/porra/ranking");
     revalidatePath("/ranking");
-    revalidatePath("/llaves");
 
     return { ok: true };
 }

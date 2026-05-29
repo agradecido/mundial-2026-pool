@@ -6,9 +6,9 @@ export default async function Header() {
   const session = await auth();
 
   const navLinks = [
-    { href: "/llaves", label: "Mi Porra" },
-    { href: "/partidos", label: "Marcador" },
-    { href: "/porra", label: "Ranking usuarios" },
+    { href: "/porra", label: "Porra" },
+    { href: "/quiniela", label: "Quiniela" },
+    { href: "/ranking", label: "Ranking" },
     { href: "/ayuda", label: "Ayuda" },
     ...(session?.user?.role === "ADMIN"
       ? [{ href: "/admin", label: "Admin" }]
