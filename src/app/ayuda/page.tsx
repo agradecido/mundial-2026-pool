@@ -34,6 +34,16 @@ export default function AyudaPage() {
                         </p>
                     </Link>
                 </div>
+
+                {/* Mensaje animador */}
+                <div className="rounded-lg border border-green-400/20 bg-green-400/5 px-4 py-3 space-y-2">
+                    <p className="text-xs text-green-300 text-center font-semibold">
+                        ✨ ¡Juega sin miedo!
+                    </p>
+                    <p className="text-xs text-gray-400 text-center leading-relaxed">
+                        Puedes modificar tus predicciones hasta <strong className="text-white">15 minutos antes</strong> del inicio del Mundial (Porra) o de cada partido (Quiniela)
+                    </p>
+                </div>
             </div>
 
 

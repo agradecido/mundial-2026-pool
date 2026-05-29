@@ -113,6 +113,15 @@ export default function WelcomeModal() {
                         </div>
                     </div>
 
+                    <div className="rounded-lg border border-green-400/20 bg-green-400/5 px-4 py-3 space-y-2">
+                        <p className="text-xs text-green-300 text-center font-semibold">
+                            ✨ ¡Juega sin miedo!
+                        </p>
+                        <p className="text-xs text-gray-400 text-center leading-relaxed">
+                            Puedes modificar tus predicciones hasta <strong className="text-white">15 minutos antes</strong> del inicio del Mundial (Porra) o de cada partido (Quiniela)
+                        </p>
+                    </div>
+
                     <div className="rounded-lg border border-amber-400/20 bg-amber-400/5 px-4 py-3">
                         <p className="text-xs text-amber-300/90 text-center">
                             Visita la sección de <strong>Ayuda</strong> para conocer todas las reglas y sistemas de puntuación
