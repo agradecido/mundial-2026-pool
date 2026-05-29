@@ -58,7 +58,7 @@ function formatDayHeader(iso: string): string {
 }
 
 export default function PartidosTabs({ partidos, pronosticoMap }: Props) {
-  const [tab, setTab] = useState<"grupos" | "fecha">("grupos");
+  const [tab, setTab] = useState<"grupos" | "fecha">("fecha");
 
   // ── Grupos view ──────────────────────────────────────────────
   const grupos = partidos.filter((p) => p.fase === "GRUPOS");
@@ -94,11 +94,10 @@ export default function PartidosTabs({ partidos, pronosticoMap }: Props) {
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
-              tab === t
+            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${tab === t
                 ? "bg-[#00e87a]/15 text-[#00e87a] border border-[#00e87a]/20"
                 : "text-gray-500 hover:text-gray-300"
-            }`}
+              }`}
           >
             {t === "grupos" ? "Por grupos" : "Por fecha"}
           </button>
