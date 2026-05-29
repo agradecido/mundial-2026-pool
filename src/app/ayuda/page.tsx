@@ -1,10 +1,15 @@
 export default function AyudaPage() {
     return (
         <div className="space-y-10 max-w-[600px] mx-auto">
+            <div className="rounded-lg border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-300">
+                Las reglas de puntuación aún no están bien definidas, estamos trabajando en ello.
+            </div>
+
             <div>
                 <h1 className="text-3xl font-bold text-white tracking-tight">Ayuda</h1>
                 <p className="mt-1 text-sm text-gray-500">Reglas y sistema de puntuación</p>
             </div>
+
 
             {/* ── Porra del torneo ─────────────────────────────────────────────── */}
             <section className="space-y-4">
@@ -105,6 +110,17 @@ export default function AyudaPage() {
                         </div>
                     ))}
                 </div>
+            </section>
+
+
+            {/* ── Clasificación ────────────────────────────────────────────────── */}
+            <section className="space-y-3">
+                <h2 className="text-lg font-semibold text-white">Clasificación actual</h2>
+                <p className="text-sm text-gray-400">
+                    Desde el menú, en el apartado <span className="text-white font-medium">Ranking usuarios</span>,
+                    puedes consultar en cualquier momento la clasificación actualizada de todos los participantes
+                    de la porra.
+                </p>
             </section>
         </div>
     );
