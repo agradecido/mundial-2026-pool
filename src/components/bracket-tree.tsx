@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { getFlag } from "@/lib/flags";
 import {
     D32_MATCHES, D16_MATCHES, QF_MATCHES, SF_MATCHES, FINAL_MATCH,
@@ -154,19 +155,56 @@ function MatchCell({
             className="relative flex flex-col justify-center pr-6 lg:pr-8 py-1"
             style={{ height: `calc(var(--s) * ${slotHeight / BASE_SLOT})` }}
         >
-            <div className="flex flex-col gap-0.5 lg:gap-1 p-1.5 lg:p-2 rounded-lg border border-white/[0.08] bg-white/[0.02] hover:border-white/[0.14] transition-colors">
-                <TeamRow matchId={matchId} team={teamA} isWinner={winner === teamA} onChampionPath={onChampionPath} onPick={onPick} locked={locked} />
-                <div className="flex items-center justify-center gap-1.5 py-0.5">
-                    <span className="text-[8px] lg:text-[9px] font-bold text-gray-700 tracking-wider">VS</span>
-                    {odds && (
-                        <span className="text-[8px] lg:text-[9px] text-gray-500 tabular-nums">
-                            {odds.first.toFixed(2)} · {odds.draw.toFixed(2)} · {odds.second.toFixed(2)}
-                        </span>
-                    )}
-                </div>
-                <TeamRow matchId={matchId} team={teamB} isWinner={winner === teamB} onChampionPath={onChampionPath} onPick={onPick} locked={locked} />
-            </div>
+            <MatchCard
+                matchId={matchId}
+                teamA={teamA}
+                teamB={teamB}
+                winner={winner}
+                onChampionPath={onChampionPath}
+                onPick={onPick}
+                locked={locked}
+                odds={odds}
+            />
             {connectorEl}
+        </div>
+    );
+}
+
+// ── MatchCard ────────────────────────────────────────────────────────────────
+// The visual card (two teams + VS/odds). Shared by the desktop tree (MatchCell)
+// and the mobile per-round view.
+
+function MatchCard({
+    matchId,
+    teamA,
+    teamB,
+    winner,
+    onChampionPath,
+    onPick,
+    locked,
+    odds,
+}: {
+    matchId: string;
+    teamA: string | undefined;
+    teamB: string | undefined;
+    winner: string | undefined;
+    onChampionPath: boolean;
+    onPick?: (matchId: string, team: string) => void;
+    locked?: boolean;
+    odds?: { first: number; draw: number; second: number } | null;
+}) {
+    return (
+        <div className="flex flex-col gap-0.5 lg:gap-1 p-1.5 lg:p-2 rounded-lg border border-white/[0.08] bg-white/[0.02] hover:border-white/[0.14] transition-colors">
+            <TeamRow matchId={matchId} team={teamA} isWinner={winner === teamA} onChampionPath={onChampionPath} onPick={onPick} locked={locked} />
+            <div className="flex items-center justify-center gap-1.5 py-0.5">
+                <span className="text-[8px] lg:text-[9px] font-bold text-gray-700 tracking-wider">VS</span>
+                {odds && (
+                    <span className="text-[8px] lg:text-[9px] text-gray-500 tabular-nums">
+                        {odds.first.toFixed(2)} · {odds.draw.toFixed(2)} · {odds.second.toFixed(2)}
+                    </span>
+                )}
+            </div>
+            <TeamRow matchId={matchId} team={teamB} isWinner={winner === teamB} onChampionPath={onChampionPath} onPick={onPick} locked={locked} />
         </div>
     );
 }
@@ -212,6 +250,9 @@ export default function BracketTree({
     const terceros = picks.terceros ?? [];
     const resultados = picks.resultados ?? {};
 
+    // Mobile per-round navigation
+    const [activeRound, setActiveRound] = useState<string>("D32");
+
     const championPath = buildChampionPath(resultados);
 
     // Resolve all matches
@@ -252,8 +293,96 @@ export default function BracketTree({
 
     const champion = resultados["FINAL"];
 
+    // Round config — drives the mobile per-round view
+    const rounds: Array<{ id: string; label: string; matches: typeof D32_MATCHES }> = [
+        { id: "D32", label: "16avos", matches: D32_MATCHES },
+        { id: "D16", label: "Octavos", matches: D16_MATCHES },
+        { id: "QF", label: "Cuartos", matches: QF_MATCHES },
+        { id: "SF", label: "Semis", matches: SF_MATCHES },
+        { id: "FINAL", label: "Final", matches: [FINAL_MATCH] },
+    ];
+    const activeMatches = rounds.find(r => r.id === activeRound)?.matches ?? D32_MATCHES;
+
+    const championBlock = (
+        <div className={`rounded-xl border px-4 py-4 flex flex-col items-center gap-2 ${champion
+            ? "border-[#00e87a]/40 bg-[#00e87a]/5"
+            : "border-dashed border-white/10 bg-white/[0.01]"
+            }`}>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-amber-400/80">
+                Campeón del mundo
+            </p>
+            {champion ? (
+                <>
+                    <span className="text-4xl leading-none">{getFlag(champion)}</span>
+                    <span className="text-base font-bold text-[#00e87a] text-center leading-tight">
+                        {champion}
+                    </span>
+                </>
+            ) : (
+                <>
+                    <span className="text-4xl leading-none text-gray-700">❓</span>
+                    <span className="text-[13px] text-gray-700 italic text-center">Sin pick</span>
+                </>
+            )}
+        </div>
+    );
+
     return (
-        <div className="overflow-x-auto scrollbar-none -mx-5 px-5 [--s:96px] lg:[--s:112px] [touch-action:pan-x] [-webkit-overflow-scrolling:touch]">
+      <>
+        {/* ── Mobile: per-round view ── */}
+        <div className="lg:hidden">
+            {/* Round selector */}
+            <div className="flex gap-1 overflow-x-auto scrollbar-none -mx-5 px-5 pb-3 [overscroll-behavior-x:contain]">
+                {rounds.map((r) => {
+                    const active = r.id === activeRound;
+                    const done = r.matches.every(m => resultados[m.id] !== undefined);
+                    return (
+                        <button
+                            key={r.id}
+                            type="button"
+                            onClick={() => setActiveRound(r.id)}
+                            className={`shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${active
+                                ? "bg-[#00e87a]/15 text-[#00e87a] border border-[#00e87a]/20"
+                                : done
+                                    ? "bg-white/5 text-gray-300 border border-white/[0.08]"
+                                    : "text-gray-500 border border-transparent"
+                                }`}
+                        >
+                            {done && !active && <span className="text-[#00e87a] text-[10px]">✓</span>}
+                            {r.label}
+                        </button>
+                    );
+                })}
+            </div>
+
+            {/* Matches for the active round */}
+            <div className="space-y-2">
+                {activeMatches.map((m) => {
+                    const { teamA, teamB, winner } = resolvedMatch(m.id, m.slotA, m.slotB);
+                    return (
+                        <MatchCard
+                            key={m.id}
+                            matchId={m.id}
+                            teamA={teamA}
+                            teamB={teamB}
+                            winner={winner}
+                            onChampionPath={championPath.has(m.id)}
+                            onPick={onPick}
+                            locked={locked}
+                            odds={oddsFor(teamA, teamB)}
+                        />
+                    );
+                })}
+            </div>
+
+            {/* Champion shown after the Final round */}
+            {activeRound === "FINAL" && (
+                <div className="mt-4">{championBlock}</div>
+            )}
+        </div>
+
+        {/* ── Desktop: full tree ── */}
+        <div className="hidden lg:block overflow-x-auto scrollbar-none -mx-5 px-5 [--s:96px] lg:[--s:112px] [touch-action:pan-x_pan-y] [overscroll-behavior-x:contain] [-webkit-overflow-scrolling:touch]">
             <div
                 className="flex gap-0 items-stretch"
                 style={{ minWidth: 1150, height: totalHeight }}
@@ -405,5 +534,6 @@ export default function BracketTree({
                 </div>
             </div>
         </div>
+      </>
     );
 }
