@@ -45,5 +45,6 @@ next-env.d.ts
 .vscode
 opencode.json
 
-/.claude/
+.claude
+
 
