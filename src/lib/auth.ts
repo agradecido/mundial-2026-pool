@@ -15,10 +15,16 @@ declare module "next-auth" {
 }
 
 
+const nextAuthUrl = process.env.NEXTAUTH_URL;
+if (!nextAuthUrl) {
+  console.warn("⚠️  NEXTAUTH_URL is not set. OAuth redirects may not work correctly.");
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
+  ...(nextAuthUrl && { url: nextAuthUrl }),
   callbacks: {
     async jwt({ token, user }) {
       if (user) {

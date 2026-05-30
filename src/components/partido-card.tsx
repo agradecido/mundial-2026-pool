@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { guardarPronostico } from "@/app/quiniela/actions";
 import { getFlag } from "@/lib/flags";
 import type { EstadoPartido, Fase } from "@prisma/client";
@@ -54,7 +54,7 @@ function CheckIcon() {
 }
 
 export default function PartidoCard({ partido, pronostico, odds }: Props) {
-  const locked = isLocked(partido.fechaPartido, partido.estado);
+  const [locked, setLocked] = useState(false);
   const [local, setLocal] = useState<string>(
     pronostico != null ? String(pronostico.golesLocal) : "0"
   );
@@ -64,6 +64,10 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
   const [saved, setSaved] = useState(!!pronostico);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+
+  useEffect(() => {
+    setLocked(isLocked(partido.fechaPartido, partido.estado));
+  }, [partido.fechaPartido, partido.estado]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

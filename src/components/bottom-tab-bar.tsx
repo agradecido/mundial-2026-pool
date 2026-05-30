@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -71,6 +72,11 @@ const tabs: TabItem[] = [
 
 export default function BottomTabBar() {
     const pathname = usePathname();
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     return (
         <nav className="sm:hidden fixed bottom-0 inset-x-0 z-50 border-t border-white/[0.07] bg-black/70 backdrop-blur-xl">
@@ -78,7 +84,7 @@ export default function BottomTabBar() {
             <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#00e87a]/30 to-transparent" />
             <div className="flex items-stretch justify-around pb-safe">
                 {tabs.map(({ href, label, icon, activeIcon }) => {
-                    const isActive = pathname === href || pathname.startsWith(href + "/");
+                    const isActive = mounted && (pathname === href || pathname.startsWith(href + "/"));
                     return (
                         <Link
                             key={href}
