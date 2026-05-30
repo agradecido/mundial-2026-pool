@@ -253,7 +253,7 @@ export default function BracketTree({
     const champion = resultados["FINAL"];
 
     return (
-        <div className="overflow-x-auto scrollbar-none -mx-5 px-5 [--s:96px] lg:[--s:112px]">
+        <div className="overflow-x-auto scrollbar-none -mx-5 px-5 [--s:96px] lg:[--s:112px] [touch-action:pan-x] [-webkit-overflow-scrolling:touch]">
             <div
                 className="flex gap-0 items-stretch"
                 style={{ minWidth: 1150, height: totalHeight }}
