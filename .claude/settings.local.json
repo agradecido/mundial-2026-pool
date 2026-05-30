@@ -20,7 +20,16 @@
       "Bash(chmod 600 ~/.claude/channels/telegram/.env)",
       "Read(/home/javi/.claude/channels/telegram/**)",
       "Skill(telegram:configure)",
-      "Bash(chmod 600 *)"
+      "Bash(chmod 600 *)",
+      "Bash(awk '{print $1}')",
+      "Bash(npx auth *)",
+      "Bash(kill 22193)",
+      "Bash(kill 22216)",
+      "Bash(pkill -f \"next dev\")",
+      "Bash(curl -s http://localhost:3000/login)",
+      "mcp__plugin_vercel_vercel__get_runtime_logs",
+      "mcp__plugin_vercel_vercel__get_project",
+      "mcp__plugin_vercel_vercel__list_deployments"
     ]
   }
 }
