@@ -183,6 +183,7 @@ function MatchCard({
     onPick,
     locked,
     odds,
+    cardClassName,
 }: {
     matchId: string;
     teamA: string | undefined;
@@ -192,9 +193,11 @@ function MatchCard({
     onPick?: (matchId: string, team: string) => void;
     locked?: boolean;
     odds?: { first: number; draw: number; second: number } | null;
+    /** Override the card skin (border/bg/padding). Used by the mobile list. */
+    cardClassName?: string;
 }) {
     return (
-        <div className="flex flex-col gap-0.5 lg:gap-1 p-1.5 lg:p-2 rounded-lg border border-white/[0.08] bg-white/[0.02] hover:border-white/[0.14] transition-colors">
+        <div className={cardClassName ?? "flex flex-col gap-0.5 lg:gap-1 p-1.5 lg:p-2 rounded-lg border border-white/[0.08] bg-white/[0.02] hover:border-white/[0.14] transition-colors"}>
             <TeamRow matchId={matchId} team={teamA} isWinner={winner === teamA} onChampionPath={onChampionPath} onPick={onPick} locked={locked} />
             <div className="flex items-center justify-center gap-1.5 py-0.5">
                 <span className="text-[10px] lg:text-[9px] font-bold text-gray-700 tracking-wider">VS</span>
@@ -356,7 +359,7 @@ export default function BracketTree({
             </div>
 
             {/* Matches for the active round */}
-            <div className="space-y-2">
+            <div className="space-y-3.5">
                 {activeMatches.map((m) => {
                     const { teamA, teamB, winner } = resolvedMatch(m.id, m.slotA, m.slotB);
                     return (
@@ -370,6 +373,7 @@ export default function BracketTree({
                             onPick={onPick}
                             locked={locked}
                             odds={oddsFor(teamA, teamB)}
+                            cardClassName="flex flex-col gap-1 p-3 rounded-xl border border-white/[0.14] bg-white/[0.05] shadow-md shadow-black/20 transition-colors"
                         />
                     );
                 })}
