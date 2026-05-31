@@ -136,25 +136,28 @@ export function cascadeAll(p: BracketPicks, allGrupos?: Record<string, string[]>
   const grupos = p.grupos ?? {};
   const terceros = p.terceros ?? [];
 
-  // Remove terceros that are already in a grupo's top-2
+  // Remove terceros that are already in a grupo's top-2 (they can't be a "third"
+  // and a qualifier at the same time).
   const grupoPicks = Object.values(grupos).flat();
   let newTerceros = terceros.filter(t => !grupoPicks.includes(t));
 
-  // Also remove terceros from groups that don't have exactly 2 qualified teams
-  // (only if we have allGrupos to determine which group each team belongs to)
+  // Drop unknown teams and keep at most one tercero per group (preserving order).
+  //
+  // NOTE: we intentionally DO NOT drop a tercero just because its group is
+  // temporarily missing one of its two qualifiers. Editing the qualifiers of a
+  // group passes through a transient "1 qualified" state, and pruning here would
+  // silently — and permanently — delete an already-chosen tercero. A tercero only
+  // becomes invalid if it turns into a top-2 pick (handled above) or duplicates a
+  // group (handled below); group completeness is validated separately in the UI
+  // and does not affect third-place scoring (which depends only on which groups
+  // contribute a third, not on how many qualifiers each group has).
   if (allGrupos) {
     const teamGroupMap = buildTeamGroupMap(allGrupos);
-    newTerceros = newTerceros.filter(t => {
-      const group = teamGroupMap[t];
-      if (!group) return false; // Unknown team, remove it
-      const qualified = grupos[group] ?? [];
-      return qualified.length === 2; // Keep only if group has exactly 2 qualified
-    });
-    // Deduplicate: at most one tercero per group (preserve selection order)
     const seenGroups = new Set<string>();
     newTerceros = newTerceros.filter(t => {
       const group = teamGroupMap[t];
-      if (seenGroups.has(group)) return false;
+      if (!group) return false; // Unknown team, remove it
+      if (seenGroups.has(group)) return false; // already a tercero from this group
       seenGroups.add(group);
       return true;
     });

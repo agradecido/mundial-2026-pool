@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useRef, useEffect } from "react";
+import { useState, useTransition, useRef, useEffect, useCallback } from "react";
 import { getFlag } from "@/lib/flags";
 import { guardarBracket } from "@/app/porra/actions";
 import {
@@ -70,68 +70,113 @@ export default function LlavesSelector({ grupos, initialPicks, locked, oddsMap }
     return Object.keys(picks.resultados ?? {}).length > 0;
   }
 
+  // ── Auto-save ───────────────────────────────────────────────────────────────
+  // Picks are persisted automatically (debounced) on every change, and flushed
+  // immediately when the user leaves the page, so selections — especially the
+  // best-thirds — can never be lost by navigating away without pressing "Guardar".
+
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingPicks = useRef<BracketPicks | null>(null);
+
+  const flushSave = useCallback(() => {
+    if (autoSaveTimer.current) {
+      clearTimeout(autoSaveTimer.current);
+      autoSaveTimer.current = null;
+    }
+    const toSave = pendingPicks.current;
+    if (toSave == null) return;
+    pendingPicks.current = null;
+    startTransition(async () => {
+      const res = await guardarBracket(toSave);
+      if (res?.error) {
+        // Keep the pending picks so a later flush retries the failed save.
+        pendingPicks.current = toSave;
+        setError(res.error);
+      } else {
+        setError(null);
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      }
+    });
+  }, []);
+
+  const scheduleSave = useCallback((next: BracketPicks) => {
+    if (locked) return;
+    pendingPicks.current = next;
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    autoSaveTimer.current = setTimeout(flushSave, 700);
+  }, [locked, flushSave]);
+
+  // Flush any pending save when the tab is hidden or the component unmounts
+  // (e.g. client-side navigation to another tab).
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") flushSave();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("pagehide", flushSave);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("pagehide", flushSave);
+      flushSave();
+    };
+  }, [flushSave]);
+
+  function applyPicks(next: BracketPicks) {
+    setPicks(next);
+    setSaved(false);
+    scheduleSave(next);
+  }
+
   // ── Toggles ────────────────────────────────────────────────────────────────
 
   function toggleGroup(group: string, team: string) {
     if (locked) return;
-    setPicks(prev => {
-      const cur = prev.grupos?.[group] ?? [];
-      const updated = cur.includes(team)
-        ? cur.filter(t => t !== team)
-        : cur.length < 2 ? [...cur, team] : cur;
-      return cascadeAll({ ...prev, grupos: { ...(prev.grupos ?? {}), [group]: updated } }, grupos);
-    });
-    setSaved(false);
+    const cur = picks.grupos?.[group] ?? [];
+    const updated = cur.includes(team)
+      ? cur.filter(t => t !== team)
+      : cur.length < 2 ? [...cur, team] : cur;
+    applyPicks(cascadeAll({ ...picks, grupos: { ...(picks.grupos ?? {}), [group]: updated } }, grupos));
   }
 
   function toggleTercero(team: string) {
     if (locked) return;
-    setPicks(prev => {
-      const cur = prev.terceros ?? [];
-      const updated = cur.includes(team)
-        ? cur.filter(t => t !== team)           // deselect: remove and shift ranks down
-        : cur.length < 8 ? [...cur, team] : cur; // select: append at next rank
-      return cascadeAll({ ...prev, terceros: updated }, grupos);
-    });
-    setSaved(false);
+    const cur = picks.terceros ?? [];
+    const updated = cur.includes(team)
+      ? cur.filter(t => t !== team)           // deselect: remove and shift ranks down
+      : cur.length < 8 ? [...cur, team] : cur; // select: append at next rank
+    applyPicks(cascadeAll({ ...picks, terceros: updated }, grupos));
   }
 
   function pickResult(matchId: string, team: string) {
     if (locked) return;
-    setPicks(prev => {
-      const newRes = { ...(prev.resultados ?? {}) };
-      if (newRes[matchId] === team) {
-        // toggle off
-        delete newRes[matchId];
-      } else {
-        newRes[matchId] = team;
-      }
-      // always clear descendants when a result changes
-      for (const desc of getDescendants(matchId)) delete newRes[desc];
-      return { ...prev, resultados: newRes };
-    });
-    setSaved(false);
+    const newRes = { ...(picks.resultados ?? {}) };
+    if (newRes[matchId] === team) {
+      // toggle off
+      delete newRes[matchId];
+    } else {
+      newRes[matchId] = team;
+    }
+    // always clear descendants when a result changes
+    for (const desc of getDescendants(matchId)) delete newRes[desc];
+    applyPicks({ ...picks, resultados: newRes });
   }
 
   // ── Clear / Save ──────────────────────────────────────────────────────────
 
   function clearPhase(ph: Phase) {
-    setPicks(prev => {
-      if (ph === "grupos") return cascadeAll({ ...prev, grupos: {} }, grupos);
-      if (ph === "terceros") return cascadeAll({ ...prev, terceros: [] }, grupos);
-      // arbol: wipe all knockout results
-      return { ...prev, resultados: {} };
-    });
-    setSaved(false);
+    let next: BracketPicks;
+    if (ph === "grupos") next = cascadeAll({ ...picks, grupos: {} }, grupos);
+    else if (ph === "terceros") next = cascadeAll({ ...picks, terceros: [] }, grupos);
+    // arbol: wipe all knockout results
+    else next = { ...picks, resultados: {} };
+    applyPicks(next);
   }
 
   function handleSave() {
     setError(null);
-    startTransition(async () => {
-      const res = await guardarBracket(picks);
-      if (res?.error) setError(res.error);
-      else { setSaved(true); setTimeout(() => setSaved(false), 2500); }
-    });
+    pendingPicks.current = picks;
+    flushSave();
   }
 
   // ── Derived ────────────────────────────────────────────────────────────────
@@ -254,7 +299,11 @@ export default function LlavesSelector({ grupos, initialPicks, locked, oddsMap }
           <div className="flex items-center gap-3 min-w-0">
             {error
               ? <span className="text-xs text-red-400">{error}</span>
-              : <span className="text-xs text-gray-600">{completedCount}/{PHASES.length} fases completadas</span>
+              : pending
+                ? <span className="text-xs text-gray-400 animate-pulse">Guardando…</span>
+                : saved
+                  ? <span className="text-xs text-[#00e87a]">✓ Guardado automáticamente</span>
+                  : <span className="text-xs text-gray-600">{completedCount}/{PHASES.length} fases completadas</span>
             }
             {!locked && hasPicksInPhase(phase) && (
               <button
