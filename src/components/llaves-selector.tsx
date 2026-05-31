@@ -352,11 +352,11 @@ function GruposPanel({ grupos, gruposLetters, picks, onToggle, locked }: GruposP
                       key={team}
                       onClick={() => onToggle(letra, team)}
                       disabled={locked || off}
-                      className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs transition-all ${on
+                      className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs transition-all duration-100 [touch-action:manipulation] ${on
                         ? "bg-[#00e87a]/15 border border-[#00e87a]/25 text-white"
                         : off
                           ? "opacity-25 cursor-not-allowed text-gray-600"
-                          : "border border-white/[0.06] text-gray-400 hover:border-white/15 hover:text-gray-200"
+                          : "border border-white/[0.06] text-gray-400 hover:border-white/15 hover:text-gray-200 active:scale-[0.97] active:bg-[#00e87a]/15 active:border-[#00e87a]/30"
                         }`}
                     >
                       <span className="text-sm">{getFlag(team)}</span>
@@ -416,11 +416,11 @@ function TercerosPanel({ available, selected, onToggle, locked }: TercerosProps)
               key={team}
               onClick={() => onToggle(team)}
               disabled={locked || off}
-              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all ${on
+              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all duration-100 [touch-action:manipulation] ${on
                 ? "bg-[#00e87a]/15 border border-[#00e87a]/25 text-white"
                 : off
                   ? "opacity-20 cursor-not-allowed border border-white/[0.04] text-gray-700"
-                  : "border border-white/[0.07] text-gray-400 hover:border-white/20 hover:text-white bg-white/[0.02]"
+                  : "border border-white/[0.07] text-gray-400 hover:border-white/20 hover:text-white bg-white/[0.02] active:scale-[0.97] active:bg-[#00e87a]/15 active:border-[#00e87a]/30"
                 }`}
             >
               <span className="text-lg shrink-0">{getFlag(team)}</span>
