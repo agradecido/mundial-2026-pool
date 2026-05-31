@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import Link from "next/link";
+import NavButton from "@/components/nav-button";
 
 export default async function Home() {
   const session = await auth();
@@ -19,18 +19,18 @@ export default async function Home() {
       </p>
 
       <div className="flex gap-3">
-        <Link
+        <NavButton
           href="/porra"
-          className="btn-save rounded-xl px-6 py-2.5 text-sm font-semibold inline-block"
+          className="btn-save rounded-xl px-6 py-2.5 text-sm font-semibold inline-flex items-center justify-center gap-2"
         >
           Porra
-        </Link>
-        <Link
+        </NavButton>
+        <NavButton
           href="/quiniela"
-          className="rounded-xl border border-white/10 bg-white/5 px-6 py-2.5 text-sm font-medium text-gray-300 hover:border-white/20 hover:text-white active:scale-[0.96] active:bg-white/10 active:border-white/30 [touch-action:manipulation] transition-all duration-100"
+          className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-6 py-2.5 text-sm font-medium text-gray-300 hover:border-white/20 hover:text-white active:scale-[0.96] active:bg-white/10 active:border-white/30 [touch-action:manipulation] transition-all duration-100"
         >
           Quiniela
-        </Link>
+        </NavButton>
       </div>
     </div>
   );

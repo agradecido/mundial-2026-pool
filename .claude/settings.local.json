@@ -29,7 +29,8 @@
       "Bash(curl -s http://localhost:3000/login)",
       "mcp__plugin_vercel_vercel__get_runtime_logs",
       "mcp__plugin_vercel_vercel__get_project",
-      "mcp__plugin_vercel_vercel__list_deployments"
+      "mcp__plugin_vercel_vercel__list_deployments",
+      "Bash(npx eslint *)"
     ]
   }
 }
