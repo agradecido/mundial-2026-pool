@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { getFlag } from "@/lib/flags";
 import {
     D32_MATCHES, D16_MATCHES, QF_MATCHES, SF_MATCHES, FINAL_MATCH,
@@ -255,6 +255,13 @@ export default function BracketTree({
 
     // Mobile per-round navigation
     const [activeRound, setActiveRound] = useState<string>("D32");
+    const mobileTopRef = useRef<HTMLDivElement>(null);
+
+    function goToRound(id: string) {
+        setActiveRound(id);
+        // Bring the round selector back into view so the new round starts from the top.
+        mobileTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
 
     const championPath = buildChampionPath(resultados);
 
@@ -304,7 +311,9 @@ export default function BracketTree({
         { id: "SF", label: "Semis", matches: SF_MATCHES },
         { id: "FINAL", label: "Final", matches: [FINAL_MATCH] },
     ];
-    const activeMatches = rounds.find(r => r.id === activeRound)?.matches ?? D32_MATCHES;
+    const activeIdx = rounds.findIndex(r => r.id === activeRound);
+    const activeMatches = rounds[activeIdx]?.matches ?? D32_MATCHES;
+    const nextRound = activeIdx >= 0 && activeIdx < rounds.length - 1 ? rounds[activeIdx + 1] : null;
 
     const championBlock = (
         <div className={`rounded-xl border px-4 py-4 flex flex-col items-center gap-2 ${champion
@@ -333,7 +342,7 @@ export default function BracketTree({
     return (
       <>
         {/* ── Mobile: per-round view ── */}
-        <div className="lg:hidden">
+        <div className="lg:hidden scroll-mt-20" ref={mobileTopRef}>
             {/* Round selector */}
             <div className="flex gap-1 overflow-x-auto scrollbar-none -mx-5 px-5 pb-3 [overscroll-behavior-x:contain]">
                 {rounds.map((r) => {
@@ -343,7 +352,7 @@ export default function BracketTree({
                         <button
                             key={r.id}
                             type="button"
-                            onClick={() => setActiveRound(r.id)}
+                            onClick={() => goToRound(r.id)}
                             className={`shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${active
                                 ? "bg-[#00e87a]/15 text-[#00e87a] border border-[#00e87a]/20"
                                 : done
@@ -378,6 +387,18 @@ export default function BracketTree({
                     );
                 })}
             </div>
+
+            {/* Go to next round */}
+            {nextRound && (
+                <button
+                    type="button"
+                    onClick={() => goToRound(nextRound.id)}
+                    className="mt-4 w-full flex items-center justify-center gap-2 rounded-xl border border-[#00e87a]/25 bg-[#00e87a]/10 px-4 py-3 text-sm font-semibold text-[#00e87a] active:scale-[0.98] active:bg-[#00e87a]/20 [touch-action:manipulation] transition-all duration-100"
+                >
+                    Siguiente: {nextRound.label}
+                    <span aria-hidden>→</span>
+                </button>
+            )}
 
             {/* Champion shown after the Final round */}
             {activeRound === "FINAL" && (
