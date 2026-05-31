@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import RankingView from "@/components/ranking-view";
 import PorraRanking from "@/components/porra-ranking";
@@ -37,43 +38,51 @@ export default function RankingTabs({
 }: Props) {
     const router = useRouter();
     const searchParams = useSearchParams();
+    const [isPending, startTransition] = useTransition();
+    const [pendingTab, setPendingTab] = useState<"quiniela" | "porra" | null>(null);
 
     const handleTabChange = (tab: "quiniela" | "porra") => {
+        if (tab === activeTab) return;
         const params = new URLSearchParams(searchParams);
         params.set("tab", tab);
-        router.push(`/ranking?${params.toString()}`);
+        setPendingTab(tab);
+        startTransition(() => {
+            router.push(`/ranking?${params.toString()}`);
+        });
     };
+
+    const tabs: Array<{ id: "quiniela" | "porra"; label: string }> = [
+        { id: "quiniela", label: "⚽ Quiniela" },
+        { id: "porra", label: "🏆 Porra" },
+    ];
 
     return (
         <div className="space-y-6">
             {/* Tabs */}
             <div className="flex gap-2 border-b border-white/[0.07]">
-                <button
-                    onClick={() => handleTabChange("quiniela")}
-                    className={`px-4 py-2.5 text-sm font-semibold transition-all relative
-            ${activeTab === "quiniela"
-                            ? "text-[#00e87a]"
-                            : "text-gray-500 hover:text-gray-300"
-                        }`}
-                >
-                    ⚽ Quiniela
-                    {activeTab === "quiniela" && (
-                        <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#00e87a]" />
-                    )}
-                </button>
-                <button
-                    onClick={() => handleTabChange("porra")}
-                    className={`px-4 py-2.5 text-sm font-semibold transition-all relative
-            ${activeTab === "porra"
-                            ? "text-[#00e87a]"
-                            : "text-gray-500 hover:text-gray-300"
-                        }`}
-                >
-                    🏆 Porra
-                    {activeTab === "porra" && (
-                        <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#00e87a]" />
-                    )}
-                </button>
+                {tabs.map(({ id, label }) => {
+                    const active = activeTab === id;
+                    const loading = isPending && pendingTab === id;
+                    return (
+                        <button
+                            key={id}
+                            onClick={() => handleTabChange(id)}
+                            className={`inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-all relative [touch-action:manipulation] active:scale-[0.97]
+            ${active ? "text-[#00e87a]" : "text-gray-500 hover:text-gray-300"}`}
+                        >
+                            {label}
+                            {loading && (
+                                <span
+                                    className="size-3.5 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent"
+                                    aria-hidden
+                                />
+                            )}
+                            {active && (
+                                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#00e87a]" />
+                            )}
+                        </button>
+                    );
+                })}
             </div>
 
             {/* Content */}
