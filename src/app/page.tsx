@@ -27,7 +27,7 @@ export default async function Home() {
         </Link>
         <Link
           href="/quiniela"
-          className="rounded-xl border border-white/10 bg-white/5 px-6 py-2.5 text-sm font-medium text-gray-300 hover:border-white/20 hover:text-white transition-colors"
+          className="rounded-xl border border-white/10 bg-white/5 px-6 py-2.5 text-sm font-medium text-gray-300 hover:border-white/20 hover:text-white active:scale-[0.96] active:bg-white/10 active:border-white/30 [touch-action:manipulation] transition-all duration-100"
         >
           Quiniela
         </Link>
