@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LinkSpinner } from "@/components/nav-button";
 
 export default function AyudaPage() {
     return (
@@ -17,21 +18,23 @@ export default function AyudaPage() {
                 <div className="grid gap-3 sm:grid-cols-2">
                     <Link
                         href="/porra"
-                        className="rounded-lg border border-[#00e87a]/20 bg-[#00e87a]/5 p-3 transition-all hover:border-[#00e87a]/40 hover:bg-[#00e87a]/10 hover:scale-[1.02]"
+                        className="relative rounded-lg border border-[#00e87a]/20 bg-[#00e87a]/5 p-3 transition-all hover:border-[#00e87a]/40 hover:bg-[#00e87a]/10 hover:scale-[1.02]"
                     >
                         <h3 className="text-sm font-semibold text-[#00e87a] mb-1">🏆 Porra</h3>
                         <p className="text-xs text-gray-400">
                             Predice el camino al título: rellena el bracket completo antes del inicio del torneo.
                         </p>
+                        <LinkSpinner className="absolute right-2 top-2 size-3.5 text-[#00e87a]" />
                     </Link>
                     <Link
                         href="/quiniela"
-                        className="rounded-lg border border-blue-400/20 bg-blue-400/5 p-3 transition-all hover:border-blue-400/40 hover:bg-blue-400/10 hover:scale-[1.02]"
+                        className="relative rounded-lg border border-blue-400/20 bg-blue-400/5 p-3 transition-all hover:border-blue-400/40 hover:bg-blue-400/10 hover:scale-[1.02]"
                     >
                         <h3 className="text-sm font-semibold text-blue-300 mb-1">⚽ Quiniela</h3>
                         <p className="text-xs text-gray-400">
                             Pronostica el marcador exacto de cada partido durante todo el torneo.
                         </p>
+                        <LinkSpinner className="absolute right-2 top-2 size-3.5 text-blue-300" />
                     </Link>
                 </div>
 
@@ -117,7 +120,10 @@ export default function AyudaPage() {
                             Una vez enviada tu porra, puedes ver qué predicen el resto de participantes: campeón favorito, finalistas, clasificados por grupo y más.
                         </p>
                     </div>
-                    <span className="text-gray-500 text-sm shrink-0 ml-3">→</span>
+                    <span className="shrink-0 ml-3 inline-flex items-center gap-2 text-gray-500 text-sm">
+                        <LinkSpinner className="size-3.5 text-[#00e87a]" />
+                        →
+                    </span>
                 </Link>
             </section>
 
@@ -241,21 +247,23 @@ export default function AyudaPage() {
                 <div className="grid gap-3 sm:grid-cols-2">
                     <Link
                         href="/ranking?tab=porra"
-                        className="glass-card p-4 transition-all hover:border-[#00e87a]/30 hover:scale-[1.02]"
+                        className="relative glass-card p-4 transition-all hover:border-[#00e87a]/30 hover:scale-[1.02]"
                     >
                         <h4 className="text-sm font-semibold text-[#00e87a] mb-2">Ranking Porra</h4>
                         <p className="text-xs text-gray-500">
                             Solo suma puntos del bracket completo (grupos + eliminatorias).
                         </p>
+                        <LinkSpinner className="absolute right-2 top-2 size-3.5 text-[#00e87a]" />
                     </Link>
                     <Link
                         href="/ranking?tab=quiniela"
-                        className="glass-card p-4 transition-all hover:border-blue-400/30 hover:scale-[1.02]"
+                        className="relative glass-card p-4 transition-all hover:border-blue-400/30 hover:scale-[1.02]"
                     >
                         <h4 className="text-sm font-semibold text-blue-300 mb-2">Ranking Quiniela</h4>
                         <p className="text-xs text-gray-500">
                             Suma puntos de todos los partidos + predicciones especiales.
                         </p>
+                        <LinkSpinner className="absolute right-2 top-2 size-3.5 text-blue-300" />
                     </Link>
                 </div>
             </section>

@@ -2,12 +2,16 @@
 
 import Link, { useLinkStatus } from "next/link";
 
-function PendingSpinner() {
+/**
+ * Drop inside any <Link> to show a spinner the moment a navigation starts.
+ * Renders nothing while idle. Must be a descendant of <Link>.
+ */
+export function LinkSpinner({ className }: { className?: string }) {
   const { pending } = useLinkStatus();
   if (!pending) return null;
   return (
     <span
-      className="size-4 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent"
+      className={`animate-spin rounded-full border-2 border-current border-t-transparent ${className ?? "size-4 shrink-0"}`}
       aria-hidden
     />
   );
@@ -25,7 +29,7 @@ export default function NavButton({
   return (
     <Link href={href} className={className}>
       {children}
-      <PendingSpinner />
+      <LinkSpinner />
     </Link>
   );
 }

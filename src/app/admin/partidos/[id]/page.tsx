@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import { LinkSpinner } from "@/components/nav-button";
 import PartidoEditForm from "@/components/admin/partido-edit-form";
 
 export default async function PartidoEditPage({
@@ -26,9 +27,10 @@ export default async function PartidoEditPage({
             <div className="flex items-center gap-3">
                 <Link
                     href="/admin/partidos"
-                    className="text-xs text-gray-500 hover:text-white transition-colors"
+                    className="inline-flex items-center gap-2 text-xs text-gray-500 hover:text-white transition-colors"
                 >
                     ← Volver
+                    <LinkSpinner className="size-3 shrink-0" />
                 </Link>
                 <span className="text-gray-700">·</span>
                 <h2 className="text-lg font-semibold text-white">

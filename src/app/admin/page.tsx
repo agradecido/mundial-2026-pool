@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import { LinkSpinner } from "@/components/nav-button";
 
 export default async function AdminDashboard() {
     const session = await auth();
@@ -50,8 +51,9 @@ export default async function AdminDashboard() {
                         </div>
                     );
                     return href ? (
-                        <Link key={label} href={href}>
+                        <Link key={label} href={href} className="relative block">
                             {card}
+                            <LinkSpinner className="absolute right-3 top-3 size-4 text-[#00e87a]" />
                         </Link>
                     ) : (
                         <div key={label}>{card}</div>
@@ -62,15 +64,17 @@ export default async function AdminDashboard() {
             <div className="flex gap-3 flex-wrap">
                 <Link
                     href="/admin/partidos"
-                    className="btn-save rounded-xl px-5 py-2.5 text-sm font-semibold inline-block"
+                    className="btn-save rounded-xl px-5 py-2.5 text-sm font-semibold inline-flex items-center justify-center gap-2"
                 >
                     Gestionar partidos
+                    <LinkSpinner className="size-4 shrink-0" />
                 </Link>
                 <Link
                     href="/admin/usuarios"
-                    className="rounded-xl border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-medium text-gray-300 hover:border-white/20 hover:text-white transition-colors"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-medium text-gray-300 hover:border-white/20 hover:text-white active:scale-[0.97] [touch-action:manipulation] transition-all duration-100"
                 >
                     Gestionar usuarios
+                    <LinkSpinner className="size-4 shrink-0" />
                 </Link>
             </div>
         </div>

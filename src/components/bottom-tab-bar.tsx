@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { LinkSpinner } from "@/components/nav-button";
 
 interface TabItem {
     href: string;
@@ -89,10 +90,13 @@ export default function BottomTabBar() {
                         <Link
                             key={href}
                             href={href}
-                            className={`flex flex-col items-center justify-center gap-1 flex-1 py-2.5 transition-colors ${isActive ? "text-[#00e87a]" : "text-gray-600 active:text-gray-300"
+                            className={`flex flex-col items-center justify-center gap-1 flex-1 py-2.5 transition-colors [touch-action:manipulation] ${isActive ? "text-[#00e87a]" : "text-gray-600 active:text-gray-300"
                                 }`}
                         >
-                            {isActive ? activeIcon : icon}
+                            <span className="relative inline-flex">
+                                {isActive ? activeIcon : icon}
+                                <LinkSpinner className="absolute inset-0 m-auto size-5 text-[#00e87a]" />
+                            </span>
                             <span className={`text-[10px] font-medium leading-none ${isActive ? "text-[#00e87a]" : "text-gray-600"}`}>
                                 {label}
                             </span>

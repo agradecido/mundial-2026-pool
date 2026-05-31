@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import { LinkSpinner } from "@/components/nav-button";
 import { getFlag } from "@/lib/flags";
 import type { Fase, EstadoPartido } from "@prisma/client";
 
@@ -102,9 +103,10 @@ export default async function AdminPartidosPage({
                 {(fase || q || estado) && (
                     <Link
                         href="/admin/partidos"
-                        className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-gray-500 hover:text-white transition-colors"
+                        className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-gray-500 hover:text-white transition-colors"
                     >
                         Limpiar
+                        <LinkSpinner className="size-3.5 shrink-0" />
                     </Link>
                 )}
             </form>
@@ -156,9 +158,10 @@ export default async function AdminPartidosPage({
                                 <td className="px-4 py-3 text-right">
                                     <Link
                                         href={`/admin/partidos/${p.id}`}
-                                        className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-xs text-gray-400 hover:text-white hover:border-white/20 transition-colors"
+                                        className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-xs text-gray-400 hover:text-white hover:border-white/20 transition-colors"
                                     >
                                         Editar
+                                        <LinkSpinner className="size-3 shrink-0" />
                                     </Link>
                                 </td>
                             </tr>

@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { LinkSpinner } from "@/components/nav-button";
 
 export default async function AdminLayout({
     children,
@@ -32,9 +33,10 @@ export default async function AdminLayout({
                     <Link
                         key={href}
                         href={href}
-                        className="rounded-lg px-4 py-2 text-gray-400 transition-colors hover:bg-white/5 hover:text-white"
+                        className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-gray-400 transition-colors hover:bg-white/5 hover:text-white"
                     >
                         {label}
+                        <LinkSpinner className="size-3.5 shrink-0" />
                     </Link>
                 ))}
             </nav>

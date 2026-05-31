@@ -1,6 +1,7 @@
 import { auth, signOut } from "@/lib/auth";
 import Link from "next/link";
 import UserMenu from "@/components/user-menu";
+import { LinkSpinner } from "@/components/nav-button";
 
 export default async function Header() {
   const session = await auth();
@@ -32,6 +33,7 @@ export default async function Header() {
               </span>
               <span className="text-white/90"> Mundial 2026</span>
             </span>
+            <LinkSpinner className="size-3.5 shrink-0 text-[#00e87a]" />
           </Link>
 
           {/* Nav — desktop only */}
@@ -40,9 +42,10 @@ export default async function Header() {
               <Link
                 key={href}
                 href={href}
-                className="rounded-lg px-3 py-1.5 text-gray-400 transition-colors hover:bg-white/5 hover:text-white"
+                className="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-gray-400 transition-colors hover:bg-white/5 hover:text-white"
               >
                 {label}
+                <LinkSpinner className="size-3.5 shrink-0" />
               </Link>
             ))}
           </nav>

@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import { LinkSpinner } from "@/components/nav-button";
 import { redirect } from "next/navigation";
 import type { BracketPicks } from "@/lib/bracket";
 import { D32_MATCHES, D16_MATCHES, QF_MATCHES, SF_MATCHES } from "@/lib/bracket";
@@ -165,15 +166,17 @@ export default async function PorraStatsPage() {
                 <div className="flex gap-2 shrink-0">
                     <Link
                         href="/porra/ranking"
-                        className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs text-gray-400 hover:border-white/20 hover:text-white transition-colors"
+                        className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs text-gray-400 hover:border-white/20 hover:text-white transition-colors"
                     >
                         ← Ranking
+                        <LinkSpinner className="size-3 shrink-0" />
                     </Link>
                     <Link
                         href="/porra"
-                        className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs text-gray-400 hover:border-white/20 hover:text-white transition-colors"
+                        className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs text-gray-400 hover:border-white/20 hover:text-white transition-colors"
                     >
                         Mi porra →
+                        <LinkSpinner className="size-3 shrink-0" />
                     </Link>
                 </div>
             </div>

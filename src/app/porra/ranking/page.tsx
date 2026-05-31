@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import { LinkSpinner } from "@/components/nav-button";
 import type { BracketPicks } from "@/lib/bracket";
 import { SF_MATCHES } from "@/lib/bracket";
 import { computeActualBracket, scoreBracket, bracketCompletion } from "@/lib/bracket-scoring";
@@ -97,15 +98,17 @@ export default async function PorraRankingPage() {
         <div className="flex gap-2 shrink-0">
           <Link
             href="/porra/stats"
-            className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs text-gray-400 hover:border-white/20 hover:text-white transition-colors"
+            className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs text-gray-400 hover:border-white/20 hover:text-white transition-colors"
           >
             📊 Consenso
+            <LinkSpinner className="size-3 shrink-0" />
           </Link>
           <Link
             href="/porra"
-            className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs text-gray-400 hover:border-white/20 hover:text-white transition-colors"
+            className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs text-gray-400 hover:border-white/20 hover:text-white transition-colors"
           >
             Mi porra →
+            <LinkSpinner className="size-3 shrink-0" />
           </Link>
         </div>
       </div>
@@ -120,8 +123,9 @@ export default async function PorraRankingPage() {
       ) : entries.length === 0 ? (
         <div className="glass-card p-16 text-center space-y-4">
           <p className="text-gray-600 text-sm">Nadie ha rellenado la porra todavía</p>
-          <Link href="/porra" className="inline-block text-sm text-[#00e87a] hover:underline">
+          <Link href="/porra" className="inline-flex items-center gap-2 text-sm text-[#00e87a] hover:underline">
             Rellenar mi porra →
+            <LinkSpinner className="size-3.5 shrink-0" />
           </Link>
         </div>
       ) : (
