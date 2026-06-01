@@ -10,6 +10,7 @@ export default async function Header() {
     { href: "/porra", label: "Porra" },
     { href: "/quiniela", label: "Quiniela" },
     { href: "/ranking", label: "Ranking" },
+    { href: "/porra/stats", label: "Consenso" },
     { href: "/ayuda", label: "Ayuda" },
     ...(session?.user?.role === "ADMIN"
       ? [{ href: "/admin", label: "Admin" }]

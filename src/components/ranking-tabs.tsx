@@ -101,7 +101,7 @@ export default function RankingTabs({
                             entries={preTournamentQuinielaEntries}
                             currentUserId={currentUserId}
                             mode="quiniela"
-                            subtitle="El ranking y las votaciones de cada jugador se mostrarán 16 minutos antes de que empiece el Mundial. Participantes ordenados por pronósticos de quiniela completados."
+                            subtitle="Puedes ver las predicciones de los participantes, pero podrán ser modificadas tantas veces se quiera hasta 15 minutos antes de que empiece el Mundial."
                         />
                     )}
                 </div>
@@ -118,7 +118,7 @@ export default function RankingTabs({
                             entries={preTournamentPorraEntries}
                             currentUserId={currentUserId}
                             mode="porra"
-                            subtitle="El ranking y las votaciones de cada jugador se mostrarán 16 minutos antes de que empiece el Mundial. Participantes ordenados por secciones de porra completadas."
+                            subtitle="Puedes ver las predicciones de los participantes, pero podrán ser modificadas tantas veces se quiera hasta 15 minutos antes de que empiece el Mundial."
                         />
                     ) : porraEntries.length === 0 ? (
                         <div className="glass-card p-16 text-center space-y-4">
