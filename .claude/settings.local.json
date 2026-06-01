@@ -31,7 +31,13 @@
       "mcp__plugin_vercel_vercel__get_project",
       "mcp__plugin_vercel_vercel__list_deployments",
       "Bash(npx eslint *)",
-      "Bash(echo \"exit: $?\")"
+      "Bash(echo \"exit: $?\")",
+      "Bash(chmod 644 ~/.ssh/id_rsa.pub)",
+      "Read(//home/javi/.ssh/**)",
+      "Bash(gh pr *)",
+      "Bash(gh api *)",
+      "mcp__plugin_vercel_vercel__list_teams",
+      "mcp__plugin_vercel_vercel__list_projects"
     ]
   }
 }

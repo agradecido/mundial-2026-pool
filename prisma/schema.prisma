@@ -57,11 +57,12 @@ model User {
   hasChosenNickname Boolean  @default(false)
   welcomeModalViews Int      @default(0)
 
-  accounts         Account[]
-  sessions         Session[]
-  pronosticos      Pronostico[]
-  prediccionFutura PrediccionFutura?
-  bracketPicks     PronosticoBracket?
+  accounts          Account[]
+  sessions          Session[]
+  pronosticos       Pronostico[]
+  prediccionFutura  PrediccionFutura?
+  bracketPicks      PronosticoBracket?
+  modalDismissals   ModalDismissal[]
 }
 
 enum Role {
@@ -138,4 +139,27 @@ model PrediccionFutura {
   puntosBota           Int     @default(0)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Modal {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  title     String
+  body      String
+  emoji     String   @default("📢")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  dismissals ModalDismissal[]
+}
+
+model ModalDismissal {
+  userId    String
+  modalId   String
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId],  references: [id], onDelete: Cascade)
+  modal Modal @relation(fields: [modalId], references: [id], onDelete: Cascade)
+
+  @@id([userId, modalId])
 }
