@@ -15,6 +15,7 @@ export default async function AdminLayout({
         { href: "/admin", label: "Dashboard", exact: true },
         { href: "/admin/partidos", label: "Partidos" },
         { href: "/admin/usuarios", label: "Usuarios" },
+        { href: "/admin/modales", label: "Modales" },
     ];
 
     return (

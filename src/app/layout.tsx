@@ -6,6 +6,8 @@ import Header from "@/components/header";
 import BottomTabBar from "@/components/bottom-tab-bar";
 import WelcomeModal from "@/components/welcome-modal";
 import NicknameModal from "@/components/nickname-modal";
+import { ModalAnnouncements } from "@/components/modal-announcements";
+import { getActiveModalsForUser } from "@/app/actions/modals";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -26,7 +28,9 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const modals = await getActiveModalsForUser();
+
   return (
     <html lang="es" className={`${spaceGrotesk.variable} ${geistMono.variable}`}>
       <body className="min-h-dvh flex flex-col">
@@ -37,6 +41,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <BottomTabBar />
         <WelcomeModal />
         <NicknameModal />
+        {modals.length > 0 && <ModalAnnouncements modals={modals} />}
       </body>
     </html>
   );
