@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import LlavesSelector from "@/components/llaves-selector";
+import ShareBracketButton from "@/components/share-bracket-button";
 import type { BracketPicks } from "@/lib/bracket";
 import { getMundialOdds, buildPairOddsLookup } from "@/lib/odds-api";
 
@@ -46,7 +47,10 @@ export default async function LlavesPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-white tracking-tight">Porra</h1>
+        <div className="flex items-start justify-between gap-4">
+          <h1 className="text-3xl font-bold text-white tracking-tight">Porra</h1>
+          <ShareBracketButton userName={session!.user.name ?? "tú"} />
+        </div>
         <p className="mt-1 text-sm text-gray-500">
           Predice el camino al título · cierra el{" "}
           {lockDate.toLocaleDateString("es-ES", {

@@ -251,7 +251,8 @@ export default function LlavesSelector({ grupos, initialPicks, locked, oddsMap }
           />
         )}
 
-        {phase === "arbol" && (
+        {/* Always mounted so bracket-capture-inner is always in the DOM for sharing */}
+        <div className={phase !== "arbol" ? "hidden" : ""}>
           <ArbolPanel
             picks={picks}
             onPick={pickResult}
@@ -261,7 +262,7 @@ export default function LlavesSelector({ grupos, initialPicks, locked, oddsMap }
             allGrupos={grupos}
             oddsMap={oddsMap}
           />
-        )}
+        </div>
       </div>
 
       {/* Phase nav */}
