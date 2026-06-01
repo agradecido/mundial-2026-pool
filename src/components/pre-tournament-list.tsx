@@ -16,10 +16,12 @@ interface Props {
     currentUserId: string;
     mode: "quiniela" | "porra";
     subtitle?: string;
+    onUserClick?: (userId: string) => void;
+    loadingUserId?: string | null;
 }
 
 
-export default function PreTournamentList({ entries, currentUserId, mode, subtitle }: Props) {
+export default function PreTournamentList({ entries, currentUserId, mode, subtitle, onUserClick, loadingUserId }: Props) {
     if (entries.length === 0) {
         return (
             <div className="glass-card p-16 text-center text-gray-600">
@@ -37,11 +39,15 @@ export default function PreTournamentList({ entries, currentUserId, mode, subtit
                 <ul className="divide-y divide-white/[0.04]">
                     {entries.map((u) => {
                         const isMe = u.id === currentUserId;
+                        const isLoading = loadingUserId === u.id;
                         return (
                             <li
                                 key={u.id}
-                                className={`flex items-center gap-3 px-4 py-3 transition-colors ${isMe ? "bg-[#00e87a]/[0.04]" : ""
-                                    }`}
+                                onClick={onUserClick ? () => onUserClick(u.id) : undefined}
+                                className={`flex items-center gap-3 px-4 py-3 transition-colors
+                                    ${isMe ? "bg-[#00e87a]/[0.04]" : ""}
+                                    ${onUserClick ? "cursor-pointer hover:bg-white/[0.03] select-none [touch-action:manipulation]" : ""}
+                                    ${isLoading ? "opacity-60" : ""}`}
                             >
                                 {u.image ? (
                                     <Image

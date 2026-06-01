@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import RankingView from "@/components/ranking-view";
-import PreTournamentList from "@/components/pre-tournament-list";
+import PreTournamentWithModal from "@/components/pre-tournament-with-modal";
 import type { PreTournamentEntry } from "@/components/pre-tournament-list";
 
 export default async function QuinielaRankingPage() {
@@ -84,7 +84,7 @@ export default async function QuinielaRankingPage() {
             </div>
 
             {!tournamentStarted ? (
-                <PreTournamentList
+                <PreTournamentWithModal
                     entries={preTournamentEntries}
                     currentUserId={currentUserId}
                     mode="quiniela"

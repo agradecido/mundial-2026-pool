@@ -7,7 +7,7 @@ import { SF_MATCHES } from "@/lib/bracket";
 import { computeActualBracket, scoreBracket, bracketCompletion } from "@/lib/bracket-scoring";
 import PorraRanking from "@/components/porra-ranking";
 import type { RankedPorraEntry } from "@/components/porra-ranking";
-import PreTournamentList from "@/components/pre-tournament-list";
+import PreTournamentWithModal from "@/components/pre-tournament-with-modal";
 import type { PreTournamentEntry } from "@/components/pre-tournament-list";
 
 export default async function PorraRankingPage() {
@@ -114,7 +114,7 @@ export default async function PorraRankingPage() {
       </div>
 
       {!tournamentStarted ? (
-        <PreTournamentList
+        <PreTournamentWithModal
           entries={preTournamentEntries}
           currentUserId={currentUserId}
           mode="porra"

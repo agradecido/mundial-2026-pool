@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import RankingView from "@/components/ranking-view";
 import PorraRanking from "@/components/porra-ranking";
 import type { RankedPorraEntry } from "@/components/porra-ranking";
-import PreTournamentList from "@/components/pre-tournament-list";
+import PreTournamentWithModal from "@/components/pre-tournament-with-modal";
 import type { PreTournamentEntry } from "@/components/pre-tournament-list";
 
 interface QuinielaEntry {
@@ -97,7 +97,7 @@ export default function RankingTabs({
                     {tournamentStarted ? (
                         <RankingView ranking={quinielaRanking} currentUserId={currentUserId} />
                     ) : (
-                        <PreTournamentList
+                        <PreTournamentWithModal
                             entries={preTournamentQuinielaEntries}
                             currentUserId={currentUserId}
                             mode="quiniela"
@@ -114,7 +114,7 @@ export default function RankingTabs({
                         </p>
                     </div>
                     {!tournamentStarted ? (
-                        <PreTournamentList
+                        <PreTournamentWithModal
                             entries={preTournamentPorraEntries}
                             currentUserId={currentUserId}
                             mode="porra"
