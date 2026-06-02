@@ -17,7 +17,7 @@ type Phase = "grupos" | "terceros" | "arbol";
 const PHASES: Array<{ id: Phase; label: string; hint: string }> = [
   { id: "grupos", label: "Grupos", hint: "2 por grupo" },
   { id: "terceros", label: "Mejores 3°", hint: "8 equipos" },
-  { id: "arbol", label: "Eliminatorias", hint: "árbol" },
+  { id: "arbol", label: "Eliminatorias", hint: "" },
 ];
 
 const PHASE_LABEL: Record<Phase, string> = {
@@ -181,6 +181,12 @@ export default function LlavesSelector({ grupos, initialPicks, locked, oddsMap }
 
   // ── Derived ────────────────────────────────────────────────────────────────
 
+  function isUnlocked(ph: Phase): boolean {
+    if (ph === "grupos") return true;
+    if (ph === "terceros") return isComplete("grupos");
+    return isComplete("grupos") && isComplete("terceros");
+  }
+
   const completedCount = PHASES.filter(p => isComplete(p.id)).length;
 
   // Terceros: teams that finished 3rd in their group (not in top-2 of any group)
@@ -208,21 +214,27 @@ export default function LlavesSelector({ grupos, initialPicks, locked, oddsMap }
         {PHASES.map((p) => {
           const done = isComplete(p.id);
           const active = p.id === phase;
+          const unlocked = isUnlocked(p.id);
           return (
             <button
               key={p.id}
               data-phase={p.id}
-              onClick={() => setPhase(p.id)}
-              className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${active
+              onClick={() => unlocked && setPhase(p.id)}
+              disabled={!unlocked}
+              title={!unlocked ? "Completa la fase anterior primero" : undefined}
+              className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-lg font-semibold transition-all ${active
                 ? "bg-[#00e87a]/15 text-[#00e87a] border border-[#00e87a]/20"
-                : done
-                  ? "bg-white/5 text-gray-300 border border-white/8"
-                  : "text-gray-600 hover:text-gray-400 border border-transparent"
+                : !unlocked
+                  ? "opacity-35 cursor-not-allowed text-gray-600 border border-transparent"
+                  : done
+                    ? "bg-white/5 text-gray-300 border border-white/8"
+                    : "text-gray-400 hover:text-gray-400 border border-transparent"
                 }`}
             >
               {done && !active && <span className="text-[#00e87a] text-[10px]">✓</span>}
+              {!unlocked && <span className="text-[10px]">🔒</span>}
               {p.label}
-              {!done && !active && (
+              {!done && !active && unlocked && (
                 <span className="text-[10px] text-gray-700">{p.hint}</span>
               )}
             </button>
@@ -273,7 +285,7 @@ export default function LlavesSelector({ grupos, initialPicks, locked, oddsMap }
             return i > 0 ? PHASES[i - 1].id : p;
           })}
           disabled={phase === "grupos"}
-          className="text-sm text-gray-600 hover:text-gray-300 disabled:opacity-0 transition-colors"
+          className="text-sm text-gray-400 hover:text-gray-300 disabled:opacity-0 transition-colors"
         >
           ← Anterior
         </button>
@@ -283,8 +295,9 @@ export default function LlavesSelector({ grupos, initialPicks, locked, oddsMap }
             const i = PHASES.findIndex(x => x.id === p);
             return i < PHASES.length - 1 ? PHASES[i + 1].id : p;
           })}
-          disabled={phase === "arbol"}
-          className="text-sm text-gray-600 hover:text-gray-300 disabled:opacity-0 transition-colors"
+          disabled={phase === "arbol" || (phase === "grupos" && !isComplete(phase))}
+          title={!isComplete(phase) ? "Completa esta fase para continuar" : undefined}
+          className="text-sm text-gray-400 hover:text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
         >
           Siguiente →
         </button>
@@ -292,7 +305,7 @@ export default function LlavesSelector({ grupos, initialPicks, locked, oddsMap }
 
       {/* Save bar */}
       {locked ? (
-        <p className="text-center text-xs text-gray-600 py-2">
+        <p className="text-center text-xs text-gray-400 py-2">
           🔒 La porra está cerrada — el torneo ya ha comenzado
         </p>
       ) : (
@@ -304,7 +317,7 @@ export default function LlavesSelector({ grupos, initialPicks, locked, oddsMap }
                 ? <span className="text-xs text-gray-400 animate-pulse">Guardando…</span>
                 : saved
                   ? <span className="text-xs text-[#00e87a]">✓ Guardado automáticamente</span>
-                  : <span className="text-xs text-gray-600">{completedCount}/{PHASES.length} fases completadas</span>
+                  : <span className="text-xs text-gray-400">{completedCount}/{PHASES.length} fases completadas</span>
             }
             {!locked && hasPicksInPhase(phase) && (
               <button
@@ -402,14 +415,14 @@ function GruposPanel({ grupos, gruposLetters, picks, onToggle, locked }: GruposP
                       key={team}
                       onClick={() => onToggle(letra, team)}
                       disabled={locked || off}
-                      className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs transition-all duration-100 [touch-action:manipulation] ${on
+                      className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-lg transition-all duration-100 [touch-action:manipulation] ${on
                         ? "bg-[#00e87a]/15 border border-[#00e87a]/25 text-white"
                         : off
-                          ? "opacity-25 cursor-not-allowed text-gray-600"
+                          ? "opacity-25 cursor-not-allowed text-gray-400"
                           : "border border-white/[0.06] text-gray-400 hover:border-white/15 hover:text-gray-200 active:scale-[0.97] active:bg-[#00e87a]/15 active:border-[#00e87a]/30"
                         }`}
                     >
-                      <span className="text-sm">{getFlag(team)}</span>
+                      <span className="text-[21px]">{getFlag(team)}</span>
                       <span className="truncate flex-1 text-left">{team}</span>
                       {orderLabel && (
                         <span className="text-[10px] text-[#00e87a] font-bold tabular-nums shrink-0">
@@ -441,18 +454,18 @@ function TercerosPanel({ available, selected, onToggle, locked }: TercerosProps)
   if (available.length === 0) {
     return (
       <div className="glass-card p-12 text-center">
-        <p className="text-gray-600 text-sm">Completa primero los 2 clasificados de cada grupo para poder seleccionar terceros</p>
+        <p className="text-gray-400 text-sm">Completa primero los 2 clasificados de cada grupo para poder seleccionar terceros</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-gray-500">
-        Selecciona los 8 mejores terceros <span className="text-gray-700">en orden</span> — el primero en que hagas click será el mejor tercero, el último el peor
+      <p className="text-sm text-gray-400">
+        Selecciona los 8 mejores terceros <span className="font-bold">en orden</span> — el primero en que hagas click será el mejor tercero, el último el peor
         <span className="ml-2 text-gray-700 tabular-nums">({selected.length}/8)</span>
       </p>
-      <p className="text-xs text-gray-600">
+      <p className="text-xs text-gray-400">
         💡 Solo aparecen los equipos de grupos con 2 clasificados definidos · máximo un tercero por grupo
       </p>
       <div className="grid gap-2 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
@@ -466,15 +479,15 @@ function TercerosPanel({ available, selected, onToggle, locked }: TercerosProps)
               key={team}
               onClick={() => onToggle(team)}
               disabled={locked || off}
-              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all duration-100 [touch-action:manipulation] ${on
+              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[21px] transition-all duration-100 [touch-action:manipulation] ${on
                 ? "bg-[#00e87a]/15 border border-[#00e87a]/25 text-white"
                 : off
                   ? "opacity-20 cursor-not-allowed border border-white/[0.04] text-gray-700"
                   : "border border-white/[0.07] text-gray-400 hover:border-white/20 hover:text-white bg-white/[0.02] active:scale-[0.97] active:bg-[#00e87a]/15 active:border-[#00e87a]/30"
                 }`}
             >
-              <span className="text-lg shrink-0">{getFlag(team)}</span>
-              <span className="truncate text-left text-xs flex-1">{team}</span>
+              <span className="text-[27px] shrink-0">{getFlag(team)}</span>
+              <span className="truncate text-left text-lg flex-1">{team}</span>
               {rankLabel && (
                 <span className="text-[10px] text-[#00e87a] font-bold tabular-nums shrink-0">
                   {rankLabel}
