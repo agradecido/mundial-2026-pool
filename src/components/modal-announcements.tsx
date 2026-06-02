@@ -56,9 +56,10 @@ export function ModalAnnouncements({ modals }: { modals: ModalData[] }) {
           <h2 className="text-xl font-bold text-white pr-6">{current.title}</h2>
         </div>
 
-        <p className="text-sm text-gray-400 leading-relaxed whitespace-pre-wrap text-center">
-          {current.body}
-        </p>
+        <div
+          className="modal-html text-sm text-gray-400 leading-relaxed text-center"
+          dangerouslySetInnerHTML={{ __html: current.body }}
+        />
 
         {queue.length > 1 && (
           <p className="text-xs text-gray-600 text-center">

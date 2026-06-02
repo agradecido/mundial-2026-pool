@@ -38,6 +38,15 @@ export async function resetModalForEveryone(modalId: string) {
   revalidatePath("/admin/modales");
 }
 
+export async function updateModal(
+  modalId: string,
+  data: { slug: string; title: string; body: string; emoji: string }
+) {
+  await requireAdmin();
+  await prisma.modal.update({ where: { id: modalId }, data });
+  revalidatePath("/admin/modales");
+}
+
 export async function resetModalForUser(modalId: string, userId: string) {
   await requireAdmin();
   await prisma.modalDismissal.deleteMany({ where: { modalId, userId } });
