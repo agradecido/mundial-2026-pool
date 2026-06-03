@@ -26,6 +26,10 @@ interface Props {
   odds?: { home: number; draw: number; away: number } | null;
 }
 
+function isPlaceholder(name: string): boolean {
+  return /^\d/.test(name) || name.includes("/") || name.startsWith("W(") || name.startsWith("L(");
+}
+
 function isLocked(fechaPartido: string, estado: EstadoPartido) {
   if (estado !== "PROGRAMADO") return true;
   return Date.now() >= new Date(fechaPartido).getTime() - 15 * 60 * 1000;
@@ -123,6 +127,7 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
   const flagVisitante = getFlag(partido.equipoVisitante);
 
   // ── Display helpers ────────────────────────────────────────────────
+  const teamsUnknown = isPlaceholder(partido.equipoLocal) || isPlaceholder(partido.equipoVisitante);
   const isFinished = partido.estado === "FINALIZADO";
   const showInputs = !locked;
   const localValue = pronostico != null ? pronostico.golesLocal : null;
@@ -147,6 +152,19 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
         🔒 Cerrado
       </span>
     ) : null;
+
+  if (teamsUnknown) {
+    return (
+      <div className="rounded-2xl border border-white/[0.04] bg-white/[0.01] px-4 py-3 flex items-center justify-between gap-4">
+        <span className="text-[10px] uppercase tracking-[0.18em] text-gray-700 tabular-nums shrink-0">
+          {formatFecha(partido.fechaPartido)}
+        </span>
+        <span className="text-[10px] uppercase tracking-wider text-gray-700 text-right">
+          Equipos por definir
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div className="relative overflow-hidden rounded-2xl border border-white/[0.07] bg-gradient-to-b from-white/[0.04] to-white/[0.015] transition-all hover:border-white/[0.14] hover:from-white/[0.06] hover:to-white/[0.02] group">
