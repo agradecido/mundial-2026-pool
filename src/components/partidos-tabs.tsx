@@ -28,6 +28,8 @@ export interface SerializedPartido {
   golesLocalReal: number | null;
   golesVisitanteReal: number | null;
   grupo: string | null;
+  estadio: string | null;
+  ciudad: string | null;
 }
 
 interface Props {

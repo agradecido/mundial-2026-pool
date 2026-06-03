@@ -77,6 +77,8 @@ model Partido {
   fechaPartido       DateTime
   fase               Fase
   grupo              String?
+  estadio            String?
+  ciudad             String?
   golesLocalReal     Int?
   golesVisitanteReal Int?
   estado             EstadoPartido @default(PROGRAMADO)

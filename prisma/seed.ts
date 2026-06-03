@@ -2,6 +2,7 @@ import { PrismaClient, Fase } from "@prisma/client";
 import { PrismaNeon } from "@prisma/adapter-neon";
 import { config } from "dotenv";
 import worldcupData from "./data/worldcup.json";
+import stadiumsData from "../worldcup.stadiums.json";
 
 config({ path: ".env.local" });
 config({ path: ".env" });
@@ -46,6 +47,19 @@ function parseDateTime(date: string, time: string): Date {
   return dt;
 }
 
+interface Stadium {
+  city: string;
+  name: string;
+  timezone: string;
+  cc: string;
+  capacity: number;
+  coords: string;
+}
+
+const stadiumByCity = new Map<string, Stadium>(
+  (stadiumsData as { stadiums: Stadium[] }).stadiums.map((s) => [s.city, s])
+);
+
 async function main() {
   const matches = (worldcupData as { matches: RawMatch[] }).matches;
 
@@ -53,13 +67,18 @@ async function main() {
 
   await prisma.partido.deleteMany();
 
-  const data = matches.map((m) => ({
-    equipoLocal: m.team1,
-    equipoVisitante: m.team2,
-    fechaPartido: parseDateTime(m.date, m.time),
-    fase: roundToFase(m.round, m.group),
-    grupo: m.group ? m.group.replace("Group ", "") : null,
-  }));
+  const data = matches.map((m) => {
+    const stadium = m.ground ? stadiumByCity.get(m.ground) : undefined;
+    return {
+      equipoLocal: m.team1,
+      equipoVisitante: m.team2,
+      fechaPartido: parseDateTime(m.date, m.time),
+      fase: roundToFase(m.round, m.group),
+      grupo: m.group ? m.group.replace("Group ", "") : null,
+      estadio: stadium?.name ?? null,
+      ciudad: m.ground ?? null,
+    };
+  });
 
   const result = await prisma.partido.createMany({ data });
   console.log(`✓ Created ${result.count} partidos`);

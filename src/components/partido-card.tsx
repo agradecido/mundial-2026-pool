@@ -15,6 +15,8 @@ interface Props {
     estado: EstadoPartido;
     golesLocalReal: number | null;
     golesVisitanteReal: number | null;
+    estadio: string | null;
+    ciudad: string | null;
   };
   pronostico: { golesLocal: number; golesVisitante: number } | null;
   odds?: { home: number; draw: number; away: number } | null;
@@ -56,10 +58,10 @@ function CheckIcon() {
 export default function PartidoCard({ partido, pronostico, odds }: Props) {
   const [locked, setLocked] = useState(false);
   const [local, setLocal] = useState<string>(
-    pronostico != null ? String(pronostico.golesLocal) : "0"
+    pronostico != null ? String(pronostico.golesLocal) : "0",
   );
   const [visitante, setVisitante] = useState<string>(
-    pronostico != null ? String(pronostico.golesVisitante) : "0"
+    pronostico != null ? String(pronostico.golesVisitante) : "0",
   );
   const [saved, setSaved] = useState(!!pronostico);
   const [error, setError] = useState<string | null>(null);
@@ -74,7 +76,11 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
     if (local === "" || visitante === "") return;
     setError(null);
     startTransition(async () => {
-      const res = await guardarPronostico(partido.id, Number(local), Number(visitante));
+      const res = await guardarPronostico(
+        partido.id,
+        Number(local),
+        Number(visitante),
+      );
       if (res.error) {
         setError(res.error);
       } else {
@@ -112,11 +118,18 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
       {/* Top accent line */}
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent group-hover:via-[#00e87a]/40 transition-colors" />
 
-      {/* Header: fecha centrada + badge de estado */}
+      {/* Header: fecha + sede + badge de estado */}
       <div className="flex items-center justify-between px-4 pt-3 pb-1">
-        <span className="text-[10px] uppercase tracking-[0.18em] text-gray-500 font-medium tabular-nums">
-          {formatFecha(partido.fechaPartido)}
-        </span>
+        <div className="flex flex-col gap-0.5">
+          <span className="text-[12px] uppercase tracking-[0.18em] text-gray-200 font-medium tabular-nums">
+            {formatFecha(partido.fechaPartido)}
+          </span>
+          {partido.estadio && (
+            <span className="text-[12px] text-gray-400 truncate max-w-[180px]">
+              {partido.estadio}, {partido.ciudad}
+            </span>
+          )}
+        </div>
         {statusBadge}
       </div>
 
@@ -160,11 +173,17 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
           {/* ── Separador central ───────────────────── */}
           <div className="flex flex-col items-center gap-2 pt-1">
             {/* Espaciado para alinear con bandera */}
-            <span className="text-4xl lg:text-5xl leading-none opacity-0 select-none" aria-hidden>
+            <span
+              className="text-4xl lg:text-5xl leading-none opacity-0 select-none"
+              aria-hidden
+            >
               ·
             </span>
             {/* Espaciado para alinear con nombre */}
-            <span className="text-sm lg:text-base leading-tight opacity-0 select-none" aria-hidden>
+            <span
+              className="text-sm lg:text-base leading-tight opacity-0 select-none"
+              aria-hidden
+            >
               vs
             </span>
             <span className="text-2xl lg:text-3xl font-bold text-gray-600 leading-[3rem] select-none">
@@ -234,12 +253,14 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
                 disabled={pending || local === "" || visitante === ""}
                 className="btn-save h-9 px-5 text-xs font-bold tracking-widest uppercase disabled:opacity-40"
               >
-                {pending ? <span className="animate-pulse">Guardando…</span> : "Guardar"}
+                {pending ? (
+                  <span className="animate-pulse">Guardando…</span>
+                ) : (
+                  "Guardar"
+                )}
               </button>
             )}
-            {error && (
-              <span className="text-xs text-red-400">{error}</span>
-            )}
+            {error && <span className="text-xs text-red-400">{error}</span>}
           </div>
         )}
       </form>
