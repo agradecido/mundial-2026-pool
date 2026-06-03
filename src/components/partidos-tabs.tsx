@@ -39,7 +39,7 @@ export interface SerializedPartido {
 
 interface Props {
   partidos: SerializedPartido[];
-  pronosticoMap: Record<string, { golesLocal: number; golesVisitante: number }>;
+  pronosticoMap: Record<string, { golesLocal: number; golesVisitante: number; puntosGanados: number }>;
   oddsMap?: Record<string, { home: number; draw: number; away: number }>;
 }
 

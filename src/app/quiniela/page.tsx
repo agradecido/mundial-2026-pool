@@ -15,7 +15,7 @@ export default async function PartidosPage() {
   ]);
 
   const pronosticoMap = Object.fromEntries(
-    pronosticos.map((p) => [p.partidoId, { golesLocal: p.golesLocal, golesVisitante: p.golesVisitante }])
+    pronosticos.map((p) => [p.partidoId, { golesLocal: p.golesLocal, golesVisitante: p.golesVisitante, puntosGanados: p.puntosGanados }])
   );
 
   const oddsByTeams = buildOddsMap(oddsEvents);

@@ -18,7 +18,11 @@ interface Props {
     estadio: string | null;
     ciudad: string | null;
   };
-  pronostico: { golesLocal: number; golesVisitante: number } | null;
+  pronostico: {
+    golesLocal: number;
+    golesVisitante: number;
+    puntosGanados: number;
+  } | null;
   odds?: { home: number; draw: number; away: number } | null;
 }
 
@@ -35,6 +39,32 @@ function formatFecha(iso: string) {
     minute: "2-digit",
     timeZone: "Europe/Madrid",
   });
+}
+
+function getTier(
+  puntos: number,
+  fase: Fase,
+): { label: string; color: string; glow: string } {
+  const mult = fase === "GRUPOS" ? 1 : 2;
+  if (puntos === 5 * mult)
+    return {
+      label: "Exacto",
+      color: "text-yellow-400",
+      glow: "rgba(250,204,21,0.5)",
+    };
+  if (puntos === 3 * mult)
+    return {
+      label: "Tendencia",
+      color: "text-[#00e87a]",
+      glow: "rgba(0,232,122,0.5)",
+    };
+  if (puntos === 1 * mult)
+    return {
+      label: "Consolación",
+      color: "text-sky-400",
+      glow: "rgba(56,189,248,0.4)",
+    };
+  return { label: "Fallo", color: "text-gray-600", glow: "transparent" };
 }
 
 function CheckIcon() {
@@ -93,9 +123,14 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
   const flagVisitante = getFlag(partido.equipoVisitante);
 
   // ── Display helpers ────────────────────────────────────────────────
+  const isFinished = partido.estado === "FINALIZADO";
   const showInputs = !locked;
   const localValue = pronostico != null ? pronostico.golesLocal : null;
   const visitanteValue = pronostico != null ? pronostico.golesVisitante : null;
+  const tier =
+    isFinished && pronostico != null
+      ? getTier(pronostico.puntosGanados, partido.fase)
+      : null;
 
   const statusBadge =
     partido.estado === "EN_PROGRESO" ? (
@@ -186,15 +221,23 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
             >
               vs
             </span>
-            <span className="text-2xl lg:text-3xl font-bold text-gray-600 leading-[3rem] select-none">
-              :
-            </span>
+            {isFinished ? (
+              <div className="flex flex-col items-center gap-0.5 leading-tight">
+                <span className="text-xl lg:text-2xl font-bold text-white tabular-nums">
+                  {partido.golesLocalReal}–{partido.golesVisitanteReal}
+                </span>
+                <span className="text-[9px] uppercase tracking-widest text-gray-600">
+                  resultado
+                </span>
+              </div>
+            ) : (
+              <span className="text-2xl lg:text-3xl font-bold text-gray-600 leading-[3rem] select-none">
+                :
+              </span>
+            )}
             {odds && (
               <span className="flex flex-col items-center gap-0.5">
-                <span className="text-[8px] font-bold uppercase tracking-widest text-gray-600">
-                  X
-                </span>
-                <span className="text-[10px] font-mono tabular-nums text-gray-500 bg-white/[0.03] border border-white/[0.06] rounded-full px-2 py-0.5">
+                <span className="text-[10px] font-mono tabular-nums text-gray-400 bg-white/[0.03] border border-white/[0.06] rounded-full px-2 py-0.5 mt-1">
                   {odds.draw.toFixed(2)}
                 </span>
               </span>
@@ -261,6 +304,34 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
               </button>
             )}
             {error && <span className="text-xs text-red-400">{error}</span>}
+          </div>
+        )}
+
+        {/* Puntos — solo cuando el partido ha finalizado */}
+        {isFinished && (
+          <div className="mt-3 flex items-center justify-center gap-2 min-h-[2rem]">
+            {pronostico != null && tier != null ? (
+              <>
+                <span
+                  className={`text-base font-bold tabular-nums ${tier.color}`}
+                  style={{ filter: `drop-shadow(0 0 6px ${tier.glow})` }}
+                >
+                  {pronostico.puntosGanados > 0
+                    ? `+${pronostico.puntosGanados}`
+                    : "0"}{" "}
+                  pts
+                </span>
+                <span
+                  className={`text-[10px] font-semibold uppercase tracking-wider opacity-70 ${tier.color}`}
+                >
+                  · {tier.label}
+                </span>
+              </>
+            ) : (
+              <span className="text-[10px] uppercase tracking-wider text-gray-600">
+                Sin pronóstico
+              </span>
+            )}
           </div>
         )}
       </form>
