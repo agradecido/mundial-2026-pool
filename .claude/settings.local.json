@@ -41,7 +41,8 @@
       "Bash(npm list *)",
       "Bash(xargs ls -la)",
       "Bash(vercel link *)",
-      "Bash(vercel env *)"
+      "Bash(vercel env *)",
+      "Bash(npx dotenv-cli *)"
     ]
   }
 }

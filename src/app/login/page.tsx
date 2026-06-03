@@ -1,5 +1,6 @@
 import { signIn, auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import EmailLoginForm from "@/components/email-login-form";
 
 export default async function LoginPage() {
   const session = await auth();
@@ -48,8 +49,16 @@ export default async function LoginPage() {
           </button>
         </form>
 
+        <div className="my-5 flex items-center gap-3">
+          <div className="h-px flex-1 bg-white/10" />
+          <span className="text-xs text-gray-600">o continúa con email</span>
+          <div className="h-px flex-1 bg-white/10" />
+        </div>
+
+        <EmailLoginForm />
+
         <p className="mt-6 text-xs text-gray-600">
-          Acceso libre a cualquier usuario con cuenta de Google. No se almacenará ningún dato personal más allá de tu correo y nombre de usuario, y solo se utilizarán para mostrar tu porra en el ranking.
+          Acceso libre a cualquier usuario. No se almacenará ningún dato personal más allá de tu correo y nombre de usuario, y solo se utilizarán para mostrar tu porra en el ranking.
         </p>
       </div>
     </main>
