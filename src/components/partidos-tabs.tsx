@@ -5,7 +5,12 @@ import PartidoCard from "@/components/partido-card";
 import type { EstadoPartido, Fase } from "@prisma/client";
 
 const FASES_ORDEN: Fase[] = [
-  "DIECISEISAVOS", "OCTAVOS", "CUARTOS", "SEMIFINAL", "TERCER_PUESTO", "FINAL",
+  "DIECISEISAVOS",
+  "OCTAVOS",
+  "CUARTOS",
+  "SEMIFINAL",
+  "TERCER_PUESTO",
+  "FINAL",
 ];
 
 const FASE_LABEL: Record<Fase, string> = {
@@ -60,32 +65,45 @@ function formatDayHeader(iso: string): string {
   });
 }
 
-export default function PartidosTabs({ partidos, pronosticoMap, oddsMap }: Props) {
+export default function PartidosTabs({
+  partidos,
+  pronosticoMap,
+  oddsMap,
+}: Props) {
   const [tab, setTab] = useState<"grupos" | "fecha">("fecha");
 
   // ── Grupos view ──────────────────────────────────────────────
   const grupos = partidos.filter((p) => p.fase === "GRUPOS");
   const eliminatorias = partidos.filter((p) => p.fase !== "GRUPOS");
 
-  const porGrupo = grupos.reduce<Record<string, SerializedPartido[]>>((acc, p) => {
-    const g = p.grupo ?? "?";
-    (acc[g] ??= []).push(p);
-    return acc;
-  }, {});
+  const porGrupo = grupos.reduce<Record<string, SerializedPartido[]>>(
+    (acc, p) => {
+      const g = p.grupo ?? "?";
+      (acc[g] ??= []).push(p);
+      return acc;
+    },
+    {},
+  );
 
-  const porFase = eliminatorias.reduce<Record<string, SerializedPartido[]>>((acc, p) => {
-    (acc[p.fase] ??= []).push(p);
-    return acc;
-  }, {});
+  const porFase = eliminatorias.reduce<Record<string, SerializedPartido[]>>(
+    (acc, p) => {
+      (acc[p.fase] ??= []).push(p);
+      return acc;
+    },
+    {},
+  );
 
   const gruposOrdenados = Object.keys(porGrupo).sort();
 
   // ── Fecha view ───────────────────────────────────────────────
-  const porFecha = partidos.reduce<Record<string, SerializedPartido[]>>((acc, p) => {
-    const key = getDayKey(p.fechaPartido);
-    (acc[key] ??= []).push(p);
-    return acc;
-  }, {});
+  const porFecha = partidos.reduce<Record<string, SerializedPartido[]>>(
+    (acc, p) => {
+      const key = getDayKey(p.fechaPartido);
+      (acc[key] ??= []).push(p);
+      return acc;
+    },
+    {},
+  );
 
   const fechasOrdenadas = Object.keys(porFecha).sort();
 
@@ -93,14 +111,15 @@ export default function PartidosTabs({ partidos, pronosticoMap, oddsMap }: Props
     <div className="space-y-8">
       {/* Tab selector */}
       <div className="flex gap-1 p-1 rounded-xl bg-white/[0.04] border border-white/[0.06] w-fit">
-        {(["grupos", "fecha"] as const).map((t) => (
+        {(["fecha", "grupos"] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${tab === t
-              ? "bg-[#00e87a]/15 text-[#00e87a] border border-[#00e87a]/20"
-              : "text-gray-500 hover:text-gray-300"
-              }`}
+            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
+              tab === t
+                ? "bg-[#00e87a]/15 text-[#00e87a] border border-[#00e87a]/20"
+                : "text-gray-500 hover:text-gray-300"
+            }`}
           >
             {t === "grupos" ? "Por grupos" : "Por fecha"}
           </button>
@@ -121,11 +140,18 @@ export default function PartidosTabs({ partidos, pronosticoMap, oddsMap }: Props
                     <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#00e87a]/10 text-xs font-bold text-[#00e87a]">
                       {letra}
                     </span>
-                    <span className="text-sm font-semibold text-gray-300">Grupo {letra}</span>
+                    <span className="text-sm font-semibold text-gray-300">
+                      Grupo {letra}
+                    </span>
                   </div>
                   <div className="space-y-1.5">
                     {porGrupo[letra].map((p) => (
-                      <PartidoCard key={`${p.id}-${pronosticoMap[p.id] ? 1 : 0}`} partido={p} pronostico={pronosticoMap[p.id] ?? null} odds={oddsMap?.[p.id] ?? null} />
+                      <PartidoCard
+                        key={`${p.id}-${pronosticoMap[p.id] ? 1 : 0}`}
+                        partido={p}
+                        pronostico={pronosticoMap[p.id] ?? null}
+                        odds={oddsMap?.[p.id] ?? null}
+                      />
                     ))}
                   </div>
                 </div>
@@ -138,13 +164,20 @@ export default function PartidosTabs({ partidos, pronosticoMap, oddsMap }: Props
               <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-gray-500">
                 {FASE_LABEL[fase]}
               </h2>
-              <div className={`glass-card p-4 ${fase === "FINAL" ? "border-[#00e87a]/20" : ""}`}>
+              <div
+                className={`glass-card p-4 ${fase === "FINAL" ? "border-[#00e87a]/20" : ""}`}
+              >
                 {fase === "FINAL" && (
                   <div className="absolute inset-x-0 top-0 h-px rounded-t-xl bg-gradient-to-r from-transparent via-[#00e87a]/40 to-transparent" />
                 )}
                 <div className="space-y-1.5">
                   {porFase[fase].map((p) => (
-                    <PartidoCard key={`${p.id}-${pronosticoMap[p.id] ? 1 : 0}`} partido={p} pronostico={pronosticoMap[p.id] ?? null} odds={oddsMap?.[p.id] ?? null} />
+                    <PartidoCard
+                      key={`${p.id}-${pronosticoMap[p.id] ? 1 : 0}`}
+                      partido={p}
+                      pronostico={pronosticoMap[p.id] ?? null}
+                      odds={oddsMap?.[p.id] ?? null}
+                    />
                   ))}
                 </div>
               </div>
@@ -166,7 +199,12 @@ export default function PartidosTabs({ partidos, pronosticoMap, oddsMap }: Props
                 <div className="glass-card p-4">
                   <div className="space-y-1.5">
                     {dayPartidos.map((p) => (
-                      <PartidoCard key={`${p.id}-${pronosticoMap[p.id] ? 1 : 0}`} partido={p} pronostico={pronosticoMap[p.id] ?? null} odds={oddsMap?.[p.id] ?? null} />
+                      <PartidoCard
+                        key={`${p.id}-${pronosticoMap[p.id] ? 1 : 0}`}
+                        partido={p}
+                        pronostico={pronosticoMap[p.id] ?? null}
+                        odds={oddsMap?.[p.id] ?? null}
+                      />
                     ))}
                   </div>
                 </div>

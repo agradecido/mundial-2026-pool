@@ -104,7 +104,7 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
         En juego
       </span>
     ) : partido.estado === "FINALIZADO" ? (
-      <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 bg-white/[0.04] border border-white/[0.08] rounded-full px-2 py-0.5">
+      <span className="text-[12px] font-semibold uppercase tracking-wider text-gray-400 bg-white/[0.04] border border-white/[0.08] rounded-full px-2 py-0.5">
         Final {partido.golesLocalReal}–{partido.golesVisitanteReal}
       </span>
     ) : locked ? (

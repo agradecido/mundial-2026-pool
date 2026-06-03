@@ -38,7 +38,8 @@
       "Bash(gh api *)",
       "mcp__plugin_vercel_vercel__list_teams",
       "mcp__plugin_vercel_vercel__list_projects",
-      "Bash(npm list *)"
+      "Bash(npm list *)",
+      "Bash(xargs ls -la)"
     ]
   }
 }
