@@ -44,6 +44,13 @@ export async function actualizarPartido(
         },
     });
 
+    // Crear pronóstico 0-0 para usuarios que no apostaron antes del cierre
+    const users = await prisma.user.findMany({ select: { id: true } });
+    await prisma.pronostico.createMany({
+        data: users.map((u) => ({ userId: u.id, partidoId: id, golesLocal: 0, golesVisitante: 0 })),
+        skipDuplicates: true,
+    });
+
     await recalcularPuntosPartido(id);
 
     revalidatePath("/admin/partidos");
