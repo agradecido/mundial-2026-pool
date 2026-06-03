@@ -468,7 +468,7 @@ function TercerosPanel({ available, selected, onToggle, locked }: TercerosProps)
       <p className="text-xs text-gray-400">
         💡 Solo aparecen los equipos de grupos con 2 clasificados definidos · máximo un tercero por grupo
       </p>
-      <div className="grid gap-2 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
+      <div className="grid gap-2 grid-cols-1 sm:grid-cols-3 lg:grid-cols-4">
         {available.map(team => {
           const rank = selected.indexOf(team); // 0-based, -1 if not selected
           const on = rank !== -1;
