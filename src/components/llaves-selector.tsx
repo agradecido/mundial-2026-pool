@@ -211,8 +211,36 @@ export default function LlavesSelector({ grupos, initialPicks, locked, oddsMap }
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
+  const allComplete = isComplete("grupos") && isComplete("terceros") && isComplete("arbol");
+
+  const pendingPhases = [
+    !isComplete("grupos") && "Grupos",
+    !isComplete("terceros") && "Mejores 3°",
+    !isComplete("arbol") && "Eliminatorias",
+  ].filter(Boolean) as string[];
+
   return (
     <div className="space-y-6">
+
+      {/* Estado de la porra */}
+      {!locked && (
+        allComplete ? (
+          <div className="flex items-center gap-2 rounded-xl border border-[#00e87a]/20 bg-[#00e87a]/5 px-4 py-2.5">
+            <span className="text-[#00e87a] text-sm">✓</span>
+            <span className="text-sm font-medium text-[#00e87a]">Tu porra está completada</span>
+          </div>
+        ) : (
+          <div className="flex items-start gap-2 rounded-xl border border-amber-400/20 bg-amber-400/5 px-4 py-2.5">
+            <span className="text-amber-400 text-sm mt-px">⚠</span>
+            <div>
+              <span className="text-sm font-medium text-amber-300">Tu porra está incompleta</span>
+              <span className="text-xs text-amber-400/70 ml-2">
+                Falta: {pendingPhases.join(" · ")}
+              </span>
+            </div>
+          </div>
+        )
+      )}
 
       {/* Phase stepper */}
       <div ref={stepperRef} className="flex gap-1 overflow-x-auto pb-1 scrollbar-none">
