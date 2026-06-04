@@ -7,6 +7,8 @@ import PorraRanking from "@/components/porra-ranking";
 import type { RankedPorraEntry } from "@/components/porra-ranking";
 import PreTournamentWithModal from "@/components/pre-tournament-with-modal";
 import type { PreTournamentEntry } from "@/components/pre-tournament-list";
+import GruposPorraRanking from "@/components/grupos-porra-ranking";
+import type { GrupoPorraEntry } from "@/components/grupos-porra-ranking";
 
 interface QuinielaEntry {
     id: string;
@@ -17,10 +19,13 @@ interface QuinielaEntry {
     tendencias: number;
 }
 
+type Tab = "quiniela" | "porra" | "grupos";
+
 interface Props {
-    activeTab: "quiniela" | "porra";
+    activeTab: Tab;
     quinielaRanking: QuinielaEntry[];
     porraEntries: RankedPorraEntry[];
+    gruposRanking: GrupoPorraEntry[];
     currentUserId: string;
     tournamentStarted: boolean;
     preTournamentQuinielaEntries: PreTournamentEntry[];
@@ -31,6 +36,7 @@ export default function RankingTabs({
     activeTab,
     quinielaRanking,
     porraEntries,
+    gruposRanking,
     currentUserId,
     tournamentStarted,
     preTournamentQuinielaEntries,
@@ -39,9 +45,9 @@ export default function RankingTabs({
     const router = useRouter();
     const searchParams = useSearchParams();
     const [isPending, startTransition] = useTransition();
-    const [pendingTab, setPendingTab] = useState<"quiniela" | "porra" | null>(null);
+    const [pendingTab, setPendingTab] = useState<Tab | null>(null);
 
-    const handleTabChange = (tab: "quiniela" | "porra") => {
+    const handleTabChange = (tab: Tab) => {
         if (tab === activeTab) return;
         const params = new URLSearchParams(searchParams);
         params.set("tab", tab);
@@ -51,9 +57,10 @@ export default function RankingTabs({
         });
     };
 
-    const tabs: Array<{ id: "quiniela" | "porra"; label: string }> = [
+    const tabs: Array<{ id: Tab; label: string }> = [
         { id: "quiniela", label: "⚽ Quiniela" },
         { id: "porra", label: "🏆 Porra" },
+        { id: "grupos", label: "👥 Porra grupos" },
     ];
 
     return (
@@ -105,7 +112,7 @@ export default function RankingTabs({
                         />
                     )}
                 </div>
-            ) : (
+            ) : activeTab === "porra" ? (
                 <div>
                     <div className="mb-6">
                         <h2 className="text-xl font-bold text-white">Ranking Porra</h2>
@@ -127,6 +134,16 @@ export default function RankingTabs({
                     ) : (
                         <PorraRanking entries={porraEntries} currentUserId={currentUserId} />
                     )}
+                </div>
+            ) : (
+                <div>
+                    <div className="mb-6">
+                        <h2 className="text-xl font-bold text-white">Porra grupos</h2>
+                        <p className="text-sm text-gray-500 mt-1">
+                            Clasificación de grupos por puntuación media de sus participantes
+                        </p>
+                    </div>
+                    <GruposPorraRanking grupos={gruposRanking} />
                 </div>
             )}
         </div>

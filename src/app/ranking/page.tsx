@@ -6,6 +6,7 @@ import { computeActualBracket, scoreBracket, bracketCompletion } from "@/lib/bra
 import type { RankedPorraEntry } from "@/components/porra-ranking";
 import RankingTabs from "@/components/ranking-tabs";
 import type { PreTournamentEntry } from "@/components/pre-tournament-list";
+import type { GrupoPorraEntry } from "@/components/grupos-porra-ranking";
 
 export default async function RankingPage({
   searchParams,
@@ -15,7 +16,7 @@ export default async function RankingPage({
   const session = await auth();
   const currentUserId = session!.user.id;
   const params = await searchParams;
-  const activeTab = params.tab === "porra" ? "porra" : "quiniela";
+  const activeTab = params.tab === "porra" ? "porra" : params.tab === "grupos" ? "grupos" : "quiniela";
 
   // Fetch data for Quiniela ranking
   const users = await prisma.user.findMany({
@@ -149,6 +150,22 @@ export default async function RankingPage({
       bracketDone: u.bracketDone,
     }));
 
+  // Compute grupos ranking using already-scored porraEntries
+  const userScoreMap = new Map(porraEntries.map(e => [e.user.id, e.score.total]));
+  const grupos = await prisma.grupo.findMany({
+    include: { miembros: { select: { userId: true } } },
+    orderBy: { nombre: "asc" },
+  });
+  const gruposRanking: GrupoPorraEntry[] = grupos
+    .map(g => {
+      const scores = g.miembros.map(m => userScoreMap.get(m.userId) ?? 0);
+      const total = scores.reduce((s, p) => s + p, 0);
+      const numMiembros = scores.length;
+      const media = numMiembros > 0 ? total / numMiembros : 0;
+      return { id: g.id, nombre: g.nombre, codigo: g.codigo, numMiembros, total, media };
+    })
+    .sort((a, b) => b.media - a.media || b.total - a.total || a.nombre.localeCompare(b.nombre));
+
   return (
     <div className="space-y-8">
       <div>
@@ -162,6 +179,7 @@ export default async function RankingPage({
         activeTab={activeTab}
         quinielaRanking={quinielaRanking}
         porraEntries={porraEntries}
+        gruposRanking={gruposRanking}
         currentUserId={currentUserId}
         tournamentStarted={tournamentStarted}
         preTournamentQuinielaEntries={preTournamentQuinielaEntries}
