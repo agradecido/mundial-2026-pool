@@ -191,3 +191,16 @@ model GrupoMiembro {
 
   @@id([grupoId, userId])
 }
+
+model PartidoHistorico {
+  id      String   @id @default(uuid())
+  torneo  String
+  fase    String
+  fecha   DateTime
+  equipo1 String
+  equipo2 String
+  goles1  Int
+  goles2  Int
+
+  @@index([equipo1, equipo2])
+}

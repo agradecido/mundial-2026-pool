@@ -11,7 +11,8 @@
     "seed": "tsx prisma/seed.ts",
     "seed:demo": "tsx prisma/seed-demo.ts",
     "seed:bracket-demo": "tsx prisma/seed-bracket-demo.ts",
-    "seed:clean": "tsx prisma/seed-clean-demo.ts"
+    "seed:clean": "tsx prisma/seed-clean-demo.ts",
+    "seed:historico": "tsx src/lib/seeds/historico.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",
