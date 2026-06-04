@@ -11,9 +11,10 @@ export async function loginWithCredentials(
 ) {
   const email = (formData.get("email") as string)?.trim();
   const password = formData.get("password") as string;
+  const callbackUrl = (formData.get("callbackUrl") as string) || "/";
 
   try {
-    await signIn("credentials", { email, password, redirectTo: "/" });
+    await signIn("credentials", { email, password, redirectTo: callbackUrl });
   } catch (error) {
     if (error instanceof AuthError) {
       return { error: "Email o contraseña incorrectos" };
@@ -30,6 +31,7 @@ export async function registerWithEmail(
   const name = (formData.get("name") as string)?.trim();
   const email = (formData.get("email") as string)?.trim().toLowerCase();
   const password = formData.get("password") as string;
+  const callbackUrl = (formData.get("callbackUrl") as string) || "/";
 
   if (!name || !email || !password) {
     return { error: "Todos los campos son obligatorios" };
@@ -54,7 +56,7 @@ export async function registerWithEmail(
   });
 
   try {
-    await signIn("credentials", { email, password, redirectTo: "/" });
+    await signIn("credentials", { email, password, redirectTo: callbackUrl });
   } catch (error) {
     if (error instanceof AuthError) {
       return { error: "Cuenta creada. Inicia sesión para continuar." };

@@ -9,6 +9,7 @@ export default async function Header() {
   const navLinks = [
     { href: "/porra", label: "Porra" },
     { href: "/quiniela", label: "Quiniela" },
+    { href: "/grupos", label: "Grupos" },
     { href: "/ranking", label: "Ranking" },
     { href: "/porra/stats", label: "Consenso" },
     { href: "/ayuda", label: "Ayuda" },

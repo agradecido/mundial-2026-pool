@@ -2,9 +2,15 @@ import { signIn, auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import EmailLoginForm from "@/components/email-login-form";
 
-export default async function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ callbackUrl?: string }>;
+}) {
   const session = await auth();
   if (session) redirect("/");
+
+  const { callbackUrl } = await searchParams;
 
   return (
     <main className="min-h-dvh flex items-center justify-center px-4"
@@ -32,7 +38,7 @@ export default async function LoginPage() {
         <form
           action={async () => {
             "use server";
-            await signIn("google", { redirectTo: "/" });
+            await signIn("google", { redirectTo: callbackUrl ?? "/" });
           }}
         >
           <button
@@ -55,7 +61,7 @@ export default async function LoginPage() {
           <div className="h-px flex-1 bg-white/10" />
         </div>
 
-        <EmailLoginForm />
+        <EmailLoginForm callbackUrl={callbackUrl} />
 
         <p className="mt-6 text-xs text-gray-600">
           Acceso libre a cualquier usuario. No se almacenará ningún dato personal más allá de tu correo y nombre de usuario, y solo se utilizarán para mostrar tu porra en el ranking.

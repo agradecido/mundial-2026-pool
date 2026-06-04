@@ -42,7 +42,13 @@
       "Bash(xargs ls -la)",
       "Bash(vercel link *)",
       "Bash(vercel env *)",
-      "Bash(npx dotenv-cli *)"
+      "Bash(npx dotenv-cli *)",
+      "mcp__plugin_vercel_vercel__get_deployment_build_logs",
+      "mcp__plugin_vercel_vercel__get_deployment",
+      "mcp__plugin_vercel_vercel__deploy_to_vercel",
+      "Bash(vercel deploy *)",
+      "Bash(mkdir -p /home/javi/sites/mundial-2026-pool/src/app/grupo/\\\\[codigo\\\\]/unirse)",
+      "Bash(mkdir -p /home/javi/sites/mundial-2026-pool/src/app/grupo/\\\\[codigo\\\\]/ajustes)"
     ]
   }
 }

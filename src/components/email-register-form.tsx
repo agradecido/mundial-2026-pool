@@ -4,11 +4,22 @@ import { useActionState } from "react";
 import { registerWithEmail } from "@/app/actions/auth";
 import Link from "next/link";
 
-export default function EmailRegisterForm() {
+interface Props {
+  callbackUrl?: string;
+}
+
+export default function EmailRegisterForm({ callbackUrl }: Props) {
   const [state, action, isPending] = useActionState(registerWithEmail, null);
+
+  const loginHref = callbackUrl
+    ? `/login?callbackUrl=${encodeURIComponent(callbackUrl)}`
+    : "/login";
 
   return (
     <form action={action} className="space-y-3">
+      {callbackUrl && (
+        <input type="hidden" name="callbackUrl" value={callbackUrl} />
+      )}
       <div>
         <input
           type="text"
@@ -52,7 +63,7 @@ export default function EmailRegisterForm() {
       </button>
       <p className="text-center text-xs text-gray-600">
         ¿Ya tienes cuenta?{" "}
-        <Link href="/login" className="text-[#00e87a]/70 hover:text-[#00e87a] transition-colors">
+        <Link href={loginHref} className="text-[#00e87a]/70 hover:text-[#00e87a] transition-colors">
           Inicia sesión
         </Link>
       </p>

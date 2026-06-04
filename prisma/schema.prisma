@@ -64,6 +64,8 @@ model User {
   prediccionFutura  PrediccionFutura?
   bracketPicks      PronosticoBracket?
   modalDismissals   ModalDismissal[]
+  gruposCreados     Grupo[]          @relation("GruposCreados")
+  grupos            GrupoMiembro[]
 }
 
 enum Role {
@@ -165,4 +167,26 @@ model ModalDismissal {
   modal Modal @relation(fields: [modalId], references: [id], onDelete: Cascade)
 
   @@id([userId, modalId])
+}
+
+model Grupo {
+  id        String   @id @default(cuid())
+  nombre    String
+  codigo    String   @unique
+  creadorId String
+  createdAt DateTime @default(now())
+
+  creador  User           @relation("GruposCreados", fields: [creadorId], references: [id], onDelete: Cascade)
+  miembros GrupoMiembro[]
+}
+
+model GrupoMiembro {
+  grupoId  String
+  userId   String
+  joinedAt DateTime @default(now())
+
+  grupo Grupo @relation(fields: [grupoId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId],  references: [id], onDelete: Cascade)
+
+  @@id([grupoId, userId])
 }
