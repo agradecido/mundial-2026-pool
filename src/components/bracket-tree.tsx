@@ -240,19 +240,21 @@ export default function BracketTree({
     locked,
     allGrupos,
     oddsMap,
+    initialRound,
 }: {
     picks: BracketPicks;
     onPick?: (matchId: string, team: string) => void;
     locked?: boolean;
     allGrupos?: Record<string, string[]>;
     oddsMap?: Record<string, { first: number; draw: number; second: number }>;
+    initialRound?: string;
 }) {
     const grupos = picks.grupos ?? {};
     const terceros = picks.terceros ?? [];
     const resultados = picks.resultados ?? {};
 
     // Mobile per-round navigation
-    const [activeRound, setActiveRound] = useState<string>("D32");
+    const [activeRound, setActiveRound] = useState<string>(initialRound ?? "D32");
     const mobileTopRef = useRef<HTMLDivElement>(null);
 
     function goToRound(id: string) {

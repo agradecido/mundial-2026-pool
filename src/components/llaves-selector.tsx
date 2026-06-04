@@ -36,15 +36,20 @@ interface Props {
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function LlavesSelector({ grupos, initialPicks, locked, oddsMap }: Props) {
+  const gruposLetters = Object.keys(grupos).sort();
+
+  const porraComplete =
+    gruposLetters.every(g => (initialPicks.grupos?.[g]?.length ?? 0) === 2) &&
+    (initialPicks.terceros?.length ?? 0) === 8 &&
+    ALL_MATCHES.every(m => initialPicks.resultados?.[m.id] !== undefined);
+
   const [picks, setPicks] = useState<BracketPicks>(initialPicks);
-  const [phase, setPhase] = useState<Phase>("grupos");
+  const [phase, setPhase] = useState<Phase>(porraComplete ? "arbol" : "grupos");
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [showClearModal, setShowClearModal] = useState(false);
   const stepperRef = useRef<HTMLDivElement>(null);
-
-  const gruposLetters = Object.keys(grupos).sort();
 
   useEffect(() => {
     const container = stepperRef.current;
@@ -273,6 +278,7 @@ export default function LlavesSelector({ grupos, initialPicks, locked, oddsMap }
             tercerosComplete={isComplete("terceros")}
             allGrupos={grupos}
             oddsMap={oddsMap}
+            initialRound={porraComplete ? "FINAL" : undefined}
           />
         </div>
       </div>
@@ -511,9 +517,10 @@ interface ArbolPanelProps {
   tercerosComplete: boolean;
   allGrupos: Record<string, string[]>;
   oddsMap?: Record<string, { first: number; draw: number; second: number }>;
+  initialRound?: string;
 }
 
-function ArbolPanel({ picks, onPick, locked, gruposComplete, tercerosComplete, allGrupos, oddsMap }: ArbolPanelProps) {
+function ArbolPanel({ picks, onPick, locked, gruposComplete, tercerosComplete, allGrupos, oddsMap, initialRound }: ArbolPanelProps) {
   const showWarning = !gruposComplete || !tercerosComplete;
   return (
     <div className="space-y-3">
@@ -523,7 +530,7 @@ function ArbolPanel({ picks, onPick, locked, gruposComplete, tercerosComplete, a
           ⚠️ Completa <strong>Grupos</strong> y <strong>Mejores 3°</strong> para que los emparejamientos de 16avos se resuelvan. Los slots sin resolver aparecerán como “Por definir”.
         </div>
       )}
-      <BracketTree picks={picks} onPick={onPick} locked={locked} allGrupos={allGrupos} oddsMap={oddsMap} />
+      <BracketTree picks={picks} onPick={onPick} locked={locked} allGrupos={allGrupos} oddsMap={oddsMap} initialRound={initialRound} />
     </div>
   );
 }
