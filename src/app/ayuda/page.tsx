@@ -182,26 +182,6 @@ export default function AyudaPage() {
             </section>
 
 
-            {/* ── Predicciones especiales (Quiniela) ───────────────────────── */}
-            <section className="space-y-4">
-                <h3 className="text-lg font-semibold text-white">Predicciones especiales (Quiniela)</h3>
-                <p className="text-sm text-gray-400">
-                    Estas predicciones se bloquean el día 1 del torneo y suman puntos al ranking de la Quiniela.
-                </p>
-                <div className="glass-card p-5 divide-y divide-white/[0.05]">
-                    {[
-                        ["Campeón", "20 pts"],
-                        ["Subcampeón", "15 pts"],
-                    ].map(([label, pts]) => (
-                        <div key={label} className="flex justify-between items-center py-2.5 text-sm">
-                            <span className="text-gray-300">{label}</span>
-                            <span className="font-bold text-[#00e87a] tabular-nums">{pts}</span>
-                        </div>
-                    ))}
-                </div>
-            </section>
-
-
             {/* ── Desempate ────────────────────────────────────────────────────── */}
             <section className="space-y-4">
                 <h3 className="text-lg font-semibold text-white">Criterios de desempate</h3>
@@ -261,7 +241,7 @@ export default function AyudaPage() {
                     >
                         <h4 className="text-sm font-semibold text-blue-300 mb-2">Ranking Quiniela</h4>
                         <p className="text-xs text-gray-500">
-                            Suma puntos de todos los partidos + predicciones especiales.
+                            Suma puntos de todos los partidos.
                         </p>
                         <LinkSpinner className="absolute right-2 top-2 size-3.5 text-blue-300" />
                     </Link>
