@@ -11,7 +11,7 @@ export default async function PartidoEditPage({
     params: Promise<{ id: string }>;
 }) {
     const session = await auth();
-    if (session?.user?.role !== "ADMIN") redirect("/");
+    if (session?.user?.role !== "ADMIN" && session?.user?.role !== "EDITOR") redirect("/");
 
     const { id } = await params;
     const partido = await prisma.partido.findUnique({ where: { id } });

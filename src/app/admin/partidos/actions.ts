@@ -6,9 +6,10 @@ import { recalcularPuntosPartido } from "@/lib/scoring";
 import { revalidatePath } from "next/cache";
 import type { EstadoPartido } from "@prisma/client";
 
-async function requireAdmin() {
+async function requireAdminOrEditor() {
     const session = await auth();
-    if (session?.user?.role !== "ADMIN") throw new Error("No autorizado");
+    const role = session?.user?.role;
+    if (role !== "ADMIN" && role !== "EDITOR") throw new Error("No autorizado");
 }
 
 export async function actualizarPartido(
@@ -20,7 +21,7 @@ export async function actualizarPartido(
         golesVisitanteReal: string;
     }
 ) {
-    await requireAdmin();
+    await requireAdminOrEditor();
 
     const gL = data.golesLocalReal.trim() === "" ? null : parseInt(data.golesLocalReal, 10);
     const gV =

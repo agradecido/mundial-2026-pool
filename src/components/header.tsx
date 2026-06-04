@@ -15,6 +15,8 @@ export default async function Header() {
     { href: "/ayuda", label: "Ayuda" },
     ...(session?.user?.role === "ADMIN"
       ? [{ href: "/admin", label: "Admin" }]
+      : session?.user?.role === "EDITOR"
+      ? [{ href: "/admin/partidos", label: "Admin" }]
       : []),
   ];
 

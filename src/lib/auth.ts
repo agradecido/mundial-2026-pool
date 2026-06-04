@@ -68,11 +68,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             const updated = await prisma.user.update({
               where: { id: userId },
               data: { ultimoAcceso: new Date(now) },
-              select: { name: true, image: true },
+              select: { name: true, image: true, role: true },
             });
             token.lastAccessSync = now;
             if (updated.name !== undefined) token.name = updated.name;
             if (updated.image !== undefined) token.picture = updated.image;
+            if (updated.role !== undefined) token.role = updated.role;
           } catch {
             // Ignore — don't break auth if DB is momentarily unavailable
           }

@@ -70,6 +70,7 @@ model User {
 
 enum Role {
   ADMIN
+  EDITOR
   JUGADOR
 }
 

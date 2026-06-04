@@ -140,6 +140,7 @@ export default function UsuariosTable({ usuarios, currentAdminId }: Props) {
                                     className="rounded-md border border-white/10 bg-[#0a0a0a] px-2 py-1 text-xs text-gray-300 focus:outline-none focus:border-white/30 disabled:opacity-50"
                                 >
                                     <option value="JUGADOR">Jugador</option>
+                                    <option value="EDITOR">Editor</option>
                                     <option value="ADMIN">Admin</option>
                                 </select>
                             </td>

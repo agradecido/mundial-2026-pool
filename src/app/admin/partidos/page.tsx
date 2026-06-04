@@ -34,7 +34,7 @@ export default async function AdminPartidosPage({
     searchParams: Promise<{ fase?: string; q?: string; estado?: string }>;
 }) {
     const session = await auth();
-    if (session?.user?.role !== "ADMIN") redirect("/");
+    if (session?.user?.role !== "ADMIN" && session?.user?.role !== "EDITOR") redirect("/");
 
     const params = await searchParams;
     const { fase, q, estado } = params;
