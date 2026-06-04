@@ -24,7 +24,7 @@ export default function GrupoInvitePanel({ codigo }: Props) {
       <p className="text-xs text-gray-500">Link de invitación</p>
       <div className="flex items-center gap-2">
         <code className="flex-1 truncate rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-gray-300">
-          /grupo/{codigo}/unirse
+          {url}
         </code>
         <button
           onClick={copy}
