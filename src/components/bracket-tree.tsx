@@ -72,15 +72,13 @@ function TeamRow({
     }
     const editable = !!onPick && !locked;
     const baseCls = `flex items-center gap-2 lg:gap-2 px-2.5 py-2 lg:px-2 lg:py-1 rounded-md transition-[background-color,border-color,transform] duration-100 w-full text-left border ${isWinner
-        ? isOnPath
-            ? "bg-[#00e87a]/10 border-[#00e87a]/40"
-            : "bg-white/[0.06] border-white/[0.18]"
+        ? "bg-[#00e87a]/10 border-[#00e87a]/40"
         : "bg-white/[0.015] border-white/[0.08]"
         } ${editable ? "cursor-pointer [touch-action:manipulation] hover:bg-white/[0.06] hover:border-white/[0.20] active:scale-[0.97] active:bg-[#00e87a]/20 active:border-[#00e87a]/50" : ""}`;
     const content = (
         <>
             <span className={`text-[27px] lg:text-[21px] leading-none shrink-0 transition-opacity ${isWinner ? "opacity-100" : "opacity-60"}`}>{getFlag(team)}</span>
-            <span className={`text-[21px] lg:text-[20px] truncate leading-none ${isWinner ? (isOnPath ? "text-[#00e87a]" : "text-white") : "text-gray-400"
+            <span className={`text-[21px] lg:text-[20px] truncate leading-none ${isWinner ? "text-[#00e87a]" : "text-gray-400"
                 }`}>
                 {team}
             </span>
