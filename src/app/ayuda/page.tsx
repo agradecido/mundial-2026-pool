@@ -10,6 +10,16 @@ export default function AyudaPage() {
             </div>
 
             {/* ── Intro ─────────────────────────────────────────────────────── */}
+            {/* Mensaje animador */}
+            <div className="rounded-lg border border-green-400/20 bg-green-400/5 px-4 py-3 space-y-2">
+                <p className="text-xs text-green-300 text-center font-semibold">
+                    ✨ ¡Juega sin miedo!
+                </p>
+                <p className="text-xs text-gray-400 text-center leading-relaxed">
+                    Puedes modificar tus predicciones hasta <strong className="text-white">15 minutos antes</strong> del inicio del Mundial (Porra) o de cada partido (Quiniela)
+                </p>
+            </div>
+
             <div className="glass-card p-5 space-y-3">
                 <p className="text-sm text-gray-300 leading-relaxed">
                     Esta plataforma tiene <strong className="text-white">dos competiciones independientes</strong> con
@@ -22,7 +32,7 @@ export default function AyudaPage() {
                     >
                         <h3 className="text-sm font-semibold text-[#00e87a] mb-1">🏆 Porra</h3>
                         <p className="text-xs text-gray-400">
-                            Predice el camino al título: rellena el bracket completo antes del inicio del torneo.
+                            Predice el camino al título: rellena el bracket completo antes del inicio del torneo. Las porras se pueden modificar hasta 15 minutos antes del inicio del Mundial, pero una vez arrancado el torneo ya no se pueden cambiar.
                         </p>
                         <LinkSpinner className="absolute right-2 top-2 size-3.5 text-[#00e87a]" />
                     </Link>
@@ -32,20 +42,10 @@ export default function AyudaPage() {
                     >
                         <h3 className="text-sm font-semibold text-blue-300 mb-1">⚽ Quiniela</h3>
                         <p className="text-xs text-gray-400">
-                            Pronostica el marcador exacto de cada partido durante todo el torneo.
+                            Pronostica el marcador exacto de cada partido, puedes ir rellenándolo jornada a jornada, no hace falta hacerlo todo de golpe.
                         </p>
                         <LinkSpinner className="absolute right-2 top-2 size-3.5 text-blue-300" />
                     </Link>
-                </div>
-
-                {/* Mensaje animador */}
-                <div className="rounded-lg border border-green-400/20 bg-green-400/5 px-4 py-3 space-y-2">
-                    <p className="text-xs text-green-300 text-center font-semibold">
-                        ✨ ¡Juega sin miedo!
-                    </p>
-                    <p className="text-xs text-gray-400 text-center leading-relaxed">
-                        Puedes modificar tus predicciones hasta <strong className="text-white">15 minutos antes</strong> del inicio del Mundial (Porra) o de cada partido (Quiniela)
-                    </p>
                 </div>
             </div>
 
@@ -214,6 +214,60 @@ export default function AyudaPage() {
                         en la <strong className="text-white">esquina superior derecha</strong> de la pantalla.
                     </p>
                 </div>
+            </section>
+
+
+            {/* ── Grupos ───────────────────────────────────────────────────── */}
+            <section className="space-y-5">
+                <div className="flex items-center gap-3">
+                    <div className="h-px flex-1 bg-gradient-to-r from-transparent to-white/10"></div>
+                    <h2 className="text-2xl font-bold text-white">👥 Grupos privados</h2>
+                    <div className="h-px flex-1 bg-gradient-to-l from-transparent to-white/10"></div>
+                </div>
+
+                <p className="text-sm text-gray-400 leading-relaxed">
+                    Además de la porra general, puedes crear <strong className="text-white">grupos privados</strong> para
+                    competir solo con tus amigos. Cada grupo tiene su propio ranking independiente basado en la puntuación de la Porra.
+                </p>
+
+                <div className="glass-card p-5 space-y-4">
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">¿Cómo funciona?</p>
+                    <div className="divide-y divide-white/[0.05]">
+                        {[
+                            ["Crear un grupo", "Ve a la sección Grupos y pulsa «Nuevo grupo». Elige un nombre y comparte el enlace de invitación con tus amigos."],
+                            ["Unirse a un grupo", "Accede al enlace de invitación que te hayan compartido. Puedes estar en varios grupos a la vez."],
+                            ["Ranking del grupo", "El ranking muestra la puntuación de la Porra (bracket) de cada miembro. Se actualiza en tiempo real."],
+                            ["Porra grupos", "En la sección Ranking › Porra grupos puedes ver todos los grupos ordenados por su puntuación media por participante."],
+                        ].map(([title, desc]) => (
+                            <div key={title} className="py-3 space-y-1">
+                                <p className="text-sm font-semibold text-white">{title}</p>
+                                <p className="text-xs text-gray-500 leading-relaxed">{desc}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="rounded-lg border border-amber-400/20 bg-amber-400/5 px-4 py-3">
+                    <p className="text-xs text-amber-300/90">
+                        <strong>Plazo:</strong> Solo puedes unirte a un grupo antes del inicio del torneo. Una vez arrancado el Mundial, los grupos quedan cerrados.
+                    </p>
+                </div>
+
+                <Link
+                    href="/grupos"
+                    className="flex items-center justify-between rounded-lg border border-purple-400/20 bg-purple-400/5 px-4 py-3 transition-all hover:border-purple-400/40 hover:bg-purple-400/10"
+                >
+                    <div>
+                        <p className="text-sm font-semibold text-purple-300">👥 Mis grupos</p>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                            Ver tus grupos, crear uno nuevo o unirte a uno existente.
+                        </p>
+                    </div>
+                    <span className="shrink-0 ml-3 inline-flex items-center gap-2 text-gray-500 text-sm">
+                        <LinkSpinner className="size-3.5 text-purple-300" />
+                        →
+                    </span>
+                </Link>
             </section>
 
 
