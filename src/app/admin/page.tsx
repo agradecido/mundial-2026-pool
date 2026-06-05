@@ -8,12 +8,13 @@ export default async function AdminDashboard() {
     const session = await auth();
     if (session?.user?.role !== "ADMIN") redirect("/");
 
-    const [totalUsuarios, totalPartidos, partidosFinalizados, totalPronosticos] =
+    const [totalUsuarios, totalPartidos, partidosFinalizados, totalPronosticos, totalGrupos] =
         await Promise.all([
             prisma.user.count(),
             prisma.partido.count(),
             prisma.partido.count({ where: { estado: "FINALIZADO" } }),
             prisma.pronostico.count(),
+            prisma.grupo.count(),
         ]);
 
     const stats = [
@@ -35,11 +36,17 @@ export default async function AdminDashboard() {
             href: null,
             icon: "📋",
         },
+        {
+            label: "Grupos privados",
+            value: totalGrupos,
+            href: "/admin/grupos",
+            icon: "🏠",
+        },
     ];
 
     return (
         <div className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {stats.map(({ label, value, href, icon }) => {
                     const card = (
                         <div className="rounded-xl border border-white/10 bg-white/5 p-5 flex items-center gap-4 transition-colors hover:border-white/20">
