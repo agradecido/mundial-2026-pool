@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 export interface GrupoPorraEntry {
   id: string;
   nombre: string;
@@ -39,10 +37,7 @@ export default function GruposPorraRanking({ grupos }: Props) {
       <ul className="divide-y divide-white/[0.04]">
         {grupos.map((g, i) => (
           <li key={g.id}>
-            <Link
-              href={`/grupo/${g.codigo}`}
-              className="grid grid-cols-[2rem_1fr_2.5rem_4rem_4rem] gap-x-4 px-5 py-3.5 items-center hover:bg-white/[0.03] transition-colors"
-            >
+            <div className="grid grid-cols-[2rem_1fr_2.5rem_4rem_4rem] gap-x-4 px-5 py-3.5 items-center">
               <span className="text-sm text-gray-600 font-mono">{i + 1}</span>
 
               <span className="text-sm font-semibold text-white truncate">{g.nombre}</span>
@@ -54,7 +49,7 @@ export default function GruposPorraRanking({ grupos }: Props) {
               <span className="text-sm font-semibold text-[#00e87a] text-right tabular-nums">
                 {g.media.toFixed(1)}
               </span>
-            </Link>
+            </div>
           </li>
         ))}
       </ul>
