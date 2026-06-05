@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import UsuariosTable from "@/components/admin/usuarios-table";
+import CrearUsuarioModal from "@/components/admin/crear-usuario-modal";
 
 export default async function AdminUsuariosPage() {
     const session = await auth();
@@ -45,8 +46,11 @@ export default async function AdminUsuariosPage() {
     return (
         <div className="space-y-5">
             <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-white">Usuarios</h2>
-                <span className="text-xs text-gray-500">{serialized.length} registrados</span>
+                <div>
+                    <h2 className="text-lg font-semibold text-white">Usuarios</h2>
+                    <span className="text-xs text-gray-500">{serialized.length} registrados</span>
+                </div>
+                <CrearUsuarioModal />
             </div>
 
             <UsuariosTable usuarios={serialized} currentAdminId={session.user.id} />
