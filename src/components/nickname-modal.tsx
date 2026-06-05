@@ -15,11 +15,12 @@ interface Props {
     onClose?: () => void;
     onSaved?: (name: string) => void;
     role?: string | null;
+    signOutAction?: () => Promise<void>;
 }
 
 const NICK_MAX = 24;
 
-export default function NicknameModal({ open: controlledOpen, onClose, onSaved, role }: Props) {
+export default function NicknameModal({ open: controlledOpen, onClose, onSaved, role, signOutAction }: Props) {
     const isControlled = controlledOpen !== undefined;
     const router = useRouter();
 
@@ -185,8 +186,8 @@ export default function NicknameModal({ open: controlledOpen, onClose, onSaved, 
                     </button>
                 </div>
 
-                {(role === "ADMIN" || role === "EDITOR") && (
-                    <div className="pt-1 border-t border-white/10">
+                <div className="pt-1 border-t border-white/10 space-y-2">
+                    {(role === "ADMIN" || role === "EDITOR") && (
                         <Link
                             href={role === "ADMIN" ? "/admin" : "/admin/partidos"}
                             onClick={close}
@@ -198,8 +199,22 @@ export default function NicknameModal({ open: controlledOpen, onClose, onSaved, 
                             </svg>
                             Panel de administración
                         </Link>
-                    </div>
-                )}
+                    )}
+
+                    {signOutAction && (
+                        <form action={signOutAction}>
+                            <button
+                                type="submit"
+                                className="flex items-center justify-center gap-2 w-full rounded-lg border border-red-900/50 bg-red-950/20 px-4 py-2.5 text-sm font-medium text-red-400 hover:bg-red-950/40 hover:text-red-300 transition-colors"
+                            >
+                                <svg className="size-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
+                                </svg>
+                                Cerrar sesión
+                            </button>
+                        </form>
+                    )}
+                </div>
             </div>
         </div>
     );
