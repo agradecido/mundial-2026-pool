@@ -20,7 +20,7 @@ export default function PrivacidadPage() {
       <Section title="1. Responsable del tratamiento">
         <ul className="space-y-1.5 text-sm text-gray-400">
           <li><span className="text-gray-500">Titular:</span> Persona física particular</li>
-          <li><span className="text-gray-500">Contacto:</span> <a href="mailto:agradecido@gmail.com" className="text-[#00e87a] hover:underline">agradecido@gmail.com</a></li>
+          <li><span className="text-gray-500">Contacto:</span> <a href="mailto:porramundial2026@outlook.com" className="text-[#00e87a] hover:underline">porramundial2026@outlook.com</a></li>
           <li><span className="text-gray-500">Dirección postal:</span> Disponible bajo solicitud justificada al correo anterior.</li>
         </ul>
       </Section>
@@ -74,7 +74,7 @@ export default function PrivacidadPage() {
           <li><strong className="text-gray-300">Portabilidad:</strong> recibir tus datos en formato estructurado para transferirlos a otro responsable.</li>
         </ul>
         <p className="mt-3 text-sm text-gray-400 leading-relaxed">
-          Para ejercer cualquiera de estos derechos, escríbenos a <a href="mailto:agradecido@gmail.com" className="text-[#00e87a] hover:underline">agradecido@gmail.com</a> indicando tu nombre de usuario y el derecho que deseas ejercer. También puedes reclamar ante la <strong className="text-gray-300">Agencia Española de Protección de Datos (AEPD)</strong> en <a href="https://www.aepd.es" className="text-[#00e87a] hover:underline" target="_blank" rel="noopener noreferrer">www.aepd.es</a>.
+          Para ejercer cualquiera de estos derechos, escríbenos a <a href="mailto:porramundial2026@outlook.com" className="text-[#00e87a] hover:underline">porramundial2026@outlook.com</a> indicando tu nombre de usuario y el derecho que deseas ejercer. También puedes reclamar ante la <strong className="text-gray-300">Agencia Española de Protección de Datos (AEPD)</strong> en <a href="https://www.aepd.es" className="text-[#00e87a] hover:underline" target="_blank" rel="noopener noreferrer">www.aepd.es</a>.
         </p>
       </Section>
 
