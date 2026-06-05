@@ -215,9 +215,19 @@ export default function NicknameModal({ open: controlledOpen, onClose, onSaved, 
                         </form>
                     )}
                 </div>
+
+                <p className="text-center">
+                    <Link
+                        href="/privacidad"
+                        onClick={close}
+                        className="text-xs text-gray-600 hover:text-gray-400 transition-colors"
+                    >
+                        Política de privacidad
+                    </Link>
+                </p>
             </div>
         </div>
     );
 
-    return createPortal(modal, document.body);
+    return createPortal(modal, document.body as Element);
 }
