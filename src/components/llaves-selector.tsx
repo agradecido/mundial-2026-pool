@@ -23,7 +23,7 @@ const PHASES: Array<{ id: Phase; label: string; hint: string }> = [
 const PHASE_LABEL: Record<Phase, string> = {
   grupos: "Selecciona los dos primeros clasificados de cada grupo",
   terceros: "Selecciona los 8 mejores terceros que crees que clasificarán",
-  arbol: "Haz click en un equipo para marcarlo como ganador. Click de nuevo para deshacer. Y cuando termines no te olvides de guardar tu porra :)",
+  arbol: "Haz click en un equipo para marcarlo como ganador",
 };
 
 interface Props {

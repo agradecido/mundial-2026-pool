@@ -23,8 +23,14 @@ El torneo cuenta con **48 selecciones y 104 partidos**, incluyendo la nueva rond
 ```
 src/
 ├── app/
+│   ├── actions/             # Server Actions globales
+│   │   ├── auth.ts          # Acciones de autenticación (sign in, registro)
+│   │   ├── grupos.ts        # Acciones de grupos privados
+│   │   ├── modals.ts        # Acciones de modales (dismiss, etc.)
+│   │   └── nickname.ts      # Acción para guardar el nickname del usuario
 │   ├── admin/               # Panel de administración (rol ADMIN o EDITOR)
 │   │   ├── emails/          # Envío masivo de emails vía Resend
+│   │   ├── grupos/          # Gestión de grupos privados (solo ADMIN)
 │   │   ├── modales/         # Gestión de modales de anuncios
 │   │   ├── partidos/        # Introducción de resultados de partidos
 │   │   └── usuarios/        # Gestión de usuarios y roles
@@ -37,6 +43,7 @@ src/
 │   ├── porra/               # Editor de bracket + ranking
 │   │   ├── ranking/         # Ranking global de la porra
 │   │   └── stats/           # Estadísticas del bracket
+│   ├── privacidad/          # Página de política de privacidad
 │   ├── quiniela/            # Editor de quiniela + ranking
 │   │   └── ranking/         # Ranking global de la quiniela
 │   ├── ranking/             # Vista unificada con tabs (Porra + Quiniela)
@@ -53,6 +60,9 @@ src/
     ├── auth.config.ts       # NextAuth config sin Prisma (para Edge / proxy.ts)
     ├── bracket.ts           # Tipos, constantes y lógica del bracket (ALL_MATCHES, etc.)
     ├── bracket-scoring.ts   # ARCHIVO CRÍTICO: puntuación de la porra
+    ├── email-template.ts    # Constructor de HTML para emails (usado por resend.ts)
+    ├── flags.ts             # Mapa de emojis de banderas por nombre de selección
+    ├── grupo-actions.ts     # Server Actions de lógica de grupos (crear, unirse, salir)
     ├── odds-api.ts          # Cliente The Odds API (cuotas de apuestas)
     ├── prisma.ts            # Singleton del cliente Prisma con PrismaNeon
     ├── resend.ts            # Cliente Resend para envío de emails
@@ -259,7 +269,7 @@ Si la rama `dev` no existe o necesita resetearse desde el estado actual de produ
 - **Variables de BD**: el prefijo `PORRA_` viene de la integración Neon en Vercel. En desarrollo, las variables apuntan a la rama Neon `dev` (ver sección 5). **No usar `vercel env pull --environment=production` para desarrollo local.**
 - **Cálculo de puntos**: se dispara cuando un admin/editor guarda el resultado de un partido; actualiza en batch `puntosGanados` en todos los `Pronostico` asociados. La lógica vive en `src/lib/scoring.ts`.
 - **Ranking**: sumar `puntosGanados` de `Pronostico` + puntos de `PrediccionFutura` por usuario; aplicar desempate en la query.
-- **`User.name`**: campo estándar de NextAuth (antes era `nombre`). En la UI se etiqueta como "Nombre" o "Nickname". El campo `hasChosenNickname` indica si el usuario ya eligió su nombre de display.
+- **`User.name`**: campo estándar de NextAuth (antes era `nombre`). En la UI se etiqueta como "Nombre" o "Nickname". El campo `hasChosenNickname` indica si el usuario ya eligió su nombre de display. El campo `welcomeModalViews` (Int, default 0) rastrea cuántas veces el usuario ha visto el modal de bienvenida.
 - **The Odds API**: se usa únicamente para mostrar cuotas de apuestas en el bracket. Plan gratuito (500 req/mes). Las respuestas se cachean mediante `fetch` con `next.revalidate`. Si `ODDS_API_KEY` no está configurada, el bracket funciona sin cuotas.
 - **Resend**: se usa para el envío masivo de emails desde `/admin/emails`. El dominio remitente es `porramundial.mdv.red`.
 - **Teams ocultos en eliminatorias**: los equipos de la fase eliminatoria no se muestran hasta que se conoce el resultado de la fase anterior (lógica en `bracket.ts` con `resolveSlot`).
