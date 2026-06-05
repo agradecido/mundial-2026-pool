@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { cambiarRolUsuario, eliminarUsuario, resetearModalBienvenida } from "@/app/admin/usuarios/actions";
+import { cambiarRolUsuario, eliminarUsuario } from "@/app/admin/usuarios/actions";
 import Image from "next/image";
 import type { Role } from "@prisma/client";
 
@@ -12,7 +12,6 @@ interface Usuario {
     image: string | null;
     role: Role;
     fechaRegistro: string; // ISO
-    welcomeModalViews: number;
     _count: { pronosticos: number };
     totalPuntos: number;
 }
@@ -55,13 +54,6 @@ export default function UsuariosTable({ usuarios, currentAdminId }: Props) {
         });
     }
 
-    function handleResetModal(userId: string) {
-        clearError(userId);
-        startTransition(async () => {
-            await resetearModalBienvenida(userId);
-        });
-    }
-
     return (
         <div className="overflow-x-auto rounded-xl border border-white/10">
             <table className="w-full text-sm">
@@ -71,7 +63,6 @@ export default function UsuariosTable({ usuarios, currentAdminId }: Props) {
                         <th className="px-4 py-3 font-medium hidden md:table-cell">Registro</th>
                         <th className="px-4 py-3 font-medium hidden sm:table-cell">Pronósticos</th>
                         <th className="px-4 py-3 font-medium hidden sm:table-cell">Puntos</th>
-                        <th className="px-4 py-3 font-medium hidden lg:table-cell">Modal</th>
                         <th className="px-4 py-3 font-medium">Rol</th>
                         <th className="px-4 py-3 font-medium"></th>
                     </tr>
@@ -115,22 +106,6 @@ export default function UsuariosTable({ usuarios, currentAdminId }: Props) {
                             </td>
                             <td className="px-4 py-3 text-white font-semibold hidden sm:table-cell">
                                 {u.totalPuntos}
-                            </td>
-                            <td className="px-4 py-3 hidden lg:table-cell">
-                                <div className="flex items-center gap-2">
-                                    <span className="text-gray-400 text-xs">{u.welcomeModalViews}/2</span>
-                                    {u.welcomeModalViews > 0 && (
-                                        <button
-                                            type="button"
-                                            onClick={() => handleResetModal(u.id)}
-                                            disabled={pending}
-                                            className="rounded px-2 py-0.5 text-xs text-blue-400 hover:text-blue-300 hover:bg-blue-400/10 transition-colors disabled:opacity-50"
-                                            title="Resetear contador modal"
-                                        >
-                                            Reset
-                                        </button>
-                                    )}
-                                </div>
                             </td>
                             <td className="px-4 py-3">
                                 <select

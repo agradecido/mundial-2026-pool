@@ -4,7 +4,6 @@ import { Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/header";
 import BottomTabBar from "@/components/bottom-tab-bar";
-import WelcomeModal from "@/components/welcome-modal";
 import NicknameModal from "@/components/nickname-modal";
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import { ModalAnnouncements } from "@/components/modal-announcements";
@@ -40,7 +39,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           {children}
         </main>
         <BottomTabBar />
-        <WelcomeModal />
         <NicknameModal />
         <SpeedInsights />
         {modals.length > 0 && <ModalAnnouncements modals={modals} />}
