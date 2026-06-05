@@ -106,6 +106,7 @@ export default async function GrupoPage({
     }));
 
   const isCreador = grupo.creadorId === session.user.id;
+  const isAdmin = session.user.role === "ADMIN";
 
   return (
     <div className="space-y-8">
@@ -122,8 +123,8 @@ export default async function GrupoPage({
           </p>
         </div>
         <div className="flex gap-2 shrink-0">
-          {isCreador && !tournamentStarted && (
-            <GrupoInviteModal codigo={codigo} />
+          {(isCreador || isAdmin) && (
+            <GrupoInviteModal codigo={codigo} isAdmin={isAdmin} />
           )}
           {isCreador && (
             <Link
