@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import {
     getNicknameStatus,
@@ -104,7 +105,7 @@ export default function NicknameModal({ open: controlledOpen, onClose, onSaved }
         });
     };
 
-    return (
+    const modal = (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 sm:p-6">
             <div
                 className="absolute inset-0 bg-black/70 backdrop-blur-sm"
@@ -190,4 +191,6 @@ export default function NicknameModal({ open: controlledOpen, onClose, onSaved }
             </div>
         </div>
     );
+
+    return createPortal(modal, document.body);
 }
