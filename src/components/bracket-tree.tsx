@@ -65,8 +65,8 @@ function TeamRow({
     if (!team) {
         return (
             <div className="flex items-center gap-2 lg:gap-2 px-2.5 py-2 lg:px-2 lg:py-1 border border-dashed border-white/[0.12] rounded-md">
-                <span className="text-gray-700 text-[21px] lg:text-[20px] opacity-40">?</span>
-                <span className="text-gray-700 text-[21px] lg:text-[20px] truncate">Por definir</span>
+                <span className="text-gray-700 text-[21px] opacity-40">?</span>
+                <span className="text-gray-700 text-lg truncate">Por definir</span>
             </div>
         );
     }
@@ -77,8 +77,8 @@ function TeamRow({
         } ${editable ? "cursor-pointer [touch-action:manipulation] hover:bg-white/[0.06] hover:border-white/[0.20] active:scale-[0.97] active:bg-[#00e87a]/20 active:border-[#00e87a]/50" : ""}`;
     const content = (
         <>
-            <span className={`text-[27px] lg:text-[21px] leading-none shrink-0 transition-opacity ${isWinner ? "opacity-100" : "opacity-60"}`}>{getFlag(team)}</span>
-            <span className={`text-[21px] lg:text-[20px] truncate leading-none ${isWinner ? "text-[#00e87a]" : "text-gray-400"
+            <span className={`text-[21px] leading-none shrink-0 transition-opacity ${isWinner ? "opacity-100" : "opacity-60"}`}>{getFlag(team)}</span>
+            <span className={`text-lg truncate leading-none ${isWinner ? "text-[#00e87a]" : "text-gray-400"
                 }`}>
                 {team}
             </span>

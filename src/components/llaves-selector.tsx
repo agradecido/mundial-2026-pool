@@ -255,7 +255,7 @@ export default function LlavesSelector({ grupos, initialPicks, locked, oddsMap }
               onClick={() => unlocked && setPhase(p.id)}
               disabled={!unlocked}
               title={!unlocked ? "Completa la fase anterior primero" : undefined}
-              className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-lg font-semibold transition-all ${active
+              className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-base font-semibold transition-all ${active
                 ? "bg-[#00e87a]/15 text-[#00e87a] border border-[#00e87a]/20"
                 : !unlocked
                   ? "opacity-35 cursor-not-allowed text-gray-600 border border-transparent"
@@ -520,7 +520,7 @@ function TercerosPanel({ available, selected, onToggle, locked }: TercerosProps)
                   : "border border-white/[0.07] text-gray-400 hover:border-white/20 hover:text-white bg-white/[0.02] active:scale-[0.97] active:bg-[#00e87a]/15 active:border-[#00e87a]/30"
                 }`}
             >
-              <span className="text-[27px] shrink-0">{getFlag(team)}</span>
+              <span className="text-[21px] shrink-0">{getFlag(team)}</span>
               <span className="truncate text-left text-lg flex-1">{team}</span>
               {rankLabel && (
                 <span className="text-[10px] text-[#00e87a] font-bold tabular-nums shrink-0">
