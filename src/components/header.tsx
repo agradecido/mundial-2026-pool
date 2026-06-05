@@ -59,6 +59,7 @@ export default async function Header() {
             <UserMenu
               name={session.user.name}
               image={session.user.image}
+              role={session.user.role}
               signOutAction={async () => {
                 "use server";
                 await signOut({ redirectTo: "/login" });

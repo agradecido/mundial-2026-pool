@@ -7,10 +7,11 @@ import NicknameModal from "@/components/nickname-modal";
 interface Props {
     name: string | null | undefined;
     image: string | null | undefined;
+    role?: string | null;
     signOutAction: () => Promise<void>;
 }
 
-export default function UserMenu({ name, image, signOutAction }: Props) {
+export default function UserMenu({ name, image, role, signOutAction }: Props) {
     const [editOpen, setEditOpen] = useState(false);
     const [displayName, setDisplayName] = useState(name ?? "—");
 
@@ -50,6 +51,7 @@ export default function UserMenu({ name, image, signOutAction }: Props) {
                 open={editOpen}
                 onClose={() => setEditOpen(false)}
                 onSaved={(newName) => setDisplayName(newName || "—")}
+                role={role}
             />
         </>
     );
