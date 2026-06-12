@@ -12,30 +12,21 @@ export default function AyudaPage() {
             {/* ── Intro ─────────────────────────────────────────────────────── */}
             {/* Mensaje animador */}
             <div className="rounded-lg border border-green-400/20 bg-green-400/5 px-4 py-3 space-y-2">
-                <p className="text-xs text-green-300 text-center font-semibold">
+                <p className="text-sm text-green-300 text-center font-semibold">
                     ✨ ¡Juega sin miedo!
                 </p>
-                <p className="text-xs text-gray-400 text-center leading-relaxed">
-                    Puedes modificar tus predicciones hasta <strong className="text-white">15 minutos antes</strong> del inicio del Mundial (Porra) o de cada partido (Quiniela)
+                <p className="text-sm text-gray-400 text-center leading-relaxed">
+                    Puedes modificar tus pronósticos hasta <strong className="text-white">15 minutos antes</strong> de cada partido.
                 </p>
             </div>
 
+            {/* 
             <div className="glass-card p-5 space-y-3">
                 <p className="text-sm text-gray-300 leading-relaxed">
                     Esta plataforma tiene <strong className="text-white">dos competiciones independientes</strong> con
                     sus propios rankings y reglas de puntuación:
                 </p>
                 <div className="grid gap-3 sm:grid-cols-2">
-                    <Link
-                        href="/porra"
-                        className="relative rounded-lg border border-[#00e87a]/20 bg-[#00e87a]/5 p-3 transition-all hover:border-[#00e87a]/40 hover:bg-[#00e87a]/10 hover:scale-[1.02]"
-                    >
-                        <h3 className="text-sm font-semibold text-[#00e87a] mb-1">🏆 Porra</h3>
-                        <p className="text-xs text-gray-400">
-                            Predice el camino al título: rellena el bracket completo antes del inicio del torneo. Las porras se pueden modificar hasta 15 minutos antes del inicio del Mundial, pero una vez arrancado el torneo ya no se pueden cambiar.
-                        </p>
-                        <LinkSpinner className="absolute right-2 top-2 size-3.5 text-[#00e87a]" />
-                    </Link>
                     <Link
                         href="/quiniela"
                         className="relative rounded-lg border border-blue-400/20 bg-blue-400/5 p-3 transition-all hover:border-blue-400/40 hover:bg-blue-400/10 hover:scale-[1.02]"
@@ -46,139 +37,145 @@ export default function AyudaPage() {
                         </p>
                         <LinkSpinner className="absolute right-2 top-2 size-3.5 text-blue-300" />
                     </Link>
+                    <Link
+                        href="/porra"
+                        className="relative rounded-lg border border-[#00e87a]/20 bg-[#00e87a]/5 p-3 transition-all hover:border-[#00e87a]/40 hover:bg-[#00e87a]/10 hover:scale-[1.02]"
+                    >
+                        <h3 className="text-sm font-semibold text-[#00e87a] mb-1">🏆 Porra</h3>
+                        <p className="text-xs text-gray-400">
+                            Cerrada. El Mundial ya ha comenzado, la porra queda en &quot;modo lectura&quot;. Puedes ver tu porra enviada, pero no modificarla. Consulta la sección de Rankings para ver tu posición en la clasificación general.
+                        </p>
+                        <LinkSpinner className="absolute right-2 top-2 size-3.5 text-[#00e87a]" />
+                    </Link>
                 </div>
             </div>
-
+            */}
 
             {/* ══════════════════════════════════════════════════════════════════ */}
-            {/* ── 1. PORRA (BRACKET) ───────────────────────────────────────────── */}
+            {/* ── SISTEMA DE PUNTUACIÓN ──────────────────────────────────────── */}
             {/* ══════════════════════════════════════════════════════════════════ */}
-            <section className="space-y-5">
+            <section className="space-y-10">
                 <div className="flex items-center gap-3">
                     <div className="h-px flex-1 bg-gradient-to-r from-transparent to-white/10"></div>
-                    <h2 className="text-2xl font-bold text-white">🏆 Porra</h2>
+                    <h2 className="text-2xl font-bold text-white">📊 Sistema de puntuación</h2>
                     <div className="h-px flex-1 bg-gradient-to-l from-transparent to-white/10"></div>
                 </div>
 
-                <p className="text-sm text-gray-400">
-                    Rellena el árbol completo del torneo: elige los clasificados de cada grupo,
-                    los 8 mejores terceros y el ganador de cada eliminatoria. Cierra el día 1 del torneo.
-                </p>
+                {/* ── Quiniela ── */}
+                <section className="space-y-4">
+                    <h3 className="text-lg font-semibold text-white">⚽ Quiniela</h3>
 
-                {/* Clasificación de grupos */}
-                <div className="glass-card p-5 space-y-4">
-                    <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">
-                        Fase de grupos — clasificados
+                    <p className="text-sm text-gray-400">
+                        Predice el marcador exacto de cada partido. Se otorga únicamente la puntuación más alta que corresponda.
+                        Las rondas eliminatorias puntúan el doble (×2).
                     </p>
-                    <div className="space-y-2 text-sm">
-                        <div className="flex justify-between items-center py-1.5">
-                            <span className="text-gray-300">Acertar un clasificado (1.º o 2.º de grupo)</span>
-                            <span className="font-bold text-[#00e87a] tabular-nums">1 pt</span>
-                        </div>
-                        <div className="flex justify-between items-center py-1.5 border-t border-white/5">
-                            <span className="text-gray-300">Acertar uno de los 8 mejores terceros</span>
-                            <span className="font-bold text-[#00e87a] tabular-nums">1 pt</span>
-                        </div>
-                    </div>
-                </div>
 
-                {/* Rondas eliminatorias */}
-                <div className="glass-card p-5 space-y-4">
-                    <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">
-                        Fase eliminatoria — ganador de cada partido
-                    </p>
-                    <div className="divide-y divide-white/[0.05]">
+                    <div className="glass-card p-5 space-y-4">
+                        <div className="grid grid-cols-[2fr,1fr,1fr] gap-3 text-xs font-bold text-gray-500 uppercase tracking-widest pb-2 border-b border-white/[0.08]">
+                            <span>Condición</span>
+                            <span className="text-center">Grupos</span>
+                            <span className="text-center">Eliminatorias</span>
+                        </div>
                         {[
-                            ["Dieciseisavos de final", "2 pts"],
-                            ["Octavos de final", "5 pts"],
-                            ["Cuartos de final", "7 pts"],
-                            ["Semifinal", "10 pts"],
-                            ["Final / Campeón", "10 pts"],
-                        ].map(([label, pts]) => (
-                            <div key={label} className="flex justify-between items-center py-2.5 text-sm">
-                                <span className="text-gray-300">{label}</span>
-                                <span className="font-bold text-[#00e87a] tabular-nums">{pts}</span>
+                            ["Marcador exacto", "5 pts", "10 pts", "Aciertas los goles de ambos equipos"],
+                            ["Tendencia correcta", "3 pts", "6 pts", "Aciertas ganador o empate"],
+                            ["Consolación", "1 pt", "2 pts", "Goles exactos de UN equipo (tendencia errónea)"],
+                            ["Fallo total", "0 pts", "0 pts", "Nada acertado"],
+                        ].map(([cond, g, e, desc]) => (
+                            <div key={cond} className="space-y-1">
+                                <div className="grid grid-cols-[2fr,1fr,1fr] gap-3 items-center py-2 text-sm border-b border-white/[0.03] last:border-0">
+                                    <span className="text-gray-200 font-medium">{cond}</span>
+                                    <span className="text-center font-bold text-[#00e87a] tabular-nums">{g}</span>
+                                    <span className="text-center font-bold text-[#00e87a] tabular-nums">{e}</span>
+                                </div>
+                                <p className="text-xs text-gray-600 pl-1">{desc}</p>
                             </div>
                         ))}
                     </div>
-                </div>
 
-                <div className="rounded-lg border border-amber-400/20 bg-amber-400/5 px-4 py-3">
-                    <p className="text-xs text-amber-300/90">
-                        <strong>Importante:</strong> Los puntos se otorgan cuando un equipo avanza realmente a esa ronda,
-                        no al predecir correctamente el resultado de un partido individual.
-                    </p>
-                </div>
-
-                <Link
-                    href="/porra/stats"
-                    className="flex items-center justify-between rounded-lg border border-[#00e87a]/20 bg-[#00e87a]/5 px-4 py-3 transition-all hover:border-[#00e87a]/40 hover:bg-[#00e87a]/10"
-                >
-                    <div>
-                        <p className="text-sm font-semibold text-[#00e87a]">📊 Página de consenso</p>
-                        <p className="text-xs text-gray-400 mt-0.5">
-                            Una vez enviada tu porra, puedes ver qué predicen el resto de participantes: campeón favorito, finalistas, clasificados por grupo y más.
-                        </p>
-                    </div>
-                    <span className="shrink-0 ml-3 inline-flex items-center gap-2 text-gray-500 text-sm">
-                        <LinkSpinner className="size-3.5 text-[#00e87a]" />
-                        →
-                    </span>
-                </Link>
-            </section>
-
-
-            {/* ══════════════════════════════════════════════════════════════════ */}
-            {/* ── 2. QUINIELA (PARTIDO A PARTIDO) ──────────────────────────────── */}
-            {/* ══════════════════════════════════════════════════════════════════ */}
-            <section className="space-y-5">
-                <div className="flex items-center gap-3">
-                    <div className="h-px flex-1 bg-gradient-to-r from-transparent to-white/10"></div>
-                    <h2 className="text-2xl font-bold text-white">⚽ Quiniela</h2>
-                    <div className="h-px flex-1 bg-gradient-to-l from-transparent to-white/10"></div>
-                </div>
-
-                <p className="text-sm text-gray-400">
-                    Predice el marcador exacto de cada partido. Se otorga únicamente la puntuación más alta que corresponda.
-                    Las rondas eliminatorias puntúan el doble (×2).
-                </p>
-
-                <div className="glass-card p-5 space-y-4">
-                    <div className="grid grid-cols-[2fr,1fr,1fr] gap-3 text-xs font-bold text-gray-500 uppercase tracking-widest pb-2 border-b border-white/[0.08]">
-                        <span>Condición</span>
-                        <span className="text-center">Grupos</span>
-                        <span className="text-center">Eliminatorias</span>
-                    </div>
-                    {[
-                        ["Marcador exacto", "5 pts", "10 pts", "Aciertas los goles de ambos equipos"],
-                        ["Tendencia correcta", "3 pts", "6 pts", "Aciertas ganador o empate"],
-                        ["Consolación", "1 pt", "2 pts", "Goles exactos de UN equipo (tendencia errónea)"],
-                        ["Fallo total", "0 pts", "0 pts", "Nada acertado"],
-                    ].map(([cond, g, e, desc]) => (
-                        <div key={cond} className="space-y-1">
-                            <div className="grid grid-cols-[2fr,1fr,1fr] gap-3 items-center py-2 text-sm border-b border-white/[0.03] last:border-0">
-                                <span className="text-gray-200 font-medium">{cond}</span>
-                                <span className="text-center font-bold text-[#00e87a] tabular-nums">{g}</span>
-                                <span className="text-center font-bold text-[#00e87a] tabular-nums">{e}</span>
-                            </div>
-                            <p className="text-xs text-gray-600 pl-1">{desc}</p>
+                    <div className="space-y-2">
+                        <div className="rounded-lg border border-blue-400/20 bg-blue-400/5 px-4 py-3">
+                            <p className="text-xs text-blue-300/90">
+                                <strong>Resultado oficial:</strong> Marcador al final del tiempo reglamentario + prórroga
+                                (90 min + 30 min). Los penales de desempate final NO cuentan.
+                            </p>
                         </div>
-                    ))}
-                </div>
+                        <div className="rounded-lg border border-red-400/20 bg-red-400/5 px-4 py-3">
+                            <p className="text-xs text-red-300/90">
+                                <strong>Bloqueo automático:</strong> Los pronósticos se cierran 15 minutos antes del inicio de cada partido.
+                            </p>
+                        </div>
+                    </div>
+                </section>
 
-                <div className="space-y-2">
-                    <div className="rounded-lg border border-blue-400/20 bg-blue-400/5 px-4 py-3">
-                        <p className="text-xs text-blue-300/90">
-                            <strong>Resultado oficial:</strong> Marcador al final del tiempo reglamentario + prórroga
-                            (90 min + 30 min). Los penales de desempate final NO cuentan.
+                {/* ── Porra ── */}
+                <section className="space-y-4">
+                    <h3 className="text-lg font-semibold text-white">🏆 Porra</h3>
+
+                    <p className="text-sm text-gray-400">
+                        Rellena el árbol completo del torneo: elige los clasificados de cada grupo,
+                        los 8 mejores terceros y el ganador de cada eliminatoria. Cierra el día 1 del torneo.
+                    </p>
+
+                    <div className="glass-card p-5 space-y-4">
+                        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">
+                            Fase de grupos — clasificados
+                        </p>
+                        <div className="space-y-2 text-sm">
+                            <div className="flex justify-between items-center py-1.5">
+                                <span className="text-gray-300">Acertar un clasificado (1.º o 2.º de grupo)</span>
+                                <span className="font-bold text-[#00e87a] tabular-nums">1 pt</span>
+                            </div>
+                            <div className="flex justify-between items-center py-1.5 border-t border-white/5">
+                                <span className="text-gray-300">Acertar uno de los 8 mejores terceros</span>
+                                <span className="font-bold text-[#00e87a] tabular-nums">1 pt</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="glass-card p-5 space-y-4">
+                        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">
+                            Fase eliminatoria — ganador de cada partido
+                        </p>
+                        <div className="divide-y divide-white/[0.05]">
+                            {[
+                                ["Dieciseisavos de final", "2 pts"],
+                                ["Octavos de final", "5 pts"],
+                                ["Cuartos de final", "7 pts"],
+                                ["Semifinal", "10 pts"],
+                                ["Final / Campeón", "10 pts"],
+                            ].map(([label, pts]) => (
+                                <div key={label} className="flex justify-between items-center py-2.5 text-sm">
+                                    <span className="text-gray-300">{label}</span>
+                                    <span className="font-bold text-[#00e87a] tabular-nums">{pts}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="rounded-lg border border-amber-400/20 bg-amber-400/5 px-4 py-3">
+                        <p className="text-xs text-amber-300/90">
+                            <strong>Importante:</strong> Los puntos se otorgan cuando un equipo avanza realmente a esa ronda,
+                            no al predecir correctamente el resultado de un partido individual.
                         </p>
                     </div>
-                    <div className="rounded-lg border border-red-400/20 bg-red-400/5 px-4 py-3">
-                        <p className="text-xs text-red-300/90">
-                            <strong>Bloqueo automático:</strong> Los pronósticos se cierran 15 minutos antes del inicio de cada partido.
-                        </p>
-                    </div>
-                </div>
+
+                    <Link
+                        href="/porra/stats"
+                        className="flex items-center justify-between rounded-lg border border-[#00e87a]/20 bg-[#00e87a]/5 px-4 py-3 transition-all hover:border-[#00e87a]/40 hover:bg-[#00e87a]/10"
+                    >
+                        <div>
+                            <p className="text-sm font-semibold text-[#00e87a]">📊 Página de consenso</p>
+                            <p className="text-xs text-gray-400 mt-0.5">
+                                Una vez enviada tu porra, puedes ver qué predicen el resto de participantes: campeón favorito, finalistas, clasificados por grupo y más.
+                            </p>
+                        </div>
+                        <span className="shrink-0 ml-3 inline-flex items-center gap-2 text-gray-500 text-sm">
+                            <LinkSpinner className="size-3.5 text-[#00e87a]" />
+                            →
+                        </span>
+                    </Link>
+                </section>
             </section>
 
 
@@ -205,19 +202,70 @@ export default function AyudaPage() {
             </section>
 
 
+            {/* ── Rankings ──────────────────────────────────────────────────── */}
+            <section className="space-y-4">
+                <div className="flex items-center gap-3">
+                    <div className="h-px flex-1 bg-gradient-to-r from-transparent to-white/10"></div>
+                    <h2 className="text-2xl font-bold text-white">🏅 Rankings</h2>
+                    <div className="h-px flex-1 bg-gradient-to-l from-transparent to-white/10"></div>
+                </div>
+                <p className="text-sm text-gray-400">
+                    Puedes consultar la clasificación en tiempo real desde el menú o los tabs de la sección{" "}
+                    <span className="text-white font-medium"><Link href="/ranking">Ranking</Link></span>.
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                    <Link
+                        href="/ranking?tab=quiniela"
+                        className="relative glass-card p-4 transition-all hover:border-blue-400/30 hover:scale-[1.02]"
+                    >
+                        <h4 className="text-sm font-semibold text-blue-300 mb-2">Ranking Quiniela</h4>
+                        <p className="text-xs text-gray-500">
+                            Suma puntos de todos los partidos.
+                        </p>
+                        <LinkSpinner className="absolute right-2 top-2 size-3.5 text-blue-300" />
+                    </Link>
+                    <Link
+                        href="/ranking?tab=porra"
+                        className="relative glass-card p-4 transition-all hover:border-[#00e87a]/30 hover:scale-[1.02]"
+                    >
+                        <h4 className="text-sm font-semibold text-[#00e87a] mb-2">Ranking Porra</h4>
+                        <p className="text-xs text-gray-500">
+                            Solo suma puntos del bracket completo (grupos + eliminatorias).
+                        </p>
+                        <LinkSpinner className="absolute right-2 top-2 size-3.5 text-[#00e87a]" />
+                    </Link>
+                </div>
+            </section>
+
             {/* ── Perfil ────────────────────────────────────────────────────── */}
             <section className="space-y-4">
-                <h3 className="text-lg font-semibold text-white">Tu perfil</h3>
+                <div className="flex items-center gap-3">
+                    <div className="h-px flex-1 bg-gradient-to-r from-transparent to-white/10"></div>
+                    <h2 className="text-2xl font-bold text-white">👤 Tu perfil</h2>
+                    <div className="h-px flex-1 bg-gradient-to-l from-transparent to-white/10"></div>
+                </div>
+                <p className="text-sm text-gray-400">
+                    Accede pulsando en tu nombre o avatar en la <strong className="text-white">esquina superior derecha</strong>. Desde ahí puedes:
+                </p>
                 <div className="glass-card p-5">
-                    <p className="text-sm text-gray-300 leading-relaxed">
-                        Puedes cambiar tu nombre visible en cualquier momento haciendo clic en tu nombre
-                        en la <strong className="text-white">esquina superior derecha</strong> de la pantalla.
-                    </p>
+                    <div className="divide-y divide-white/[0.05]">
+                        {[
+                            ["Nombre visible", "Cambia el nombre con el que apareces en los rankings. Se guarda al pulsar Enter o al salir del campo."],
+                            ["Exportar porras (PDF)", "Genera un PDF con todas las porras completadas, una por página. Ideal para imprimirlo o compartirlo."],
+                            ["Cerrar sesión", "Cierra tu sesión en el dispositivo actual."],
+                        ].map(([title, desc]) => (
+                            <div key={title} className="py-3 space-y-0.5 first:pt-0 last:pb-0">
+                                <p className="text-sm font-semibold text-white">{title}</p>
+                                <p className="text-xs text-gray-500 leading-relaxed">{desc}</p>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </section>
 
 
             {/* ── Grupos ───────────────────────────────────────────────────── */}
+            {/*
             <section className="space-y-5">
                 <div className="flex items-center gap-3">
                     <div className="h-px flex-1 bg-gradient-to-r from-transparent to-white/10"></div>
@@ -269,38 +317,8 @@ export default function AyudaPage() {
                     </span>
                 </Link>
             </section>
+            */}
 
-
-            {/* ── Rankings ──────────────────────────────────────────────────── */}
-            <section className="space-y-4">
-                <h3 className="text-lg font-semibold text-white">Rankings</h3>
-                <p className="text-sm text-gray-400">
-                    Puedes consultar la clasificación en tiempo real desde el menú o los tabs de la sección{" "}
-                    <span className="text-white font-medium">Ranking</span>.
-                </p>
-                <div className="grid gap-3 sm:grid-cols-2">
-                    <Link
-                        href="/ranking?tab=porra"
-                        className="relative glass-card p-4 transition-all hover:border-[#00e87a]/30 hover:scale-[1.02]"
-                    >
-                        <h4 className="text-sm font-semibold text-[#00e87a] mb-2">Ranking Porra</h4>
-                        <p className="text-xs text-gray-500">
-                            Solo suma puntos del bracket completo (grupos + eliminatorias).
-                        </p>
-                        <LinkSpinner className="absolute right-2 top-2 size-3.5 text-[#00e87a]" />
-                    </Link>
-                    <Link
-                        href="/ranking?tab=quiniela"
-                        className="relative glass-card p-4 transition-all hover:border-blue-400/30 hover:scale-[1.02]"
-                    >
-                        <h4 className="text-sm font-semibold text-blue-300 mb-2">Ranking Quiniela</h4>
-                        <p className="text-xs text-gray-500">
-                            Suma puntos de todos los partidos.
-                        </p>
-                        <LinkSpinner className="absolute right-2 top-2 size-3.5 text-blue-300" />
-                    </Link>
-                </div>
-            </section>
         </div>
     );
 }
