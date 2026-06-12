@@ -218,7 +218,7 @@ function PorraPage({
 
 export default async function PorrasPdfPage() {
   const session = await auth();
-  if (session?.user?.role !== "ADMIN") redirect("/");
+  if (!session?.user) redirect("/login");
 
   const [partidos, allBrackets] = await Promise.all([
     prisma.partido.findMany({

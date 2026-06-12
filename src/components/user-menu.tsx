@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import NicknameModal from "@/components/nickname-modal";
+import ProfileModal from "@/components/profile-modal";
 
 interface Props {
     name: string | null | undefined;
@@ -37,13 +37,14 @@ export default function UserMenu({ name, image, role, signOutAction }: Props) {
                 </span>
             </button>
 
-            <NicknameModal
+            <ProfileModal
                 open={editOpen}
                 onClose={() => setEditOpen(false)}
                 onSaved={(newName) => setDisplayName(newName || "—")}
                 role={role}
                 signOutAction={signOutAction}
             />
+
         </>
     );
 }
