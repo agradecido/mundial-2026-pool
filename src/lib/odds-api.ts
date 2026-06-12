@@ -55,7 +55,7 @@ export async function getMundialOdds(): Promise<OddsEvent[]> {
 
     try {
         const res = await fetch(url.toString(), {
-            next: { revalidate: 3600 }, // 1h
+            next: { revalidate: 86400 }, // 24h — plan gratuito: 500 req/mes
         });
         if (!res.ok) {
             console.error(`Odds API error: ${res.status} ${await res.text()}`);
@@ -84,7 +84,7 @@ export async function getCampeonOdds(): Promise<OddsEvent[]> {
 
     try {
         const res = await fetch(url.toString(), {
-            next: { revalidate: 86400 }, // 24h
+            next: { revalidate: 86400 }, // 24h — plan gratuito: 500 req/mes
         });
         if (!res.ok) return [];
         return (await res.json()) as OddsEvent[];
