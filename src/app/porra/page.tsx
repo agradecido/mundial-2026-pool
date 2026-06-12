@@ -6,6 +6,7 @@ import type { BracketPicks } from "@/lib/bracket";
 import { getMundialOdds, buildPairOddsLookup } from "@/lib/odds-api";
 import { computeActualBracket, scoreBracket } from "@/lib/bracket-scoring";
 import PorraViewer from "@/components/porra-viewer";
+import ShareBracketButton from "@/components/share-bracket-button";
 
 export default async function LlavesPage() {
   const session = await auth();
@@ -68,13 +69,16 @@ export default async function LlavesPage() {
           <h1 className="text-3xl font-bold text-white tracking-tight">Mi Porra</h1>
           <p className="mt-1 text-sm text-gray-500">Tu bracket del Mundial 2026</p>
         </div>
-        <Link
-          href="/porra/ranking"
-          className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs text-gray-400 hover:border-white/20 hover:text-white transition-colors shrink-0"
-        >
-          Ranking →
-          <LinkSpinner className="size-3 shrink-0" />
-        </Link>
+        <div className="flex items-center gap-2 shrink-0">
+          <ShareBracketButton userName={session!.user.name ?? "tú"} />
+          <Link
+            href="/porra/ranking"
+            className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs text-gray-400 hover:border-white/20 hover:text-white transition-colors shrink-0"
+          >
+            Ranking →
+            <LinkSpinner className="size-3 shrink-0" />
+          </Link>
+        </div>
       </div>
 
       {/* Stats */}
