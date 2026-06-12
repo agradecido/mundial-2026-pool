@@ -1,5 +1,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import Link from "next/link";
+import { LinkSpinner } from "@/components/nav-button";
 import RankingView from "@/components/ranking-view";
 import PreTournamentWithModal from "@/components/pre-tournament-with-modal";
 import type { PreTournamentEntry } from "@/components/pre-tournament-list";
@@ -76,11 +78,17 @@ export default async function QuinielaRankingPage() {
 
     return (
         <div className="space-y-10">
-            <div>
-                <h1 className="text-3xl font-bold text-white tracking-tight">Ranking Quiniela</h1>
-                <p className="mt-1 text-sm text-gray-500">
-                    Clasificación partido a partido · predicciones especiales incluidas
-                </p>
+            <div className="flex items-start justify-between gap-4">
+                <div>
+                    <h1 className="text-3xl font-bold text-white tracking-tight">Ranking Quiniela</h1>
+                </div>
+                <Link
+                    href="/quiniela"
+                    className="inline-flex items-center gap-2 rounded-lg border border-[#00e87a]/40 bg-[#00e87a]/15 px-3 py-1.5 text-xs text-[#00e87a] hover:bg-[#00e87a]/25 hover:border-[#00e87a]/60 transition-colors shrink-0"
+                >
+                    Pronosticar →
+                    <LinkSpinner className="size-3 shrink-0" />
+                </Link>
             </div>
 
             {!tournamentStarted ? (
