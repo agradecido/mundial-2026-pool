@@ -1,27 +1,38 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import LlavesSelector from "@/components/llaves-selector";
-import ShareBracketButton from "@/components/share-bracket-button";
+import Link from "next/link";
+import { LinkSpinner } from "@/components/nav-button";
 import type { BracketPicks } from "@/lib/bracket";
 import { getMundialOdds, buildPairOddsLookup } from "@/lib/odds-api";
+import { computeActualBracket, scoreBracket } from "@/lib/bracket-scoring";
+import PorraViewer from "@/components/porra-viewer";
 
 export default async function LlavesPage() {
   const session = await auth();
   const userId = session!.user.id;
 
-  // Build groups map from fixtures
-  const [partidos, oddsEvents] = await Promise.all([
+  const [partidos, oddsEvents, allBrackets] = await Promise.all([
     prisma.partido.findMany({
-      where: { fase: "GRUPOS" },
-      select: { equipoLocal: true, equipoVisitante: true, grupo: true },
+      select: {
+        equipoLocal: true,
+        equipoVisitante: true,
+        golesLocalReal: true,
+        golesVisitanteReal: true,
+        fase: true,
+        grupo: true,
+      },
     }),
     getMundialOdds(),
+    prisma.pronosticoBracket.findMany({
+      select: { userId: true, picks: true },
+    }),
   ]);
 
   const oddsMap = buildPairOddsLookup(oddsEvents);
 
+  // Build groups map from group-stage fixtures
   const gruposMap: Record<string, Set<string>> = {};
-  for (const p of partidos) {
+  for (const p of partidos.filter(p => p.fase === "GRUPOS")) {
     const g = p.grupo ?? "?";
     gruposMap[g] ??= new Set();
     gruposMap[g].add(p.equipoLocal);
@@ -33,40 +44,62 @@ export default async function LlavesPage() {
       .map(([k, v]) => [k, [...v].sort()])
   );
 
-  // Lock 15 minutes before first match
-  const first = await prisma.partido.findFirst({ orderBy: { fechaPartido: "asc" } });
-  const now = new Date();
-  const limite = first ? new Date(first.fechaPartido.getTime() - 15 * 60 * 1000) : null;
-  const locked = !!limite && now >= limite;
-  const lockDate = limite ?? new Date("2026-06-11");
+  const actual = computeActualBracket(partidos);
 
-  // Existing bracket picks
-  const bracket = await prisma.pronosticoBracket.findUnique({ where: { userId } });
-  const picks = (bracket?.picks ?? {}) as BracketPicks;
+  // User's picks and score
+  const userBracket = allBrackets.find(b => b.userId === userId);
+  const picks = (userBracket?.picks ?? {}) as BracketPicks;
+  const userScore = scoreBracket(picks, actual);
+
+  // Ranking position among all participants with a bracket
+  const ranked = allBrackets
+    .map(b => ({ userId: b.userId, total: scoreBracket(b.picks as BracketPicks, actual).total }))
+    .sort((a, b) => b.total - a.total);
+
+  const rankIdx = ranked.findIndex(b => b.userId === userId);
+  const rankPosition = rankIdx >= 0 ? rankIdx + 1 : null;
+  const totalParticipants = ranked.length;
 
   return (
     <div className="space-y-8">
-      <div>
-        <div className="flex items-start justify-between gap-4">
-          <h1 className="text-3xl font-bold text-white tracking-tight">Porra</h1>
-          <ShareBracketButton userName={session!.user.name ?? "tú"} />
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-white tracking-tight">Mi Porra</h1>
+          <p className="mt-1 text-sm text-gray-500">Tu bracket del Mundial 2026</p>
         </div>
-        <p className="mt-1 text-sm text-gray-500">
-          Predice el camino al título · cierra el{" "}
-          {lockDate.toLocaleDateString("es-ES", {
-            day: "numeric",
-            month: "long",
-            hour: "2-digit",
-            minute: "2-digit",
-            timeZone: "Europe/Madrid",
-          })}
-        </p>
-        <p className="mt-0.5 text-xs text-gray-600">
-          Puedes modificar tu porra hasta 15 minutos antes del inicio del mundial
-        </p>
+        <Link
+          href="/porra/ranking"
+          className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs text-gray-400 hover:border-white/20 hover:text-white transition-colors shrink-0"
+        >
+          Ranking →
+          <LinkSpinner className="size-3 shrink-0" />
+        </Link>
       </div>
 
-      <LlavesSelector grupos={grupos} initialPicks={picks} locked={locked} oddsMap={oddsMap} />
+      {/* Stats */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="glass-card p-4 text-center space-y-1">
+          <p className="text-3xl font-bold text-[#00e87a]">{userScore.total}</p>
+          <p className="text-xs text-gray-500">puntos</p>
+        </div>
+        <div className="glass-card p-4 text-center space-y-1">
+          {rankPosition !== null ? (
+            <>
+              <p className="text-3xl font-bold text-white">{rankPosition}°</p>
+              <p className="text-xs text-gray-500">de {totalParticipants}</p>
+            </>
+          ) : (
+            <>
+              <p className="text-3xl font-bold text-gray-600">—</p>
+              <p className="text-xs text-gray-500">sin bracket</p>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Static bracket viewer */}
+      <PorraViewer picks={picks} grupos={grupos} oddsMap={oddsMap} />
     </div>
   );
 }
