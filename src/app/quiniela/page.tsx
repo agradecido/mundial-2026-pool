@@ -61,7 +61,7 @@ export default async function PartidosPage() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex items-start justify-between gap-4 mb-4">
         <div>
           <h1 className="text-3xl font-bold text-white tracking-tight">Quiniela</h1>
         </div>
@@ -75,8 +75,9 @@ export default async function PartidosPage() {
           </Link>
           <ResetQuinielaButton />
         </div>
-      </div>
 
+      </div>
+      <p className="mt-1 mb-4 text-sm text-gray-500">Pronostica el marcador de cada partido hasta 15 minutos antes del inicio.</p>
       <PartidosTabs partidos={serializedPartidos} pronosticoMap={pronosticoMap} oddsMap={oddsMap} />
     </div>
   );
