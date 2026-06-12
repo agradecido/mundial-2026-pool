@@ -65,12 +65,26 @@ function formatDayHeader(iso: string): string {
   });
 }
 
+function getTodayKey(): string {
+  const parts = new Intl.DateTimeFormat("es-ES", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    timeZone: "Europe/Madrid",
+  }).formatToParts(new Date());
+  const y = parts.find((p) => p.type === "year")?.value ?? "";
+  const m = parts.find((p) => p.type === "month")?.value ?? "";
+  const d = parts.find((p) => p.type === "day")?.value ?? "";
+  return `${y}-${m}-${d}`;
+}
+
 export default function PartidosTabs({
   partidos,
   pronosticoMap,
   oddsMap,
 }: Props) {
   const [tab, setTab] = useState<"grupos" | "fecha">("fecha");
+  const [hidePast, setHidePast] = useState(true);
 
   // ── Grupos view ──────────────────────────────────────────────
   const grupos = partidos.filter((p) => p.fase === "GRUPOS");
@@ -107,23 +121,37 @@ export default function PartidosTabs({
 
   const fechasOrdenadas = Object.keys(porFecha).sort();
 
+  const todayKey = getTodayKey();
+
   return (
     <div className="space-y-8">
-      {/* Tab selector */}
-      <div className="flex gap-1 p-1 rounded-xl bg-white/[0.04] border border-white/[0.06] w-fit">
-        {(["fecha", "grupos"] as const).map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
-              tab === t
-                ? "bg-[#00e87a]/15 text-[#00e87a] border border-[#00e87a]/20"
-                : "text-gray-500 hover:text-gray-300"
-            }`}
-          >
-            {t === "grupos" ? "Por grupos" : "Por fecha"}
-          </button>
-        ))}
+      {/* Controles */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex gap-1 p-1 rounded-xl bg-white/[0.04] border border-white/[0.06]">
+          {(["fecha", "grupos"] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                tab === t
+                  ? "bg-[#00e87a]/15 text-[#00e87a] border border-[#00e87a]/20"
+                  : "text-gray-500 hover:text-gray-300"
+              }`}
+            >
+              {t === "grupos" ? "Por grupos" : "Por fecha"}
+            </button>
+          ))}
+        </div>
+        <button
+          onClick={() => setHidePast((v) => !v)}
+          className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
+            hidePast
+              ? "border-white/10 bg-white/[0.04] text-gray-500 hover:text-gray-300 hover:border-white/20"
+              : "border-amber-400/30 bg-amber-400/10 text-amber-400 hover:bg-amber-400/15"
+          }`}
+        >
+          {hidePast ? "Mostrar días anteriores" : "Ocultar días anteriores"}
+        </button>
       </div>
 
       {/* ── Vista: Por grupos ── */}
@@ -145,7 +173,7 @@ export default function PartidosTabs({
                     </span>
                   </div>
                   <div className="space-y-1.5">
-                    {porGrupo[letra].map((p) => (
+                    {porGrupo[letra].filter((p) => !hidePast || getDayKey(p.fechaPartido) >= todayKey).map((p) => (
                       <PartidoCard
                         key={`${p.id}-${pronosticoMap[p.id] ? 1 : 0}`}
                         partido={p}
@@ -171,7 +199,7 @@ export default function PartidosTabs({
                   <div className="absolute inset-x-0 top-0 h-px rounded-t-xl bg-gradient-to-r from-transparent via-[#00e87a]/40 to-transparent" />
                 )}
                 <div className="space-y-1.5">
-                  {porFase[fase].map((p) => (
+                  {porFase[fase].filter((p) => !hidePast || getDayKey(p.fechaPartido) >= todayKey).map((p) => (
                     <PartidoCard
                       key={`${p.id}-${pronosticoMap[p.id] ? 1 : 0}`}
                       partido={p}
@@ -189,7 +217,7 @@ export default function PartidosTabs({
       {/* ── Vista: Por fecha ── */}
       {tab === "fecha" && (
         <div className="space-y-8">
-          {fechasOrdenadas.map((key) => {
+          {fechasOrdenadas.filter((key) => !hidePast || key >= todayKey).map((key) => {
             const dayPartidos = porFecha[key];
             return (
               <section key={key}>
