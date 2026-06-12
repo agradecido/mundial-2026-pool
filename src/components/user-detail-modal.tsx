@@ -118,7 +118,7 @@ export default function UserDetailModal({ detail, position, onClose, onPrev, onN
             </div>
           )}
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-white text-base truncate">{detail.name ?? "—"}</p>
+            <p className="font-semibold text-white text-base leading-snug">{detail.name?.split(" ")[0] ?? "—"}</p>
             <p className="text-xs text-gray-500">Posición #{position}</p>
           </div>
           <div className="text-right shrink-0">
