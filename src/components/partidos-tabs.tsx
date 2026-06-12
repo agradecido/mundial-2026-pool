@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import PartidoCard from "@/components/partido-card";
+import PartidoListRow from "@/components/partido-list-row";
 import type { EstadoPartido, Fase } from "@prisma/client";
 
 const FASES_ORDEN: Fase[] = [
@@ -83,7 +84,7 @@ export default function PartidosTabs({
   pronosticoMap,
   oddsMap,
 }: Props) {
-  const [tab, setTab] = useState<"grupos" | "fecha">("fecha");
+  const [tab, setTab] = useState<"grupos" | "fecha" | "lista">("fecha");
   const [hidePast, setHidePast] = useState(true);
 
   // ── Grupos view ──────────────────────────────────────────────
@@ -128,7 +129,7 @@ export default function PartidosTabs({
       {/* Controles */}
       <div className="flex items-center gap-3 flex-wrap">
         <div className="flex gap-1 p-1 rounded-xl bg-white/[0.04] border border-white/[0.06]">
-          {(["fecha", "grupos"] as const).map((t) => (
+          {(["fecha", "grupos", "lista"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -138,7 +139,7 @@ export default function PartidosTabs({
                   : "text-gray-500 hover:text-gray-300"
               }`}
             >
-              {t === "grupos" ? "Por grupos" : "Por fecha"}
+              {t === "grupos" ? "Por grupos" : t === "fecha" ? "Por fecha" : "Lista"}
             </button>
           ))}
         </div>
@@ -211,6 +212,35 @@ export default function PartidosTabs({
               </div>
             </section>
           ))}
+        </div>
+      )}
+
+      {/* ── Vista: Lista ── */}
+      {tab === "lista" && (
+        <div className="overflow-x-auto rounded-xl border border-white/10">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-white/10 text-left text-xs text-gray-500">
+                <th className="px-3 py-2.5 font-medium hidden sm:table-cell">Fecha</th>
+                <th className="px-3 py-2.5 font-medium text-right">Local</th>
+                <th className="px-3 py-2.5 font-medium text-center">Pronóstico</th>
+                <th className="px-3 py-2.5 font-medium">Visitante</th>
+                <th className="px-3 py-2.5 font-medium text-center hidden sm:table-cell">Resultado</th>
+                <th className="px-3 py-2.5 font-medium text-right">Pts</th>
+              </tr>
+            </thead>
+            <tbody>
+              {partidos
+                .filter(p => !hidePast || getDayKey(p.fechaPartido) >= todayKey)
+                .map(p => (
+                  <PartidoListRow
+                    key={`${p.id}-${pronosticoMap[p.id] ? 1 : 0}`}
+                    partido={p}
+                    pronostico={pronosticoMap[p.id] ?? null}
+                  />
+                ))}
+            </tbody>
+          </table>
         </div>
       )}
 

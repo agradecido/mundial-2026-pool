@@ -114,10 +114,10 @@ function CheckIcon() {
 export default function PartidoCard({ partido, pronostico, odds }: Props) {
   const [locked, setLocked] = useState(false);
   const [local, setLocal] = useState<string>(
-    pronostico != null ? String(pronostico.golesLocal) : "0",
+    pronostico != null ? String(pronostico.golesLocal) : "",
   );
   const [visitante, setVisitante] = useState<string>(
-    pronostico != null ? String(pronostico.golesVisitante) : "0",
+    pronostico != null ? String(pronostico.golesVisitante) : "",
   );
   const [saved, setSaved] = useState(!!pronostico);
   const [error, setError] = useState<string | null>(null);
@@ -240,12 +240,15 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
             </span>
             {showInputs ? (
               <input
-                type="number"
-                min={0}
-                max={20}
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={local}
+                placeholder="-"
+                onFocus={(e) => e.target.select()}
                 onChange={(e) => {
-                  setLocal(e.target.value);
+                  const v = e.target.value.replace(/[^0-9]/g, "");
+                  setLocal(v);
                   setError(null);
                   setSaved(false);
                 }}
@@ -313,12 +316,15 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
             </span>
             {showInputs ? (
               <input
-                type="number"
-                min={0}
-                max={20}
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={visitante}
+                placeholder="-"
+                onFocus={(e) => e.target.select()}
                 onChange={(e) => {
-                  setVisitante(e.target.value);
+                  const v = e.target.value.replace(/[^0-9]/g, "");
+                  setVisitante(v);
                   setError(null);
                   setSaved(false);
                 }}
