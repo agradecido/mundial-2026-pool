@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import Image from "next/image";
 import { getUserDetail } from "@/app/ranking/actions";
 import UserDetailModal from "@/components/user-detail-modal";
@@ -32,30 +32,54 @@ export default function RankingView({ ranking, currentUserId }: Props) {
   const [detail, setDetail] = useState<UserDetail | null>(null);
   const [loading, setLoading] = useState<string | null>(null); // userId being loaded
   const [navigating, setNavigating] = useState(false);
+  const detailCache = useRef<Map<string, UserDetail>>(new Map());
+
+  const fetchDetail = useCallback(async (userId: string): Promise<UserDetail> => {
+    const cached = detailCache.current.get(userId);
+    if (cached) return cached;
+    const data = await getUserDetail(userId);
+    detailCache.current.set(userId, data);
+    return data;
+  }, []);
 
   const openDetail = useCallback(async (userId: string) => {
+    const cached = detailCache.current.get(userId);
+    if (cached) { setDetail(cached); return; }
     setLoading(userId);
     try {
-      const data = await getUserDetail(userId);
+      const data = await fetchDetail(userId);
       setDetail(data);
     } finally {
       setLoading(null);
     }
-  }, []);
+  }, [fetchDetail]);
 
   const closeDetail = useCallback(() => setDetail(null), []);
 
   const currentIndex = detail ? ranking.findIndex((u) => u.id === detail.id) : -1;
 
   const navigateTo = useCallback(async (userId: string) => {
+    const cached = detailCache.current.get(userId);
+    if (cached) { setDetail(cached); return; }
     setNavigating(true);
     try {
-      const data = await getUserDetail(userId);
+      const data = await fetchDetail(userId);
       setDetail(data);
     } finally {
       setNavigating(false);
     }
-  }, []);
+  }, [fetchDetail]);
+
+  // Prefetch adjacent users so first swipe is instant
+  useEffect(() => {
+    if (!detail) return;
+    const idx = ranking.findIndex((u) => u.id === detail.id);
+    const prefetch = (id: string) => {
+      if (!detailCache.current.has(id)) fetchDetail(id).catch(() => {});
+    };
+    if (idx > 0) prefetch(ranking[idx - 1].id);
+    if (idx < ranking.length - 1) prefetch(ranking[idx + 1].id);
+  }, [detail?.id, fetchDetail, ranking]);
 
   const handlePrev = useCallback(() => {
     if (currentIndex > 0) navigateTo(ranking[currentIndex - 1].id);

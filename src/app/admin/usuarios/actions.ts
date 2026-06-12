@@ -2,7 +2,7 @@
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import type { Role } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
@@ -46,6 +46,7 @@ export async function eliminarUsuario(userId: string) {
     }
 
     await prisma.user.delete({ where: { id: userId } });
+    revalidateTag("ranking", "max");
     revalidatePath("/admin/usuarios");
     revalidatePath("/admin");
     revalidatePath("/porra");

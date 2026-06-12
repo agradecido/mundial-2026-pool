@@ -3,7 +3,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { recalcularPuntosPartido } from "@/lib/scoring";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 async function requireAdminOrEditor() {
   const session = await auth();
@@ -12,6 +12,7 @@ async function requireAdminOrEditor() {
 }
 
 function revalidateAll() {
+  revalidateTag("ranking", "max");
   revalidatePath("/admin/partidos");
   revalidatePath("/admin/resultados");
   revalidatePath("/quiniela");

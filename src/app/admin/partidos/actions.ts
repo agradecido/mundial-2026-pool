@@ -3,7 +3,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { recalcularPuntosPartido } from "@/lib/scoring";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import type { EstadoPartido } from "@prisma/client";
 
 async function requireAdminOrEditor() {
@@ -65,6 +65,7 @@ export async function actualizarPartido(
 
     await recalcularPuntosPartido(id);
 
+    revalidateTag("ranking", "max");
     revalidatePath("/admin/partidos");
     revalidatePath(`/admin/partidos/${id}`);
     revalidatePath("/quiniela");
