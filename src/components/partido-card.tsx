@@ -239,7 +239,7 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
             <span className="text-4xl lg:text-5xl leading-none drop-shadow-sm">
               {flagLocal}
             </span>
-            <span className="text-sm lg:text-base font-bold text-gray-100 text-center leading-tight line-clamp-2">
+            <span className="text-sm lg:text-base font-bold text-gray-100 text-center leading-tight truncate w-full">
               {partido.equipoLocal}
             </span>
             {showInputs ? (
@@ -312,7 +312,7 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
             <span className="text-4xl lg:text-5xl leading-none drop-shadow-sm">
               {flagVisitante}
             </span>
-            <span className="text-sm lg:text-base font-bold text-gray-100 text-center leading-tight line-clamp-2">
+            <span className="text-sm lg:text-base font-bold text-gray-100 text-center leading-tight truncate w-full">
               {partido.equipoVisitante}
             </span>
             {showInputs ? (
