@@ -13,6 +13,7 @@ const FD_TO_DB: Record<string, string> = {
   "Cape Verde Islands": "Cape Verde",
   "Côte d'Ivoire": "Ivory Coast",
   "Cote d'Ivoire": "Ivory Coast",
+  "Czechia": "Czech Republic",
 };
 
 export type FDStatus =
