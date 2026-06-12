@@ -44,6 +44,14 @@ interface Props {
   oddsMap?: Record<string, { home: number; draw: number; away: number }>;
 }
 
+function isPlaceholder(name: string): boolean {
+  return /^\d/.test(name) || name.includes("/") || /^[WL]\d/.test(name);
+}
+
+function isDefined(p: SerializedPartido): boolean {
+  return !isPlaceholder(p.equipoLocal) || !isPlaceholder(p.equipoVisitante);
+}
+
 function getDayKey(iso: string): string {
   const parts = new Intl.DateTimeFormat("es-ES", {
     year: "numeric",
@@ -200,7 +208,7 @@ export default function PartidosTabs({
                   <div className="absolute inset-x-0 top-0 h-px rounded-t-xl bg-gradient-to-r from-transparent via-[#00e87a]/40 to-transparent" />
                 )}
                 <div className="space-y-1.5">
-                  {porFase[fase].filter((p) => !hidePast || getDayKey(p.fechaPartido) >= todayKey).map((p) => (
+                  {porFase[fase].filter((p) => isDefined(p) && (!hidePast || getDayKey(p.fechaPartido) >= todayKey)).map((p) => (
                     <PartidoCard
                       key={`${p.id}-${pronosticoMap[p.id] ? 1 : 0}`}
                       partido={p}
@@ -231,7 +239,7 @@ export default function PartidosTabs({
             </thead>
             <tbody>
               {partidos
-                .filter(p => !hidePast || getDayKey(p.fechaPartido) >= todayKey)
+                .filter(p => isDefined(p) && (!hidePast || getDayKey(p.fechaPartido) >= todayKey))
                 .map(p => (
                   <PartidoListRow
                     key={`${p.id}-${pronosticoMap[p.id] ? 1 : 0}`}
@@ -248,7 +256,8 @@ export default function PartidosTabs({
       {tab === "fecha" && (
         <div className="space-y-8">
           {fechasOrdenadas.filter((key) => !hidePast || key >= todayKey).map((key) => {
-            const dayPartidos = porFecha[key];
+            const dayPartidos = porFecha[key].filter(isDefined);
+            if (dayPartidos.length === 0) return null;
             return (
               <section key={key}>
                 <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-gray-500 capitalize">

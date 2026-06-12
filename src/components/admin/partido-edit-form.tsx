@@ -44,6 +44,8 @@ function toDatetimeLocal(iso: string): string {
 export default function PartidoEditForm({ partido }: Props) {
     const [fecha, setFecha] = useState(toDatetimeLocal(partido.fechaPartido));
     const [estado, setEstado] = useState<EstadoPartido>(partido.estado);
+    const [equipoLocal, setEquipoLocal] = useState(partido.equipoLocal);
+    const [equipoVisitante, setEquipoVisitante] = useState(partido.equipoVisitante);
     const [golesL, setGolesL] = useState(
         partido.golesLocalReal !== null ? String(partido.golesLocalReal) : ""
     );
@@ -53,6 +55,8 @@ export default function PartidoEditForm({ partido }: Props) {
     const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
     const [pending, startTransition] = useTransition();
 
+    const isKnockout = partido.fase !== "GRUPOS";
+
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
         setMsg(null);
@@ -60,6 +64,8 @@ export default function PartidoEditForm({ partido }: Props) {
             const res = await actualizarPartido(partido.id, {
                 fechaPartido: fecha,
                 estado,
+                equipoLocal: isKnockout ? equipoLocal : undefined,
+                equipoVisitante: isKnockout ? equipoVisitante : undefined,
                 golesLocalReal: golesL,
                 golesVisitanteReal: golesV,
             });
@@ -73,14 +79,32 @@ export default function PartidoEditForm({ partido }: Props) {
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6 max-w-lg">
-            {/* Equipos (solo lectura) */}
+            {/* Equipos */}
             <div>
                 <label className="label-field">Enfrentamiento</label>
-                <p className="mt-1 text-white font-medium text-lg">
-                    {partido.equipoLocal}{" "}
-                    <span className="text-gray-500 text-sm font-normal">vs</span>{" "}
-                    {partido.equipoVisitante}
-                </p>
+                {isKnockout ? (
+                    <div className="mt-1 flex items-center gap-2">
+                        <input
+                            value={equipoLocal}
+                            onChange={e => setEquipoLocal(e.target.value)}
+                            placeholder="Equipo local"
+                            className="flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-[#00e87a]"
+                        />
+                        <span className="text-gray-500 text-sm shrink-0">vs</span>
+                        <input
+                            value={equipoVisitante}
+                            onChange={e => setEquipoVisitante(e.target.value)}
+                            placeholder="Equipo visitante"
+                            className="flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-[#00e87a]"
+                        />
+                    </div>
+                ) : (
+                    <p className="mt-1 text-white font-medium text-lg">
+                        {partido.equipoLocal}{" "}
+                        <span className="text-gray-500 text-sm font-normal">vs</span>{" "}
+                        {partido.equipoVisitante}
+                    </p>
+                )}
                 <p className="text-xs text-gray-600 mt-0.5">
                     {FASE_LABELS[partido.fase]}
                     {partido.grupo ? ` · Grupo ${partido.grupo}` : ""}
@@ -127,7 +151,7 @@ export default function PartidoEditForm({ partido }: Props) {
                 <div className="mt-1 flex items-center gap-3">
                     <div className="flex flex-col gap-0.5 items-start">
                         <span className="text-xs text-gray-500 truncate max-w-[100px]">
-                            {partido.equipoLocal}
+                            {equipoLocal}
                         </span>
                         <input
                             type="number"
@@ -142,7 +166,7 @@ export default function PartidoEditForm({ partido }: Props) {
                     <span className="text-gray-600 text-xl mt-4">–</span>
                     <div className="flex flex-col gap-0.5 items-start">
                         <span className="text-xs text-gray-500 truncate max-w-[100px]">
-                            {partido.equipoVisitante}
+                            {equipoVisitante}
                         </span>
                         <input
                             type="number"

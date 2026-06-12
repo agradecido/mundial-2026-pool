@@ -17,6 +17,8 @@ export async function actualizarPartido(
     data: {
         fechaPartido: string;
         estado: EstadoPartido;
+        equipoLocal?: string;
+        equipoVisitante?: string;
         golesLocalReal: string;
         golesVisitanteReal: string;
     }
@@ -35,11 +37,20 @@ export async function actualizarPartido(
     const fecha = new Date(data.fechaPartido);
     if (isNaN(fecha.getTime())) return { error: "Fecha inválida" };
 
+    const equipoLocal = data.equipoLocal?.trim();
+    const equipoVisitante = data.equipoVisitante?.trim();
+    if (equipoLocal !== undefined && equipoLocal === "")
+        return { error: "El nombre del equipo local no puede estar vacío" };
+    if (equipoVisitante !== undefined && equipoVisitante === "")
+        return { error: "El nombre del equipo visitante no puede estar vacío" };
+
     await prisma.partido.update({
         where: { id },
         data: {
             fechaPartido: fecha,
             estado: data.estado,
+            ...(equipoLocal !== undefined && { equipoLocal }),
+            ...(equipoVisitante !== undefined && { equipoVisitante }),
             golesLocalReal: gL,
             golesVisitanteReal: gV,
         },

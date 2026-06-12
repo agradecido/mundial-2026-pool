@@ -154,6 +154,7 @@ export default function ResultadosPanel({ rows, error }: Props) {
         <div>
           <h2 className="text-lg font-semibold text-white">Resultados API</h2>
           <p className="text-xs text-gray-500 mt-0.5">Football-Data.org · WC 2026</p>
+          <p>Desde aquí podemos importar resultados de la API de <em>Football-Data.org</em> a nuestra base de datos. Intentaremos que esto suceda de manera automática.</p>
         </div>
         {pendientes.length > 0 && (
           <button

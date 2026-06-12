@@ -49,7 +49,7 @@ interface Props {
 }
 
 function isPlaceholder(name: string): boolean {
-  return /^\d/.test(name) || name.includes("/") || name.startsWith("W(") || name.startsWith("L(");
+  return /^\d/.test(name) || name.includes("/") || /^[WL]\d/.test(name);
 }
 
 function isLocked(fechaPartido: string, estado: EstadoPartido) {
@@ -168,11 +168,13 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
     });
   }
 
-  const flagLocal = getFlag(partido.equipoLocal);
-  const flagVisitante = getFlag(partido.equipoVisitante);
+  const flagLocal = isPlaceholder(partido.equipoLocal) ? null : getFlag(partido.equipoLocal);
+  const flagVisitante = isPlaceholder(partido.equipoVisitante) ? null : getFlag(partido.equipoVisitante);
 
   // ── Display helpers ────────────────────────────────────────────────
-  const teamsUnknown = isPlaceholder(partido.equipoLocal) || isPlaceholder(partido.equipoVisitante);
+  const teamsUnknown = isPlaceholder(partido.equipoLocal) && isPlaceholder(partido.equipoVisitante);
+  const displayLocal = isPlaceholder(partido.equipoLocal) ? "Por definir" : partido.equipoLocal;
+  const displayVisitante = isPlaceholder(partido.equipoVisitante) ? "Por definir" : partido.equipoVisitante;
   const isFinished = partido.estado === "FINALIZADO";
   const showInputs = !locked;
   const localValue = pronostico != null ? pronostico.golesLocal : null;
@@ -233,10 +235,10 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
           {/* ── Equipo Local ───────────────────────── */}
           <div className="flex flex-col items-center gap-2 min-w-0">
             <span className="text-4xl lg:text-5xl leading-none drop-shadow-sm">
-              {flagLocal}
+              {flagLocal ?? <span className="text-gray-700">?</span>}
             </span>
-            <span className="text-sm lg:text-base font-bold text-gray-100 text-center leading-tight truncate w-full">
-              {partido.equipoLocal}
+            <span className={`text-sm lg:text-base font-bold text-center leading-tight truncate w-full ${flagLocal ? "text-gray-100" : "text-gray-600 italic"}`}>
+              {displayLocal}
             </span>
             {showInputs ? (
               <input
@@ -252,7 +254,7 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
                   setError(null);
                   setSaved(false);
                 }}
-                aria-label={`Goles ${partido.equipoLocal}`}
+                aria-label={`Goles ${displayLocal}`}
                 className="score-input"
               />
             ) : (
@@ -309,10 +311,10 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
           {/* ── Equipo Visitante ────────────────────── */}
           <div className="flex flex-col items-center gap-2 min-w-0">
             <span className="text-4xl lg:text-5xl leading-none drop-shadow-sm">
-              {flagVisitante}
+              {flagVisitante ?? <span className="text-gray-700">?</span>}
             </span>
-            <span className="text-sm lg:text-base font-bold text-gray-100 text-center leading-tight truncate w-full">
-              {partido.equipoVisitante}
+            <span className={`text-sm lg:text-base font-bold text-center leading-tight truncate w-full ${flagVisitante ? "text-gray-100" : "text-gray-600 italic"}`}>
+              {displayVisitante}
             </span>
             {showInputs ? (
               <input
@@ -328,7 +330,7 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
                   setError(null);
                   setSaved(false);
                 }}
-                aria-label={`Goles ${partido.equipoVisitante}`}
+                aria-label={`Goles ${displayVisitante}`}
                 className="score-input"
               />
             ) : (
