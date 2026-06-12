@@ -1,5 +1,7 @@
 // Cliente para The Odds API — https://the-odds-api.com
-// Plan gratuito: 500 requests/mes. Cachea las respuestas con fetch.next.revalidate.
+// Plan gratuito: 500 requests/mes. Cachea 24h en Next.js + fallback en BD.
+
+import { prisma } from "@/lib/prisma";
 
 const BASE_URL = "https://api.the-odds-api.com/v4";
 const SPORT_KEY = "soccer_fifa_world_cup";
@@ -38,13 +40,34 @@ export interface H2HOdds {
     away: number;
 }
 
+async function getCachedOdds(key: string): Promise<OddsEvent[]> {
+    try {
+        const row = await prisma.oddsCache.findUnique({ where: { key } });
+        return row ? (row.data as unknown as OddsEvent[]) : [];
+    } catch {
+        return [];
+    }
+}
+
+async function setCachedOdds(key: string, data: OddsEvent[]): Promise<void> {
+    try {
+        await prisma.oddsCache.upsert({
+            where: { key },
+            create: { key, data: data as object[] },
+            update: { data: data as object[] },
+        });
+    } catch {
+        // Non-critical — ignore write errors
+    }
+}
+
 /**
  * Obtiene las cuotas h2h (1X2) de todos los partidos próximos del Mundial.
- * Cachea 1 hora.
+ * Cachea 24h en Next.js. Si la API falla, devuelve los últimos datos guardados en BD.
  */
 export async function getMundialOdds(): Promise<OddsEvent[]> {
     const apiKey = process.env.ODDS_API_KEY;
-    if (!apiKey) return [];
+    if (!apiKey) return getCachedOdds("mundial_h2h");
 
     const url = new URL(`${BASE_URL}/sports/${SPORT_KEY}/odds`);
     url.searchParams.set("apiKey", apiKey);
@@ -59,22 +82,24 @@ export async function getMundialOdds(): Promise<OddsEvent[]> {
         });
         if (!res.ok) {
             console.error(`Odds API error: ${res.status} ${await res.text()}`);
-            return [];
+            return getCachedOdds("mundial_h2h");
         }
-        return (await res.json()) as OddsEvent[];
+        const data = (await res.json()) as OddsEvent[];
+        await setCachedOdds("mundial_h2h", data);
+        return data;
     } catch (err) {
         console.error("Odds API fetch failed:", err);
-        return [];
+        return getCachedOdds("mundial_h2h");
     }
 }
 
 /**
  * Cuotas outright — campeón del Mundial.
- * Cachea 24h.
+ * Cachea 24h. Si la API falla, devuelve los últimos datos guardados en BD.
  */
 export async function getCampeonOdds(): Promise<OddsEvent[]> {
     const apiKey = process.env.ODDS_API_KEY;
-    if (!apiKey) return [];
+    if (!apiKey) return getCachedOdds("mundial_outrights");
 
     const url = new URL(`${BASE_URL}/sports/${SPORT_KEY_OUTRIGHTS}/odds`);
     url.searchParams.set("apiKey", apiKey);
@@ -86,10 +111,12 @@ export async function getCampeonOdds(): Promise<OddsEvent[]> {
         const res = await fetch(url.toString(), {
             next: { revalidate: 86400 }, // 24h — plan gratuito: 500 req/mes
         });
-        if (!res.ok) return [];
-        return (await res.json()) as OddsEvent[];
+        if (!res.ok) return getCachedOdds("mundial_outrights");
+        const data = (await res.json()) as OddsEvent[];
+        await setCachedOdds("mundial_outrights", data);
+        return data;
     } catch {
-        return [];
+        return getCachedOdds("mundial_outrights");
     }
 }
 
@@ -125,7 +152,6 @@ function avg(values: (number | undefined)[]): number | null {
 
 /**
  * Construye un mapa "Local|Visitante" → cuotas h2h para lookup rápido.
- * Los nombres de equipos deben coincidir exactamente con los de tu BD.
  */
 export function buildOddsMap(events: OddsEvent[]): Map<string, H2HOdds> {
     const map = new Map<string, H2HOdds>();

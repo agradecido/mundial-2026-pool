@@ -192,6 +192,12 @@ model GrupoMiembro {
   @@id([grupoId, userId])
 }
 
+model OddsCache {
+  key       String   @id  // e.g. "mundial_h2h" | "mundial_outrights"
+  data      Json
+  updatedAt DateTime @updatedAt
+}
+
 model PartidoHistorico {
   id      String   @id @default(uuid())
   torneo  String
