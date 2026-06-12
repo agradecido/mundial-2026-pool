@@ -15,7 +15,10 @@ export default async function AdminLayout({
 
     // EDITOR solo puede acceder a /admin/partidos
     if (role === "EDITOR") {
-        const navItems = [{ href: "/admin/partidos", label: "Partidos" }];
+        const navItems = [
+            { href: "/admin/partidos", label: "Partidos" },
+            { href: "/admin/resultados", label: "Importar" },
+        ];
         return (
             <div className="space-y-6">
                 <div className="flex items-center gap-3 pb-4 border-b border-white/10">
@@ -44,6 +47,7 @@ export default async function AdminLayout({
     const navItems = [
         { href: "/admin", label: "Dashboard", exact: true },
         { href: "/admin/partidos", label: "Partidos" },
+        { href: "/admin/resultados", label: "Importar" },
         { href: "/admin/usuarios", label: "Usuarios" },
         { href: "/admin/grupos", label: "Grupos" },
         { href: "/admin/modales", label: "Modales" },
