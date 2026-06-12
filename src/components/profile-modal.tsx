@@ -27,6 +27,7 @@ export default function ProfileModal({ open: controlledOpen, onClose, onSaved, r
     const [autoOpen, setAutoOpen] = useState(false);
     const [status, setStatus] = useState<NicknameStatus | null>(null);
     const [value, setValue] = useState("");
+    const [savedValue, setSavedValue] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [pending, startTransition] = useTransition();
 
@@ -49,7 +50,9 @@ export default function ProfileModal({ open: controlledOpen, onClose, onSaved, r
         (async () => {
             const s = await getNicknameStatus();
             setStatus(s);
-            setValue(s?.currentName ?? "");
+            const name = s?.currentName ?? "";
+            setValue(name);
+            setSavedValue(name);
             setError(null);
         })();
     }, [isControlled, controlledOpen]);
@@ -78,6 +81,15 @@ export default function ProfileModal({ open: controlledOpen, onClose, onSaved, r
             router.refresh();
             close();
         });
+    };
+
+    const handleBlur = () => {
+        if (isInitial || pending) return;
+        if (value !== savedValue && value.trim().length >= 2) handleSave();
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === "Enter") { e.preventDefault(); handleSave(); }
     };
 
     const handleKeep = () => {
@@ -176,6 +188,8 @@ export default function ProfileModal({ open: controlledOpen, onClose, onSaved, r
                             type="text"
                             value={value}
                             onChange={(e) => { setValue(e.target.value); setError(null); }}
+                            onBlur={handleBlur}
+                            onKeyDown={handleKeyDown}
                             maxLength={NICK_MAX}
                             autoFocus
                             placeholder="Tu nombre o nick"
@@ -191,7 +205,7 @@ export default function ProfileModal({ open: controlledOpen, onClose, onSaved, r
                         <button
                             onClick={handleSave}
                             disabled={pending || value.trim().length < 2}
-                            className="w-full px-4 py-2 bg-[#00e87a] hover:bg-[#00d970] text-black text-sm font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="hidden sm:block w-full px-4 py-2 bg-[#00e87a] hover:bg-[#00d970] text-black text-sm font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {pending ? "Guardando…" : "Guardar nombre"}
                         </button>
