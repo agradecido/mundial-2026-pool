@@ -119,9 +119,9 @@ export default async function AdminPartidosPage({
                             <th className="px-4 py-3 font-medium">Partido</th>
                             <th className="px-4 py-3 font-medium hidden sm:table-cell">Fase</th>
                             <th className="px-4 py-3 font-medium hidden md:table-cell">Fecha</th>
+                            <th className="px-4 py-3 font-medium"></th>
                             <th className="px-4 py-3 font-medium">Resultado</th>
                             <th className="px-4 py-3 font-medium">Estado</th>
-                            <th className="px-4 py-3 font-medium"></th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
@@ -147,15 +147,7 @@ export default async function AdminPartidosPage({
                                         minute: "2-digit",
                                     })}
                                 </td>
-                                <td className="px-4 py-3 font-mono text-white">
-                                    {p.golesLocalReal !== null && p.golesVisitanteReal !== null
-                                        ? `${p.golesLocalReal} – ${p.golesVisitanteReal}`
-                                        : <span className="text-gray-600">—</span>}
-                                </td>
-                                <td className={`px-4 py-3 ${ESTADO_COLORS[p.estado]}`}>
-                                    {ESTADO_LABELS[p.estado]}
-                                </td>
-                                <td className="px-4 py-3 text-right">
+                                <td className="px-4 py-3">
                                     <Link
                                         href={`/admin/partidos/${p.id}`}
                                         className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-xs text-gray-400 hover:text-white hover:border-white/20 transition-colors"
@@ -163,6 +155,14 @@ export default async function AdminPartidosPage({
                                         Editar
                                         <LinkSpinner className="size-3 shrink-0" />
                                     </Link>
+                                </td>
+                                <td className="px-4 py-3 font-mono text-white">
+                                    {p.golesLocalReal !== null && p.golesVisitanteReal !== null
+                                        ? `${p.golesLocalReal} – ${p.golesVisitanteReal}`
+                                        : <span className="text-gray-600">—</span>}
+                                </td>
+                                <td className={`px-4 py-3 ${ESTADO_COLORS[p.estado]}`}>
+                                    {ESTADO_LABELS[p.estado]}
                                 </td>
                             </tr>
                         ))}
