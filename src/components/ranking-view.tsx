@@ -31,6 +31,7 @@ interface Props {
 export default function RankingView({ ranking, currentUserId }: Props) {
   const [detail, setDetail] = useState<UserDetail | null>(null);
   const [loading, setLoading] = useState<string | null>(null); // userId being loaded
+  const [navigating, setNavigating] = useState(false);
 
   const openDetail = useCallback(async (userId: string) => {
     setLoading(userId);
@@ -44,6 +45,26 @@ export default function RankingView({ ranking, currentUserId }: Props) {
 
   const closeDetail = useCallback(() => setDetail(null), []);
 
+  const currentIndex = detail ? ranking.findIndex((u) => u.id === detail.id) : -1;
+
+  const navigateTo = useCallback(async (userId: string) => {
+    setNavigating(true);
+    try {
+      const data = await getUserDetail(userId);
+      setDetail(data);
+    } finally {
+      setNavigating(false);
+    }
+  }, []);
+
+  const handlePrev = useCallback(() => {
+    if (currentIndex > 0) navigateTo(ranking[currentIndex - 1].id);
+  }, [currentIndex, navigateTo, ranking]);
+
+  const handleNext = useCallback(() => {
+    if (currentIndex < ranking.length - 1) navigateTo(ranking[currentIndex + 1].id);
+  }, [currentIndex, navigateTo, ranking]);
+
   const top3 = ranking.slice(0, 3);
   const rest = ranking.slice(3);
 
@@ -56,8 +77,12 @@ export default function RankingView({ ranking, currentUserId }: Props) {
       {detail && (
         <UserDetailModal
           detail={detail}
-          position={ranking.findIndex((u) => u.id === detail.id) + 1}
+          position={currentIndex + 1}
           onClose={closeDetail}
+          onPrev={currentIndex > 0 ? handlePrev : undefined}
+          onNext={currentIndex < ranking.length - 1 ? handleNext : undefined}
+          isNavigating={navigating}
+          totalUsers={ranking.length}
         />
       )}
 

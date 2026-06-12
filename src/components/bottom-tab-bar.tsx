@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { LinkSpinner } from "@/components/nav-button";
 
 interface TabItem {
@@ -87,6 +87,7 @@ const tabs: TabItem[] = [
 
 export default function BottomTabBar() {
     const pathname = usePathname();
+    const router = useRouter();
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
@@ -104,6 +105,12 @@ export default function BottomTabBar() {
                         <Link
                             key={href}
                             href={href}
+                            onClick={(e) => {
+                                if (isActive) {
+                                    e.preventDefault();
+                                    router.push(href);
+                                }
+                            }}
                             className={`flex flex-col items-center justify-center gap-1 flex-1 py-2.5 transition-colors [touch-action:manipulation] ${isActive ? "text-[#00e87a]" : "text-gray-600 active:text-gray-300"
                                 }`}
                         >

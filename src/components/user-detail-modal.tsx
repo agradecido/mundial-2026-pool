@@ -30,20 +30,47 @@ interface Props {
   detail: UserDetail;
   position: number;
   onClose: () => void;
+  onPrev?: () => void;
+  onNext?: () => void;
+  isNavigating?: boolean;
+  totalUsers?: number;
 }
 
-export default function UserDetailModal({ detail, position, onClose }: Props) {
+export default function UserDetailModal({ detail, position, onClose, onPrev, onNext, isNavigating, totalUsers }: Props) {
   const overlayRef = useRef<HTMLDivElement>(null);
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
 
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowLeft") onPrev?.();
+      if (e.key === "ArrowRight") onNext?.();
+    };
     window.addEventListener("keydown", handler);
     document.body.style.overflow = "hidden";
     return () => {
       window.removeEventListener("keydown", handler);
       document.body.style.overflow = "";
     };
-  }, [onClose]);
+  }, [onClose, onPrev, onNext]);
+
+  function handleTouchStart(e: React.TouchEvent) {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  }
+
+  function handleTouchEnd(e: React.TouchEvent) {
+    if (touchStartX.current === null || touchStartY.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    const dy = e.changedTouches[0].clientY - touchStartY.current;
+    touchStartX.current = null;
+    touchStartY.current = null;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 60) {
+      if (dx < 0) onNext?.();
+      else onPrev?.();
+    }
+  }
 
   // Stats
   const exactos = detail.pronosticos.filter((p) => p.puntosGanados === 5 || p.puntosGanados === 10).length;
@@ -73,7 +100,11 @@ export default function UserDetailModal({ detail, position, onClose }: Props) {
       <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" />
 
       {/* Panel */}
-      <div className="relative w-full max-w-2xl max-h-[88vh] flex flex-col rounded-2xl border border-white/[0.09] bg-[#0c0c18] shadow-2xl overflow-hidden">
+      <div
+        className="relative w-full max-w-2xl max-h-[88vh] flex flex-col rounded-2xl border border-white/[0.09] bg-[#0c0c18] shadow-2xl overflow-hidden"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         {/* Top glow */}
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#00e87a]/40 to-transparent" />
 
@@ -94,12 +125,37 @@ export default function UserDetailModal({ detail, position, onClose }: Props) {
             <p className="text-2xl font-bold text-white tabular-nums">{ptsPartidos + ptsEspeciales}</p>
             <p className="text-xs text-gray-600">puntos totales</p>
           </div>
-          <button
-            onClick={onClose}
-            className="ml-2 shrink-0 rounded-lg p-2 text-gray-500 hover:text-white hover:bg-white/8 transition-colors"
-          >
-            ✕
-          </button>
+          <div className="ml-2 flex items-center gap-0.5 shrink-0">
+            {(onPrev !== undefined || onNext !== undefined) && (
+              <>
+                <button
+                  onClick={onPrev}
+                  disabled={!onPrev || isNavigating}
+                  className="rounded-lg p-2 text-gray-500 hover:text-white hover:bg-white/8 transition-colors disabled:opacity-25 disabled:cursor-not-allowed text-base leading-none"
+                  title="Anterior (←)"
+                >
+                  ‹
+                </button>
+                <span className="text-[11px] text-gray-600 tabular-nums min-w-[2.5rem] text-center select-none">
+                  {position}{totalUsers ? `/${totalUsers}` : ""}
+                </span>
+                <button
+                  onClick={onNext}
+                  disabled={!onNext || isNavigating}
+                  className="rounded-lg p-2 text-gray-500 hover:text-white hover:bg-white/8 transition-colors disabled:opacity-25 disabled:cursor-not-allowed text-base leading-none"
+                  title="Siguiente (→)"
+                >
+                  ›
+                </button>
+              </>
+            )}
+            <button
+              onClick={onClose}
+              className="ml-1 rounded-lg p-2 text-gray-500 hover:text-white hover:bg-white/8 transition-colors"
+            >
+              ✕
+            </button>
+          </div>
         </div>
 
         {/* ── Stats bar ── */}
@@ -118,7 +174,7 @@ export default function UserDetailModal({ detail, position, onClose }: Props) {
         </div>
 
         {/* ── Scrollable body ── */}
-        <div className="overflow-y-auto flex-1">
+        <div className={`overflow-y-auto flex-1 transition-opacity duration-150 ${isNavigating ? "opacity-40 pointer-events-none" : ""}`}>
 
           {/* Predicciones especiales */}
           {pf && (
