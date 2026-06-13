@@ -88,10 +88,15 @@ export default function PorraDetailModal({ data, onClose, onPrev, onNext, isNavi
     const dy = e.changedTouches[0].clientY - touchStartY.current;
     touchStartX.current = null;
     touchStartY.current = null;
-    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 60) {
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
       if (dx < 0) onNext?.();
       else onPrev?.();
     }
+  }
+
+  function handleTouchCancel() {
+    touchStartX.current = null;
+    touchStartY.current = null;
   }
 
   // Derive teams per phase from picks
@@ -140,6 +145,7 @@ export default function PorraDetailModal({ data, onClose, onPrev, onNext, isNavi
         className="relative w-full sm:max-w-2xl max-h-[85dvh] flex flex-col overflow-hidden rounded-2xl border border-white/[0.09] bg-[#0c0c18] shadow-2xl"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchCancel}
       >
         {/* Top glow */}
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#00e87a]/40 to-transparent" />

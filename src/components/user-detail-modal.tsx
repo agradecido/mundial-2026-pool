@@ -67,10 +67,15 @@ export default function UserDetailModal({ detail, position, onClose, onPrev, onN
     const dy = e.changedTouches[0].clientY - touchStartY.current;
     touchStartX.current = null;
     touchStartY.current = null;
-    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 60) {
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
       if (dx < 0) onNext?.();
       else onPrev?.();
     }
+  }
+
+  function handleTouchCancel() {
+    touchStartX.current = null;
+    touchStartY.current = null;
   }
 
   // Stats
@@ -105,6 +110,7 @@ export default function UserDetailModal({ detail, position, onClose, onPrev, onN
         className="relative w-full max-w-2xl max-h-[85dvh] flex flex-col rounded-2xl border border-white/[0.09] bg-[#0c0c18] shadow-2xl overflow-hidden"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchCancel}
       >
         {/* Top glow */}
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#00e87a]/40 to-transparent" />
