@@ -1,6 +1,8 @@
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
 import { getFlag } from "@/lib/flags";
+import type { BracketPicks } from "@/lib/bracket";
 
 type Stats = {
   team: string;
@@ -69,7 +71,16 @@ const getClasificacion = unstable_cache(
 );
 
 export default async function ClasificacionPage() {
-  const grupos = await getClasificacion();
+  const [grupos, session] = await Promise.all([getClasificacion(), auth()]);
+
+  const userBracket = session?.user
+    ? await prisma.pronosticoBracket.findUnique({
+        where: { userId: session.user.id },
+        select: { picks: true },
+      })
+    : null;
+
+  const userGrupos = (userBracket?.picks as BracketPicks | null)?.grupos ?? {};
 
   return (
     <>
@@ -85,20 +96,43 @@ export default async function ClasificacionPage() {
       ) : (
         <>
           {/* Legend */}
-          <div className="flex items-center gap-4 mb-4 text-[11px] text-gray-600">
-            <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-[#00e87a]/70" />
-              Clasificado
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-yellow-500/50" />
-              Posible 3º clasificado
-            </span>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mb-4 text-[11px] text-gray-600">
+            {Object.keys(userGrupos).length > 0 ? (
+              <>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-green-500/70" />
+                  Puesto exacto
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-green-500/30" />
+                  Clasificado (puesto cambiado)
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-red-500/40" />
+                  No en tu porra
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-yellow-500/50" />
+                  Posible 3º clasificado
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-[#00e87a]/70" />
+                  Clasificado
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-yellow-500/50" />
+                  Posible 3º clasificado
+                </span>
+              </>
+            )}
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {grupos.map(({ letra, equipos }) => (
-              <GrupoCard key={letra} letra={letra} equipos={equipos} />
+              <GrupoCard key={letra} letra={letra} equipos={equipos} userPicks={userGrupos[letra]} />
             ))}
           </div>
         </>
@@ -107,7 +141,16 @@ export default async function ClasificacionPage() {
   );
 }
 
-function GrupoCard({ letra, equipos }: { letra: string; equipos: Stats[] }) {
+function rowBg(i: number, team: string, userPicks?: string[]): string {
+  if (i >= 2) return "";
+  if (!userPicks?.length) return "bg-[#00e87a]/[0.03]";
+  const pickedAt = userPicks.indexOf(team);
+  if (pickedAt === i) return "bg-green-500/[0.18]";      // exact position
+  if (pickedAt >= 0) return "bg-green-500/[0.07]";       // right team, wrong slot
+  return "bg-red-500/[0.08]";                            // not picked in top 2
+}
+
+function GrupoCard({ letra, equipos, userPicks }: { letra: string; equipos: Stats[]; userPicks?: string[] }) {
   return (
     <div className="glass-card !p-0 overflow-hidden">
       {/* Group header */}
@@ -141,7 +184,7 @@ function GrupoCard({ letra, equipos }: { letra: string; equipos: Stats[] }) {
             return (
               <tr
                 key={e.team}
-                className={`border-b border-white/[0.03] last:border-0 ${qualifies ? "bg-[#00e87a]/[0.03]" : ""}`}
+                className={`border-b border-white/[0.03] last:border-0 ${rowBg(i, e.team, userPicks)}`}
               >
                 <td className="pl-3 pr-1 py-2.5">
                   <span className={`text-xs font-bold ${qualifies ? "text-[#00e87a]" : thirdPlace ? "text-yellow-500/60" : "text-gray-700"}`}>
