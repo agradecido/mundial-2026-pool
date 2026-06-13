@@ -132,6 +132,11 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
   const [h2hData, setH2hData] = useState<H2HData | null>(null);
   const [h2hLoading, setH2hLoading] = useState(false);
 
+  // ── Puntuaciones ──────────────────────────────────────────────────────────
+  const [puntosOpen, setPuntosOpen] = useState(false);
+  const [puntosData, setPuntosData] = useState<{ name: string; image: string | null; puntosGanados: number }[] | null>(null);
+  const [puntosLoading, setPuntosLoading] = useState(false);
+
   async function fetchH2H() {
     if (h2hData || h2hLoading) return;
     setH2hLoading(true);
@@ -148,6 +153,22 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
   function toggleH2H() {
     if (!h2hOpen && !h2hData) fetchH2H();
     setH2hOpen((v) => !v);
+  }
+
+  async function fetchPuntos() {
+    if (puntosData || puntosLoading) return;
+    setPuntosLoading(true);
+    try {
+      const res = await fetch(`/api/partidos/puntos?partidoId=${encodeURIComponent(partido.id)}`);
+      if (res.ok) setPuntosData(await res.json());
+    } finally {
+      setPuntosLoading(false);
+    }
+  }
+
+  function togglePuntos() {
+    if (!puntosOpen && !puntosData) fetchPuntos();
+    setPuntosOpen((v) => !v);
   }
 
   useEffect(() => {
@@ -418,6 +439,57 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
           </div>
         )}
       </form>
+
+      {/* ── Puntuaciones ────────────────────────────────────────────── */}
+      {isFinished && (
+        <div className="border-t border-white/[0.05]">
+          <button
+            type="button"
+            onClick={togglePuntos}
+            className="w-full flex items-center justify-between px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-gray-600 hover:text-gray-400 transition-colors"
+          >
+            <span>Puntuaciones</span>
+            <span className="text-[9px]">{puntosOpen ? "▲" : "▼"}</span>
+          </button>
+
+          {puntosOpen && (
+            <div className="px-4 pb-4">
+              {puntosLoading && (
+                <p className="text-center text-xs text-gray-600 py-2 animate-pulse">Cargando…</p>
+              )}
+              {!puntosLoading && puntosData?.length === 0 && (
+                <p className="text-center text-[11px] text-gray-700 py-2">Nadie acertó este partido</p>
+              )}
+              {!puntosLoading && puntosData && puntosData.length > 0 && (
+                <div className="space-y-1 max-h-52 overflow-y-auto scrollbar-none">
+                  {puntosData.map((u, i) => {
+                    const t = getTier(u.puntosGanados, partido.fase);
+                    const initials = u.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+                    return (
+                      <div key={i} className="flex items-center gap-2.5 py-1.5 border-b border-white/[0.04] last:border-0">
+                        {u.image ? (
+                          <img src={u.image} alt={u.name} className="size-5 rounded-full shrink-0 object-cover" />
+                        ) : (
+                          <span className="size-5 rounded-full bg-white/10 flex items-center justify-center text-[8px] font-bold text-gray-400 shrink-0">
+                            {initials}
+                          </span>
+                        )}
+                        <span className="flex-1 text-[11px] text-gray-300 truncate">{u.name}</span>
+                        <span className={`text-[10px] font-semibold uppercase tracking-wide shrink-0 ${t.color}`}>
+                          {t.label}
+                        </span>
+                        <span className={`text-xs font-bold tabular-nums shrink-0 ${t.color}`}>
+                          +{u.puntosGanados}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── H2H ────────────────────────────────────────────────────────── */}
       {!teamsUnknown && (
