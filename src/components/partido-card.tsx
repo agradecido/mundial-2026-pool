@@ -94,6 +94,20 @@ function getTier(
   return { label: "Fallo", color: "text-gray-600", glow: "transparent" };
 }
 
+function calcPoints(
+  userLocal: number, userVisitante: number,
+  realLocal: number, realVisitante: number,
+  fase: Fase,
+): number {
+  const mult = fase === "GRUPOS" ? 1 : 2;
+  if (userLocal === realLocal && userVisitante === realVisitante) return 5 * mult;
+  const userResult = Math.sign(userLocal - userVisitante);
+  const realResult = Math.sign(realLocal - realVisitante);
+  if (userResult === realResult) return 3 * mult;
+  if (userLocal === realLocal || userVisitante === realVisitante) return 1 * mult;
+  return 0;
+}
+
 function CheckIcon() {
   return (
     <svg
@@ -136,6 +150,10 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
   const [puntosOpen, setPuntosOpen] = useState(false);
   const [puntosData, setPuntosData] = useState<{ name: string; image: string | null; puntosGanados: number }[] | null>(null);
   const [puntosLoading, setPuntosLoading] = useState(false);
+  const [pronosticosData, setPronosticosData] = useState<{ name: string; image: string | null; golesLocal: number; golesVisitante: number }[] | null>(null);
+
+  // ── Live score ────────────────────────────────────────────────────────────
+  const [liveScore, setLiveScore] = useState<{ home: number; away: number } | null>(null);
 
   async function fetchH2H() {
     if (h2hData || h2hLoading) return;
@@ -166,14 +184,43 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
     }
   }
 
+  async function fetchPronosticos() {
+    if (pronosticosData || puntosLoading) return;
+    setPuntosLoading(true);
+    try {
+      const res = await fetch(`/api/partidos/pronosticos?partidoId=${encodeURIComponent(partido.id)}`);
+      if (res.ok) setPronosticosData(await res.json());
+    } finally {
+      setPuntosLoading(false);
+    }
+  }
+
   function togglePuntos() {
-    if (!puntosOpen && !puntosData) fetchPuntos();
+    if (!puntosOpen) {
+      if (partido.estado === "FINALIZADO" && !puntosData) fetchPuntos();
+      else if (partido.estado === "EN_PROGRESO" && !pronosticosData) fetchPronosticos();
+    }
     setPuntosOpen((v) => !v);
   }
 
   useEffect(() => {
     setLocked(isLocked(partido.fechaPartido, partido.estado));
   }, [partido.fechaPartido, partido.estado]);
+
+  useEffect(() => {
+    if (partido.estado !== "EN_PROGRESO") return;
+    const poll = async () => {
+      try {
+        const res = await fetch(
+          `/api/partidos/score-live?team1=${encodeURIComponent(partido.equipoLocal)}&team2=${encodeURIComponent(partido.equipoVisitante)}`,
+        );
+        if (res.ok) setLiveScore(await res.json() as { home: number; away: number });
+      } catch { /* ignore */ }
+    };
+    poll();
+    const id = setInterval(poll, 60_000);
+    return () => clearInterval(id);
+  }, [partido.estado, partido.equipoLocal, partido.equipoVisitante]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -201,12 +248,29 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
   const displayLocal = isPlaceholder(partido.equipoLocal) ? "Por definir" : partido.equipoLocal;
   const displayVisitante = isPlaceholder(partido.equipoVisitante) ? "Por definir" : partido.equipoVisitante;
   const isFinished = partido.estado === "FINALIZADO";
+  const isLive = partido.estado === "EN_PROGRESO";
   const showInputs = !locked;
   const localValue = pronostico != null ? pronostico.golesLocal : null;
   const visitanteValue = pronostico != null ? pronostico.golesVisitante : null;
   const tier =
     isFinished && pronostico != null
       ? getTier(pronostico.puntosGanados, partido.fase)
+      : null;
+
+  // Projected live points for the current user
+  const myLivePoints =
+    isLive && liveScore && pronostico != null
+      ? calcPoints(pronostico.golesLocal, pronostico.golesVisitante, liveScore.home, liveScore.away, partido.fase)
+      : null;
+  const myLiveTier = myLivePoints !== null ? getTier(myLivePoints, partido.fase) : null;
+
+  // Projected live points for all players (computed from pronosticosData + liveScore)
+  const liveEntries =
+    isLive && liveScore && pronosticosData
+      ? pronosticosData
+          .map((u) => ({ ...u, pts: calcPoints(u.golesLocal, u.golesVisitante, liveScore.home, liveScore.away, partido.fase) }))
+          .filter((u) => u.pts > 0)
+          .sort((a, b) => b.pts - a.pts)
       : null;
 
   const statusBadge =
@@ -331,6 +395,16 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
                     resultado
                   </span>
                 </div>
+              ) : liveScore ? (
+                <div className="flex flex-col items-center gap-0.5 leading-tight">
+                  <span className="text-xl lg:text-2xl font-bold text-white tabular-nums">
+                    {liveScore.home}–{liveScore.away}
+                  </span>
+                  <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-widest text-yellow-300">
+                    <span className="size-1.5 rounded-full bg-yellow-300 animate-pulse" />
+                    en vivo
+                  </span>
+                </div>
               ) : (
                 <span className="text-2xl lg:text-3xl font-bold text-gray-600 leading-[3rem] select-none">
                   :
@@ -411,44 +485,56 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
             </div>
           )}
 
-          {/* Puntos — solo cuando el partido ha finalizado */}
-          {isFinished && (
+          {/* Puntos — final o proyección en vivo del usuario */}
+          {(isFinished || (isLive && liveScore)) && (
             <div className="mt-3 flex items-center justify-center gap-2 min-h-[2rem]">
-              {pronostico != null && tier != null ? (
-                <>
-                  <span
-                    className={`text-base font-bold tabular-nums ${tier.color}`}
-                    style={{ filter: `drop-shadow(0 0 6px ${tier.glow})` }}
-                  >
-                    {pronostico.puntosGanados > 0
-                      ? `+${pronostico.puntosGanados}`
-                      : "0"}{" "}
-                    pts
-                  </span>
-                  <span
-                    className={`text-[10px] font-semibold uppercase tracking-wider opacity-70 ${tier.color}`}
-                  >
-                    · {tier.label}
-                  </span>
-                </>
+              {isFinished ? (
+                pronostico != null && tier != null ? (
+                  <>
+                    <span
+                      className={`text-base font-bold tabular-nums ${tier.color}`}
+                      style={{ filter: `drop-shadow(0 0 6px ${tier.glow})` }}
+                    >
+                      {pronostico.puntosGanados > 0 ? `+${pronostico.puntosGanados}` : "0"}{" "}pts
+                    </span>
+                    <span className={`text-[10px] font-semibold uppercase tracking-wider opacity-70 ${tier.color}`}>
+                      · {tier.label}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-[10px] uppercase tracking-wider text-gray-600">Sin pronóstico</span>
+                )
               ) : (
-                <span className="text-[10px] uppercase tracking-wider text-gray-600">
-                  Sin pronóstico
-                </span>
+                myLivePoints !== null && myLiveTier ? (
+                  <>
+                    <span className={`text-base font-bold tabular-nums ${myLiveTier.color}`}>
+                      {myLivePoints > 0 ? `+${myLivePoints}` : "0"}{" "}pts
+                    </span>
+                    <span className={`text-[10px] font-semibold uppercase tracking-wider opacity-70 ${myLiveTier.color}`}>
+                      · {myLiveTier.label}
+                    </span>
+                    <span className="text-[10px] text-yellow-500/60">(en vivo)</span>
+                  </>
+                ) : (
+                  <span className="text-[10px] uppercase tracking-wider text-gray-600">Sin pronóstico</span>
+                )
               )}
             </div>
           )}
         </form>
 
         {/* ── Puntuaciones ────────────────────────────────────────────── */}
-        {isFinished && (
+        {(isFinished || isLive) && (
           <div className="border-t border-white/[0.05]">
             <button
               type="button"
               onClick={togglePuntos}
               className="w-full flex items-center justify-between px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-gray-600 hover:text-gray-400 transition-colors"
             >
-              <span>Puntuaciones jugadores Quiniela</span>
+              <span className="flex items-center gap-1.5">
+                Puntuaciones
+                {isLive && <span className="size-1.5 rounded-full bg-yellow-300 animate-pulse" />}
+              </span>
               <span className="text-[9px]">{puntosOpen ? "▲" : "▼"}</span>
             </button>
 
@@ -457,34 +543,32 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
                 {puntosLoading && (
                   <p className="text-center text-xs text-gray-600 py-2 animate-pulse">Cargando…</p>
                 )}
-                {!puntosLoading && puntosData?.length === 0 && (
+
+                {/* ── FINALIZADO ── */}
+                {!puntosLoading && isFinished && puntosData?.length === 0 && (
                   <p className="text-center text-[11px] text-gray-700 py-2">Nadie acertó este partido</p>
                 )}
-                {!puntosLoading && puntosData && puntosData.length > 0 && (
-                  <div className="space-y-1 max-h-52 overflow-y-auto scrollbar-none">
-                    {puntosData.map((u, i) => {
-                      const t = getTier(u.puntosGanados, partido.fase);
-                      const initials = u.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
-                      return (
-                        <div key={i} className="flex items-center gap-2.5 py-1.5 border-b border-white/[0.04] last:border-0">
-                          {u.image ? (
-                            <img src={u.image} alt={u.name} className="size-5 rounded-full shrink-0 object-cover" />
-                          ) : (
-                            <span className="size-5 rounded-full bg-white/10 flex items-center justify-center text-[8px] font-bold text-gray-400 shrink-0">
-                              {initials}
-                            </span>
-                          )}
-                          <span className="flex-1 text-[11px] text-gray-300 truncate">{u.name}</span>
-                          <span className={`text-[10px] font-semibold uppercase tracking-wide shrink-0 ${t.color}`}>
-                            {t.label}
-                          </span>
-                          <span className={`text-xs font-bold tabular-nums shrink-0 ${t.color}`}>
-                            +{u.puntosGanados}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
+                {!puntosLoading && isFinished && puntosData && puntosData.length > 0 && (
+                  <ScoreList
+                    entries={puntosData.map(u => ({ name: u.name, image: u.image, pts: u.puntosGanados }))}
+                    fase={partido.fase}
+                  />
+                )}
+
+                {/* ── EN PROGRESO ── */}
+                {!puntosLoading && isLive && !liveScore && (
+                  <p className="text-center text-xs text-gray-600 py-2 animate-pulse">Esperando marcador…</p>
+                )}
+                {!puntosLoading && isLive && liveScore && liveEntries?.length === 0 && (
+                  <p className="text-center text-[11px] text-gray-700 py-2">
+                    Nadie puntúa con el marcador actual
+                  </p>
+                )}
+                {!puntosLoading && isLive && liveScore && liveEntries && liveEntries.length > 0 && (
+                  <ScoreList
+                    entries={liveEntries.map(u => ({ name: u.name, image: u.image, pts: u.pts }))}
+                    fase={partido.fase}
+                  />
                 )}
               </div>
             )}
@@ -540,6 +624,37 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
         )}
       </div>
     </>
+  );
+}
+
+// ── ScoreList ─────────────────────────────────────────────────────────────────
+
+function ScoreList({ entries, fase }: { entries: { name: string; image: string | null; pts: number }[]; fase: Fase }) {
+  return (
+    <div className="space-y-1 max-h-52 overflow-y-auto scrollbar-none">
+      {entries.map((u, i) => {
+        const t = getTier(u.pts, fase);
+        const initials = u.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
+        return (
+          <div key={i} className="flex items-center gap-2.5 py-1.5 border-b border-white/[0.04] last:border-0">
+            {u.image ? (
+              <img src={u.image} alt={u.name} className="size-5 rounded-full shrink-0 object-cover" />
+            ) : (
+              <span className="size-5 rounded-full bg-white/10 flex items-center justify-center text-[8px] font-bold text-gray-400 shrink-0">
+                {initials}
+              </span>
+            )}
+            <span className="flex-1 text-[11px] text-gray-300 truncate">{u.name}</span>
+            <span className={`text-[10px] font-semibold uppercase tracking-wide shrink-0 ${t.color}`}>
+              {t.label}
+            </span>
+            <span className={`text-xs font-bold tabular-nums shrink-0 ${t.color}`}>
+              +{u.pts}
+            </span>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
