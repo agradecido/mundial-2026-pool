@@ -142,7 +142,7 @@ export default function PorraDetailModal({ data, onClose, onPrev, onNext, isNavi
       <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" />
 
       <div
-        className="relative w-full sm:max-w-2xl max-h-[85dvh] flex flex-col overflow-hidden rounded-2xl border border-white/[0.09] bg-[#0c0c18] shadow-2xl"
+        className={`relative w-full sm:max-w-2xl max-h-[85dvh] flex flex-col overflow-hidden rounded-2xl border border-white/[0.09] bg-[#0c0c18] shadow-2xl transition-opacity duration-150 ${isNavigating ? "opacity-40" : ""}`}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         onTouchCancel={handleTouchCancel}
@@ -217,7 +217,7 @@ export default function PorraDetailModal({ data, onClose, onPrev, onNext, isNavi
         </div>
 
         {/* Content */}
-        <div className={`overflow-y-auto flex-1 px-5 py-4 space-y-5 transition-opacity duration-150 ${isNavigating ? "opacity-40 pointer-events-none" : ""}`}>
+        <div className="overflow-y-auto flex-1 px-5 py-4 space-y-5">
 
           {tab === "bracket" && (
             <>

@@ -107,7 +107,7 @@ export default function UserDetailModal({ detail, position, onClose, onPrev, onN
 
       {/* Panel */}
       <div
-        className="relative w-full max-w-2xl max-h-[85dvh] flex flex-col rounded-2xl border border-white/[0.09] bg-[#0c0c18] shadow-2xl overflow-hidden"
+        className={`relative w-full max-w-2xl max-h-[85dvh] flex flex-col rounded-2xl border border-white/[0.09] bg-[#0c0c18] shadow-2xl overflow-hidden transition-opacity duration-150 ${isNavigating ? "opacity-40" : ""}`}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         onTouchCancel={handleTouchCancel}
@@ -184,7 +184,7 @@ export default function UserDetailModal({ detail, position, onClose, onPrev, onN
         <SwipeHint enabled={!!(onPrev !== undefined || onNext !== undefined)} />
 
         {/* ── Scrollable body ── */}
-        <div className={`overflow-y-auto flex-1 transition-opacity duration-150 ${isNavigating ? "opacity-40 pointer-events-none" : ""}`}>
+        <div className="overflow-y-auto flex-1">
 
           {/* Predicciones especiales */}
           {pf && (
