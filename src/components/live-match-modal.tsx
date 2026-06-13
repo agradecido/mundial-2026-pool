@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { getFlag } from "@/lib/flags";
 
 // Local map so this client component has no server-only imports
@@ -73,7 +74,10 @@ export default function LiveMatchModal({ equipoLocal, equipoVisitante, onClose }
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
+  const [mounted, setMounted] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => { setMounted(true); }, []);
 
   const fetchLive = useCallback(async () => {
     try {
@@ -119,7 +123,9 @@ export default function LiveMatchModal({ equipoLocal, equipoVisitante, onClose }
   const htAway = liveData?.score.halfTime.away;
   const showHT = htHome != null && htAway != null;
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <div
       ref={overlayRef}
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -262,6 +268,7 @@ export default function LiveMatchModal({ equipoLocal, equipoVisitante, onClose }
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

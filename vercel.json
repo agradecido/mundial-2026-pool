@@ -3,10 +3,6 @@
     {
       "path": "/api/cron/default-pronosticos",
       "schedule": "0 3 * * *"
-    },
-    {
-      "path": "/api/cron/sync-match-status",
-      "schedule": "*/5 * * * *"
     }
   ]
 }
