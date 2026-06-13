@@ -3,6 +3,7 @@
 import { useState, useTransition, useEffect } from "react";
 import { guardarPronostico } from "@/app/quiniela/actions";
 import { getFlag } from "@/lib/flags";
+import LiveMatchModal from "@/components/live-match-modal";
 import type { EstadoPartido, Fase } from "@prisma/client";
 
 // ── H2H types ─────────────────────────────────────────────────────────────────
@@ -123,6 +124,9 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
+  // ── Live match modal ──────────────────────────────────────────────────────
+  const [liveOpen, setLiveOpen] = useState(false);
+
   // ── H2H ───────────────────────────────────────────────────────────────────
   const [h2hOpen, setH2hOpen] = useState(false);
   const [h2hData, setH2hData] = useState<H2HData | null>(null);
@@ -186,10 +190,14 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
 
   const statusBadge =
     partido.estado === "EN_PROGRESO" ? (
-      <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-yellow-300 bg-yellow-400/10 border border-yellow-400/20 rounded-full px-2 py-0.5">
+      <button
+        type="button"
+        onClick={() => setLiveOpen(true)}
+        className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-yellow-300 bg-yellow-400/10 border border-yellow-400/20 rounded-full px-2 py-0.5 hover:bg-yellow-400/20 transition-colors cursor-pointer"
+      >
         <span className="size-1.5 rounded-full bg-yellow-300 animate-pulse" />
         En juego
-      </span>
+      </button>
     ) : locked ? (
       <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 bg-white/[0.03] border border-white/[0.06] rounded-full px-2 py-0.5">
         🔒 Cerrado
@@ -210,6 +218,14 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
   }
 
   return (
+    <>
+    {liveOpen && (
+      <LiveMatchModal
+        equipoLocal={partido.equipoLocal}
+        equipoVisitante={partido.equipoVisitante}
+        onClose={() => setLiveOpen(false)}
+      />
+    )}
     <div className="relative overflow-hidden rounded-2xl border border-white/[0.07] bg-gradient-to-b from-white/[0.04] to-white/[0.015] transition-all hover:border-white/[0.14] hover:from-white/[0.06] hover:to-white/[0.02] group">
       {/* Top accent line */}
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent group-hover:via-[#00e87a]/40 transition-colors" />
@@ -451,6 +467,7 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
         </div>
       )}
     </div>
+    </>
   );
 }
 
