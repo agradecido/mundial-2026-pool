@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { getFlag } from "@/lib/flags";
 import {
@@ -13,6 +13,11 @@ import BracketTree from "@/components/bracket-tree";
 interface Props {
   data: UserBracketData;
   onClose: () => void;
+  onPrev?: () => void;
+  onNext?: () => void;
+  isNavigating?: boolean;
+  position?: number;
+  totalUsers?: number;
 }
 
 type Tab = "bracket" | "arbol" | "grupos";
@@ -50,19 +55,43 @@ function PhaseSection({ label, teams, columns = 4 }: { label: string; teams: (st
 
 // ── Main modal ────────────────────────────────────────────────────────────────
 
-export default function PorraDetailModal({ data, onClose }: Props) {
+export default function PorraDetailModal({ data, onClose, onPrev, onNext, isNavigating, position, totalUsers }: Props) {
   const [tab, setTab] = useState<Tab>("bracket");
   const { user, picks, score } = data;
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
 
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowLeft") onPrev?.();
+      if (e.key === "ArrowRight") onNext?.();
+    };
     window.addEventListener("keydown", handler);
     document.body.style.overflow = "hidden";
     return () => {
       window.removeEventListener("keydown", handler);
       document.body.style.overflow = "";
     };
-  }, [onClose]);
+  }, [onClose, onPrev, onNext]);
+
+  function handleTouchStart(e: React.TouchEvent) {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  }
+
+  function handleTouchEnd(e: React.TouchEvent) {
+    if (touchStartX.current === null || touchStartY.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    const dy = e.changedTouches[0].clientY - touchStartY.current;
+    touchStartX.current = null;
+    touchStartY.current = null;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 60) {
+      if (dx < 0) onNext?.();
+      else onPrev?.();
+    }
+  }
 
   // Derive teams per phase from picks
   const grupos = picks.grupos ?? {};
@@ -99,24 +128,32 @@ export default function PorraDetailModal({ data, onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4"
-      onClick={onClose}
+      ref={overlayRef}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
+      onClick={(e) => { if (e.target === overlayRef.current) onClose(); }}
     >
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" />
+
       <div
-        className="glass-card w-full sm:max-w-2xl max-h-[90vh] flex flex-col overflow-hidden rounded-t-2xl sm:rounded-2xl"
-        onClick={e => e.stopPropagation()}
+        className="relative w-full sm:max-w-2xl max-h-[85dvh] flex flex-col overflow-hidden rounded-2xl border border-white/[0.09] bg-[#0c0c18] shadow-2xl"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
       >
+        {/* Top glow */}
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#00e87a]/40 to-transparent" />
+
         {/* Header */}
         <div className="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-white/[0.07] shrink-0">
           {user.image ? (
-            <Image src={user.image} alt="" width={44} height={44} className="rounded-full shrink-0" />
+            <Image src={user.image} alt="" width={44} height={44} className="rounded-full shrink-0 ring-2 ring-white/10" />
           ) : (
             <div className="w-11 h-11 rounded-full bg-white/10 flex items-center justify-center text-lg font-bold text-gray-400 shrink-0">
               {user.name?.[0] ?? "?"}
             </div>
           )}
           <div className="min-w-0 flex-1">
-            <p className="text-base font-semibold text-white truncate">{user.name}</p>
+            <p className="text-base font-semibold text-white leading-snug">{user.name?.split(" ")[0] ?? "—"}</p>
             <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-0.5">
               {scoreItems.map(({ label, pts }) => (
                 <span key={label} className="text-[10px] text-gray-600">
@@ -126,12 +163,31 @@ export default function PorraDetailModal({ data, onClose }: Props) {
               <span className="text-[10px] font-bold text-[#00e87a]">{score.total} pts</span>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="shrink-0 text-gray-600 hover:text-white transition-colors text-lg leading-none"
-          >
-            ✕
-          </button>
+          <div className="flex items-center gap-0.5 shrink-0">
+            {(onPrev !== undefined || onNext !== undefined) && (
+              <>
+                <button
+                  onClick={onPrev}
+                  disabled={!onPrev || isNavigating}
+                  className="rounded-lg p-2 text-gray-500 hover:text-white hover:bg-white/8 transition-colors disabled:opacity-25 disabled:cursor-not-allowed text-base leading-none"
+                  title="Anterior (←)"
+                >‹</button>
+                <span className="text-[11px] text-gray-600 tabular-nums min-w-[2.5rem] text-center select-none">
+                  {position ?? ""}{totalUsers ? `/${totalUsers}` : ""}
+                </span>
+                <button
+                  onClick={onNext}
+                  disabled={!onNext || isNavigating}
+                  className="rounded-lg p-2 text-gray-500 hover:text-white hover:bg-white/8 transition-colors disabled:opacity-25 disabled:cursor-not-allowed text-base leading-none"
+                  title="Siguiente (→)"
+                >›</button>
+              </>
+            )}
+            <button
+              onClick={onClose}
+              className="ml-1 rounded-lg p-2 text-gray-500 hover:text-white hover:bg-white/8 transition-colors"
+            >✕</button>
+          </div>
         </div>
 
         {/* Tabs */}
@@ -151,7 +207,7 @@ export default function PorraDetailModal({ data, onClose }: Props) {
         </div>
 
         {/* Content */}
-        <div className="overflow-y-auto flex-1 px-5 py-4 space-y-5">
+        <div className={`overflow-y-auto flex-1 px-5 py-4 space-y-5 transition-opacity duration-150 ${isNavigating ? "opacity-40 pointer-events-none" : ""}`}>
 
           {tab === "bracket" && (
             <>

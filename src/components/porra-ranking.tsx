@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import Image from "next/image";
 import { getFlag } from "@/lib/flags";
 import { getUserBracket } from "@/app/porra/actions";
@@ -30,17 +30,70 @@ interface Props {
 
 export default function PorraRanking({ entries, currentUserId }: Props) {
   const [detail, setDetail] = useState<UserBracketData | null>(null);
+  const [detailUserId, setDetailUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState<string | null>(null);
+  const [navigating, setNavigating] = useState(false);
+  const detailCache = useRef<Map<string, UserBracketData>>(new Map());
+
+  const fetchDetail = useCallback(async (userId: string): Promise<UserBracketData> => {
+    const cached = detailCache.current.get(userId);
+    if (cached) return cached;
+    const data = await getUserBracket(userId);
+    detailCache.current.set(userId, data);
+    return data;
+  }, []);
+
+  const showDetail = useCallback((userId: string, data: UserBracketData) => {
+    setDetail(data);
+    setDetailUserId(userId);
+  }, []);
 
   const openDetail = useCallback(async (userId: string) => {
+    const cached = detailCache.current.get(userId);
+    if (cached) { showDetail(userId, cached); return; }
     setLoading(userId);
     try {
-      const data = await getUserBracket(userId);
-      setDetail(data);
+      const data = await fetchDetail(userId);
+      showDetail(userId, data);
     } finally {
       setLoading(null);
     }
-  }, []);
+  }, [fetchDetail, showDetail]);
+
+  const closeDetail = useCallback(() => { setDetail(null); setDetailUserId(null); }, []);
+
+  const currentIndex = detailUserId ? entries.findIndex((e) => e.user.id === detailUserId) : -1;
+
+  const navigateTo = useCallback(async (userId: string) => {
+    const cached = detailCache.current.get(userId);
+    if (cached) { showDetail(userId, cached); return; }
+    setNavigating(true);
+    try {
+      const data = await fetchDetail(userId);
+      showDetail(userId, data);
+    } finally {
+      setNavigating(false);
+    }
+  }, [fetchDetail, showDetail]);
+
+  const handlePrev = useCallback(() => {
+    if (currentIndex > 0) navigateTo(entries[currentIndex - 1].user.id);
+  }, [currentIndex, navigateTo, entries]);
+
+  const handleNext = useCallback(() => {
+    if (currentIndex < entries.length - 1) navigateTo(entries[currentIndex + 1].user.id);
+  }, [currentIndex, navigateTo, entries]);
+
+  // Prefetch adjacent users
+  useEffect(() => {
+    if (!detailUserId) return;
+    const idx = entries.findIndex((e) => e.user.id === detailUserId);
+    const prefetch = (id: string) => {
+      if (!detailCache.current.has(id)) fetchDetail(id).catch(() => {});
+    };
+    if (idx > 0) prefetch(entries[idx - 1].user.id);
+    if (idx < entries.length - 1) prefetch(entries[idx + 1].user.id);
+  }, [detailUserId, fetchDetail, entries]);
 
   const top3 = entries.slice(0, 3);
   const rest = entries.slice(3);
@@ -48,7 +101,15 @@ export default function PorraRanking({ entries, currentUserId }: Props) {
   return (
     <>
       {detail && (
-        <PorraDetailModal data={detail} onClose={() => setDetail(null)} />
+        <PorraDetailModal
+          data={detail}
+          onClose={closeDetail}
+          position={currentIndex + 1}
+          totalUsers={entries.length}
+          onPrev={currentIndex > 0 ? handlePrev : undefined}
+          onNext={currentIndex < entries.length - 1 ? handleNext : undefined}
+          isNavigating={navigating}
+        />
       )}
 
       {/* Podium */}

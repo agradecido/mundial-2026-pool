@@ -101,7 +101,7 @@ export default function UserDetailModal({ detail, position, onClose, onPrev, onN
 
       {/* Panel */}
       <div
-        className="relative w-full max-w-2xl max-h-[88vh] flex flex-col rounded-2xl border border-white/[0.09] bg-[#0c0c18] shadow-2xl overflow-hidden"
+        className="relative w-full max-w-2xl max-h-[85dvh] flex flex-col rounded-2xl border border-white/[0.09] bg-[#0c0c18] shadow-2xl overflow-hidden"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
