@@ -81,6 +81,7 @@ export default async function ClasificacionPage() {
     : null;
 
   const userGrupos = (userBracket?.picks as BracketPicks | null)?.grupos ?? {};
+  const userTerceros = (userBracket?.picks as BracketPicks | null)?.terceros ?? [];
 
   return (
     <>
@@ -132,7 +133,7 @@ export default async function ClasificacionPage() {
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {grupos.map(({ letra, equipos }) => (
-              <GrupoCard key={letra} letra={letra} equipos={equipos} userPicks={userGrupos[letra]} />
+              <GrupoCard key={letra} letra={letra} equipos={equipos} userPicks={userGrupos[letra]} terceros={userTerceros} />
             ))}
           </div>
         </>
@@ -150,7 +151,14 @@ function rowBg(i: number, team: string, userPicks?: string[]): string {
   return "bg-red-500/[0.08]";                            // not picked in top 2
 }
 
-function GrupoCard({ letra, equipos, userPicks }: { letra: string; equipos: Stats[]; userPicks?: string[] }) {
+function userPickLabel(team: string, groupPicks?: string[], terceros?: string[]): string | null {
+  if (groupPicks?.[0] === team) return "tú: 1º";
+  if (groupPicks?.[1] === team) return "tú: 2º";
+  if (terceros?.includes(team)) return "tú: mejor 3º";
+  return null;
+}
+
+function GrupoCard({ letra, equipos, userPicks, terceros }: { letra: string; equipos: Stats[]; userPicks?: string[]; terceros?: string[] }) {
   return (
     <div className="glass-card !p-0 overflow-hidden">
       {/* Group header */}
@@ -197,6 +205,15 @@ function GrupoCard({ letra, equipos, userPicks }: { letra: string; equipos: Stat
                     <span className={`text-xs font-medium truncate ${qualifies ? "text-gray-200" : "text-gray-400"}`}>
                       {e.team}
                     </span>
+                    {(() => {
+                      const label = userPickLabel(e.team, userPicks, terceros);
+                      if (!label) return null;
+                      return (
+                        <span className="shrink-0 text-[10px] text-gray-500 whitespace-nowrap">
+                          ({label})
+                        </span>
+                      );
+                    })()}
                   </div>
                 </td>
                 <td className="px-2 py-2.5 text-center text-xs text-gray-400 tabular-nums">{e.pj}</td>
