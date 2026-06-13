@@ -12,7 +12,9 @@
     "seed:demo": "tsx prisma/seed-demo.ts",
     "seed:bracket-demo": "tsx prisma/seed-bracket-demo.ts",
     "seed:clean": "tsx prisma/seed-clean-demo.ts",
-    "seed:historico": "tsx src/lib/seeds/historico.ts"
+    "seed:historico": "tsx src/lib/seeds/historico.ts",
+    "seed:jugadores": "tsx prisma/seed-jugadores.ts",
+    "seed:fifa-stats": "tsx prisma/seed-fifa-stats.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",

@@ -198,6 +198,38 @@ model OddsCache {
   updatedAt DateTime @updatedAt
 }
 
+enum PosicionJugador {
+  GK
+  DF
+  MF
+  FW
+}
+
+model Jugador {
+  id          String          @id @default(cuid())
+  nombre      String
+  seleccion   String
+  dorsal      Int
+  posicion    PosicionJugador
+  edad        Int?
+  partidosInt Int             @default(0)
+  goles       Int             @default(0)
+  clubActual  String?
+
+  // FIFA EA Sports 2025 stats
+  fifaOvr     Int?
+  fifaPac     Int?
+  fifaSho     Int?
+  fifaPas     Int?
+  fifaDri     Int?
+  fifaDef     Int?
+  fifaPhy     Int?
+  fifaPos     String?         // FIFA position (ST, CAM, CB, GK…)
+
+  @@index([seleccion])
+  @@unique([seleccion, dorsal])
+}
+
 model PartidoHistorico {
   id      String   @id @default(uuid())
   torneo  String
