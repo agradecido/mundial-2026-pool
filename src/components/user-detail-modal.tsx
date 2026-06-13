@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import Image from "next/image";
 import { getFlag } from "@/lib/flags";
+import SwipeHint from "@/components/swipe-hint";
 import type { UserDetail } from "@/app/ranking/actions";
 import type { Fase } from "@prisma/client";
 
@@ -172,6 +173,9 @@ export default function UserDetailModal({ detail, position, onClose, onPrev, onN
             </div>
           ))}
         </div>
+
+        {/* ── Swipe hint (shown once) ── */}
+        <SwipeHint enabled={!!(onPrev !== undefined || onNext !== undefined)} />
 
         {/* ── Scrollable body ── */}
         <div className={`overflow-y-auto flex-1 transition-opacity duration-150 ${isNavigating ? "opacity-40 pointer-events-none" : ""}`}>

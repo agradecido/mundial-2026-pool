@@ -9,6 +9,7 @@ import {
 } from "@/lib/bracket";
 import type { UserBracketData } from "@/app/porra/actions";
 import BracketTree from "@/components/bracket-tree";
+import SwipeHint from "@/components/swipe-hint";
 
 interface Props {
   data: UserBracketData;
@@ -189,6 +190,9 @@ export default function PorraDetailModal({ data, onClose, onPrev, onNext, isNavi
             >✕</button>
           </div>
         </div>
+
+        {/* ── Swipe hint (shown once) ── */}
+        <SwipeHint enabled={!!(onPrev !== undefined || onNext !== undefined)} />
 
         {/* Tabs */}
         <div className="flex gap-1 px-5 pt-3 shrink-0">
