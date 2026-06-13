@@ -72,6 +72,13 @@ export default async function LlavesPage() {
         <div className="flex items-center gap-2 shrink-0">
           <ShareBracketButton userName={session!.user.name ?? "tú"} />
           <Link
+            href="/clasificacion"
+            className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs text-gray-400 hover:border-white/20 hover:text-white transition-colors shrink-0"
+          >
+            Clasificación →
+            <LinkSpinner className="size-3 shrink-0" />
+          </Link>
+          <Link
             href="/porra/ranking"
             className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs text-gray-400 hover:border-white/20 hover:text-white transition-colors shrink-0"
           >
