@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
+import { useState, useTransition, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { guardarPronostico } from "@/app/quiniela/actions";
 import { getFlag } from "@/lib/flags";
 import LiveMatchModal from "@/components/live-match-modal";
@@ -127,6 +128,8 @@ function CheckIcon() {
 }
 
 export default function PartidoCard({ partido, pronostico, odds }: Props) {
+  const router = useRouter();
+  const refreshed = useRef(false);
   const [locked, setLocked] = useState(false);
   const [local, setLocal] = useState<string>(
     pronostico != null ? String(pronostico.golesLocal) : "",
@@ -198,7 +201,7 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
   function togglePuntos() {
     if (!puntosOpen) {
       if (partido.estado === "FINALIZADO" && !puntosData) fetchPuntos();
-      else if (partido.estado === "EN_PROGRESO" && !pronosticosData) fetchPronosticos();
+      else if (isActuallyLive && !pronosticosData) fetchPronosticos();
     }
     setPuntosOpen((v) => !v);
   }
@@ -208,19 +211,29 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
   }, [partido.fechaPartido, partido.estado]);
 
   useEffect(() => {
-    if (partido.estado !== "EN_PROGRESO") return;
+    const isLive = partido.estado === "EN_PROGRESO";
+    const hasPassed = Date.now() >= new Date(partido.fechaPartido).getTime();
+    if (!isLive && !(partido.estado === "PROGRAMADO" && hasPassed)) return;
+
     const poll = async () => {
       try {
         const res = await fetch(
           `/api/partidos/score-live?team1=${encodeURIComponent(partido.equipoLocal)}&team2=${encodeURIComponent(partido.equipoVisitante)}`,
         );
-        if (res.ok) setLiveScore(await res.json() as { home: number; away: number });
+        if (!res.ok) return;
+        const data = await res.json() as { home: number; away: number };
+        setLiveScore(data);
+        // First time we detect live data while DB still says PROGRAMADO → refresh server data
+        if (partido.estado === "PROGRAMADO" && !refreshed.current) {
+          refreshed.current = true;
+          router.refresh();
+        }
       } catch { /* ignore */ }
     };
     poll();
     const id = setInterval(poll, 60_000);
     return () => clearInterval(id);
-  }, [partido.estado, partido.equipoLocal, partido.equipoVisitante]);
+  }, [partido.estado, partido.fechaPartido, partido.equipoLocal, partido.equipoVisitante, router]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -257,16 +270,19 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
       ? getTier(pronostico.puntosGanados, partido.fase)
       : null;
 
+  // Whether we have live data (from DB state or detected via polling before DB updates)
+  const isActuallyLive = isLive || liveScore !== null;
+
   // Projected live points for the current user
   const myLivePoints =
-    isLive && liveScore && pronostico != null
+    isActuallyLive && liveScore && pronostico != null
       ? calcPoints(pronostico.golesLocal, pronostico.golesVisitante, liveScore.home, liveScore.away, partido.fase)
       : null;
   const myLiveTier = myLivePoints !== null ? getTier(myLivePoints, partido.fase) : null;
 
   // Projected live points for all players (computed from pronosticosData + liveScore)
   const liveEntries =
-    isLive && liveScore && pronosticosData
+    isActuallyLive && liveScore && pronosticosData
       ? pronosticosData
           .map((u) => ({ ...u, pts: calcPoints(u.golesLocal, u.golesVisitante, liveScore.home, liveScore.away, partido.fase) }))
           .filter((u) => u.pts > 0)
@@ -486,7 +502,7 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
           )}
 
           {/* Puntos — final o proyección en vivo del usuario */}
-          {(isFinished || (isLive && liveScore)) && (
+          {(isFinished || (isActuallyLive && liveScore)) && (
             <div className="mt-3 flex items-center justify-center gap-2 min-h-[2rem]">
               {isFinished ? (
                 pronostico != null && tier != null ? (
@@ -524,7 +540,7 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
         </form>
 
         {/* ── Puntuaciones ────────────────────────────────────────────── */}
-        {(isFinished || isLive) && (
+        {(isFinished || isActuallyLive) && (
           <div className="border-t border-white/[0.05]">
             <button
               type="button"
@@ -533,7 +549,7 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
             >
               <span className="flex items-center gap-1.5">
                 Puntuaciones
-                {isLive && <span className="size-1.5 rounded-full bg-yellow-300 animate-pulse" />}
+                {isActuallyLive && <span className="size-1.5 rounded-full bg-yellow-300 animate-pulse" />}
               </span>
               <span className="text-[9px]">{puntosOpen ? "▲" : "▼"}</span>
             </button>
@@ -556,15 +572,15 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
                 )}
 
                 {/* ── EN PROGRESO ── */}
-                {!puntosLoading && isLive && !liveScore && (
+                {!puntosLoading && isActuallyLive && !liveScore && (
                   <p className="text-center text-xs text-gray-600 py-2 animate-pulse">Esperando marcador…</p>
                 )}
-                {!puntosLoading && isLive && liveScore && liveEntries?.length === 0 && (
+                {!puntosLoading && isActuallyLive && liveScore && liveEntries?.length === 0 && (
                   <p className="text-center text-[11px] text-gray-700 py-2">
                     Nadie puntúa con el marcador actual
                   </p>
                 )}
-                {!puntosLoading && isLive && liveScore && liveEntries && liveEntries.length > 0 && (
+                {!puntosLoading && isActuallyLive && liveScore && liveEntries && liveEntries.length > 0 && (
                   <ScoreList
                     entries={liveEntries.map(u => ({ name: u.name, image: u.image, pts: u.pts }))}
                     fase={partido.fase}
