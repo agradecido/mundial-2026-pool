@@ -98,8 +98,30 @@ export default function PorraRanking({ entries, currentUserId }: Props) {
   const top3 = entries.slice(0, 3);
   const rest = entries.slice(3);
 
+  const loadingEntry = loading ? entries.find((e) => e.user.id === loading) : null;
+
   return (
     <>
+      {/* ── Loading overlay ── */}
+      {loading && !detail && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" />
+          <div className="relative flex flex-col items-center gap-4">
+            {loadingEntry?.user.image ? (
+              <Image src={loadingEntry.user.image} alt="" width={64} height={64} className="rounded-full ring-2 ring-white/10 opacity-80" />
+            ) : (
+              <div className="w-16 h-16 rounded-full bg-white/8 flex items-center justify-center text-xl font-bold text-gray-400">
+                {loadingEntry?.user.name?.[0] ?? "?"}
+              </div>
+            )}
+            {loadingEntry && (
+              <p className="text-sm text-gray-400 font-medium">{loadingEntry.user.name?.split(" ")[0]}</p>
+            )}
+            <div className="w-6 h-6 rounded-full border-2 border-white/10 border-t-[#00e87a] animate-spin" />
+          </div>
+        </div>
+      )}
+
       {detail && (
         <PorraDetailModal
           data={detail}

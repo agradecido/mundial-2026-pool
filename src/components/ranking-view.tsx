@@ -95,8 +95,30 @@ export default function RankingView({ ranking, currentUserId }: Props) {
   const rowBase =
     "cursor-pointer select-none transition-colors border border-transparent rounded-xl";
 
+  const loadingUser = loading ? ranking.find((u) => u.id === loading) : null;
+
   return (
     <>
+      {/* ── Loading overlay ── */}
+      {loading && !detail && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" />
+          <div className="relative flex flex-col items-center gap-4">
+            {loadingUser?.image ? (
+              <Image src={loadingUser.image} alt="" width={64} height={64} className="rounded-full ring-2 ring-white/10 opacity-80" />
+            ) : (
+              <div className="w-16 h-16 rounded-full bg-white/8 flex items-center justify-center text-xl font-bold text-gray-400">
+                {loadingUser?.name?.[0] ?? "?"}
+              </div>
+            )}
+            {loadingUser && (
+              <p className="text-sm text-gray-400 font-medium">{loadingUser.name?.split(" ")[0]}</p>
+            )}
+            <div className="w-6 h-6 rounded-full border-2 border-white/10 border-t-[#00e87a] animate-spin" />
+          </div>
+        </div>
+      )}
+
       {/* ── Modal ── */}
       {detail && (
         <UserDetailModal
