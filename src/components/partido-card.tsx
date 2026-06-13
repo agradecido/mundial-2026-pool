@@ -240,305 +240,305 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
 
   return (
     <>
-    {liveOpen && (
-      <LiveMatchModal
-        equipoLocal={partido.equipoLocal}
-        equipoVisitante={partido.equipoVisitante}
-        onClose={() => setLiveOpen(false)}
-      />
-    )}
-    <div className="relative overflow-hidden rounded-2xl border border-white/[0.07] bg-gradient-to-b from-white/[0.04] to-white/[0.015] transition-all hover:border-white/[0.14] hover:from-white/[0.06] hover:to-white/[0.02] group">
-      {/* Top accent line */}
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent group-hover:via-[#00e87a]/40 transition-colors" />
+      {liveOpen && (
+        <LiveMatchModal
+          equipoLocal={partido.equipoLocal}
+          equipoVisitante={partido.equipoVisitante}
+          onClose={() => setLiveOpen(false)}
+        />
+      )}
+      <div className="relative overflow-hidden rounded-2xl border border-white/[0.07] bg-gradient-to-b from-white/[0.04] to-white/[0.015] transition-all hover:border-white/[0.14] hover:from-white/[0.06] hover:to-white/[0.02] group">
+        {/* Top accent line */}
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent group-hover:via-[#00e87a]/40 transition-colors" />
 
-      {/* Header: fecha + sede + badge de estado */}
-      <div className="flex items-center justify-between px-4 pt-3 pb-1">
-        <div className="flex flex-col gap-0.5">
-          <span className="text-[12px] uppercase tracking-[0.18em] text-gray-200 font-medium tabular-nums">
-            {formatFecha(partido.fechaPartido)}
-          </span>
-          {partido.estadio && (
-            <span className="text-[12px] text-gray-400 truncate max-w-[180px]">
-              {partido.estadio}, {partido.ciudad}
+        {/* Header: fecha + sede + badge de estado */}
+        <div className="flex items-center justify-between px-4 pt-3 pb-1">
+          <div className="flex flex-col gap-0.5">
+            <span className="text-[12px] uppercase tracking-[0.18em] text-gray-200 font-medium tabular-nums">
+              {formatFecha(partido.fechaPartido)}
             </span>
-          )}
-        </div>
-        {statusBadge}
-      </div>
-
-      <form onSubmit={handleSubmit} className="px-4 pb-4 pt-2">
-        {/* Body: grid simétrico 3 columnas */}
-        <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-3 lg:gap-4">
-          {/* ── Equipo Local ───────────────────────── */}
-          <div className="flex flex-col items-center gap-2 min-w-0">
-            <span className="text-4xl lg:text-5xl leading-none drop-shadow-sm">
-              {flagLocal ?? <span className="text-gray-700">?</span>}
-            </span>
-            <span className={`text-sm lg:text-base font-bold text-center leading-tight truncate w-full ${flagLocal ? "text-gray-100" : "text-gray-600 italic"}`}>
-              {displayLocal}
-            </span>
-            {showInputs ? (
-              <input
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                value={local}
-                placeholder="-"
-                onFocus={(e) => e.target.select()}
-                onChange={(e) => {
-                  const v = e.target.value.replace(/[^0-9]/g, "");
-                  setLocal(v);
-                  setError(null);
-                  setSaved(false);
-                }}
-                aria-label={`Goles ${displayLocal}`}
-                className="score-input"
-              />
-            ) : (
-              <span className="score-input flex items-center justify-center text-gray-400 select-none">
-                {localValue ?? "–"}
-              </span>
-            )}
-            {odds && (
-              <span className="text-[10px] font-mono tabular-nums text-gray-400 bg-white/[0.04] border border-white/[0.08] rounded-full px-2 py-0.5">
-                {odds.home.toFixed(2)}
+            {partido.estadio && (
+              <span className="text-[12px] text-gray-400 truncate max-w-[180px]">
+                {partido.estadio}, {partido.ciudad}
               </span>
             )}
           </div>
-
-          {/* ── Separador central ───────────────────── */}
-          <div className="flex flex-col items-center gap-2 pt-1">
-            {/* Espaciado para alinear con bandera */}
-            <span
-              className="text-4xl lg:text-5xl leading-none opacity-0 select-none"
-              aria-hidden
-            >
-              ·
-            </span>
-            {/* Espaciado para alinear con nombre */}
-            <span
-              className="text-sm lg:text-base leading-tight opacity-0 select-none"
-              aria-hidden
-            >
-              vs
-            </span>
-            {isFinished ? (
-              <div className="flex flex-col items-center gap-0.5 leading-tight">
-                <span className="text-xl lg:text-2xl font-bold text-white tabular-nums">
-                  {partido.golesLocalReal}–{partido.golesVisitanteReal}
-                </span>
-                <span className="text-[9px] uppercase tracking-widest text-gray-600">
-                  resultado
-                </span>
-              </div>
-            ) : (
-              <span className="text-2xl lg:text-3xl font-bold text-gray-600 leading-[3rem] select-none">
-                :
-              </span>
-            )}
-            {odds && (
-              <span className="flex flex-col items-center gap-0.5">
-                <span className="text-[10px] font-mono tabular-nums text-gray-400 bg-white/[0.03] border border-white/[0.06] rounded-full px-2 py-0.5 mt-1">
-                  {odds.draw.toFixed(2)}
-                </span>
-              </span>
-            )}
-          </div>
-
-          {/* ── Equipo Visitante ────────────────────── */}
-          <div className="flex flex-col items-center gap-2 min-w-0">
-            <span className="text-4xl lg:text-5xl leading-none drop-shadow-sm">
-              {flagVisitante ?? <span className="text-gray-700">?</span>}
-            </span>
-            <span className={`text-sm lg:text-base font-bold text-center leading-tight truncate w-full ${flagVisitante ? "text-gray-100" : "text-gray-600 italic"}`}>
-              {displayVisitante}
-            </span>
-            {showInputs ? (
-              <input
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                value={visitante}
-                placeholder="-"
-                onFocus={(e) => e.target.select()}
-                onChange={(e) => {
-                  const v = e.target.value.replace(/[^0-9]/g, "");
-                  setVisitante(v);
-                  setError(null);
-                  setSaved(false);
-                }}
-                aria-label={`Goles ${displayVisitante}`}
-                className="score-input"
-              />
-            ) : (
-              <span className="score-input flex items-center justify-center text-gray-400 select-none">
-                {visitanteValue ?? "–"}
-              </span>
-            )}
-            {odds && (
-              <span className="text-[10px] font-mono tabular-nums text-gray-400 bg-white/[0.04] border border-white/[0.08] rounded-full px-2 py-0.5">
-                {odds.away.toFixed(2)}
-              </span>
-            )}
-          </div>
+          {statusBadge}
         </div>
 
-        {/* Acción / feedback */}
-        {showInputs && (
-          <div className="mt-3 flex items-center justify-center gap-3 min-h-[2.5rem]">
-            {saved ? (
+        <form onSubmit={handleSubmit} className="px-4 pb-4 pt-2">
+          {/* Body: grid simétrico 3 columnas */}
+          <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-3 lg:gap-4">
+            {/* ── Equipo Local ───────────────────────── */}
+            <div className="flex flex-col items-center gap-2 min-w-0">
+              <span className="text-4xl lg:text-5xl leading-none drop-shadow-sm">
+                {flagLocal ?? <span className="text-gray-700">?</span>}
+              </span>
+              <span className={`text-sm lg:text-base font-bold text-center leading-tight truncate w-full ${flagLocal ? "text-gray-100" : "text-gray-600 italic"}`}>
+                {displayLocal}
+              </span>
+              {showInputs ? (
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={local}
+                  placeholder="-"
+                  onFocus={(e) => e.target.select()}
+                  onChange={(e) => {
+                    const v = e.target.value.replace(/[^0-9]/g, "");
+                    setLocal(v);
+                    setError(null);
+                    setSaved(false);
+                  }}
+                  aria-label={`Goles ${displayLocal}`}
+                  className="score-input"
+                />
+              ) : (
+                <span className="score-input flex items-center justify-center text-gray-400 select-none">
+                  {localValue ?? "–"}
+                </span>
+              )}
+              {odds && (
+                <span className="text-[10px] font-mono tabular-nums text-gray-400 bg-white/[0.04] border border-white/[0.08] rounded-full px-2 py-0.5">
+                  {odds.home.toFixed(2)}
+                </span>
+              )}
+            </div>
+
+            {/* ── Separador central ───────────────────── */}
+            <div className="flex flex-col items-center gap-2 pt-1">
+              {/* Espaciado para alinear con bandera */}
               <span
-                className="inline-flex items-center gap-1.5 text-[#00e87a] text-xs font-semibold uppercase tracking-wider"
-                style={{ filter: "drop-shadow(0 0 8px rgba(0,232,122,0.55))" }}
+                className="text-4xl lg:text-5xl leading-none opacity-0 select-none"
+                aria-hidden
               >
-                <CheckIcon />
-                Guardado
+                ·
               </span>
-            ) : (
-              <button
-                type="submit"
-                disabled={pending || local === "" || visitante === ""}
-                className="btn-save h-9 px-5 text-xs font-bold tracking-widest uppercase disabled:opacity-40"
+              {/* Espaciado para alinear con nombre */}
+              <span
+                className="text-sm lg:text-base leading-tight opacity-0 select-none"
+                aria-hidden
               >
-                {pending ? (
-                  <span className="animate-pulse">Guardando…</span>
-                ) : (
-                  "Guardar"
-                )}
-              </button>
-            )}
-            {error && <span className="text-xs text-red-400">{error}</span>}
-          </div>
-        )}
-
-        {/* Puntos — solo cuando el partido ha finalizado */}
-        {isFinished && (
-          <div className="mt-3 flex items-center justify-center gap-2 min-h-[2rem]">
-            {pronostico != null && tier != null ? (
-              <>
-                <span
-                  className={`text-base font-bold tabular-nums ${tier.color}`}
-                  style={{ filter: `drop-shadow(0 0 6px ${tier.glow})` }}
-                >
-                  {pronostico.puntosGanados > 0
-                    ? `+${pronostico.puntosGanados}`
-                    : "0"}{" "}
-                  pts
-                </span>
-                <span
-                  className={`text-[10px] font-semibold uppercase tracking-wider opacity-70 ${tier.color}`}
-                >
-                  · {tier.label}
-                </span>
-              </>
-            ) : (
-              <span className="text-[10px] uppercase tracking-wider text-gray-600">
-                Sin pronóstico
+                vs
               </span>
-            )}
-          </div>
-        )}
-      </form>
-
-      {/* ── Puntuaciones ────────────────────────────────────────────── */}
-      {isFinished && (
-        <div className="border-t border-white/[0.05]">
-          <button
-            type="button"
-            onClick={togglePuntos}
-            className="w-full flex items-center justify-between px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-gray-600 hover:text-gray-400 transition-colors"
-          >
-            <span>Puntuaciones</span>
-            <span className="text-[9px]">{puntosOpen ? "▲" : "▼"}</span>
-          </button>
-
-          {puntosOpen && (
-            <div className="px-4 pb-4">
-              {puntosLoading && (
-                <p className="text-center text-xs text-gray-600 py-2 animate-pulse">Cargando…</p>
-              )}
-              {!puntosLoading && puntosData?.length === 0 && (
-                <p className="text-center text-[11px] text-gray-700 py-2">Nadie acertó este partido</p>
-              )}
-              {!puntosLoading && puntosData && puntosData.length > 0 && (
-                <div className="space-y-1 max-h-52 overflow-y-auto scrollbar-none">
-                  {puntosData.map((u, i) => {
-                    const t = getTier(u.puntosGanados, partido.fase);
-                    const initials = u.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
-                    return (
-                      <div key={i} className="flex items-center gap-2.5 py-1.5 border-b border-white/[0.04] last:border-0">
-                        {u.image ? (
-                          <img src={u.image} alt={u.name} className="size-5 rounded-full shrink-0 object-cover" />
-                        ) : (
-                          <span className="size-5 rounded-full bg-white/10 flex items-center justify-center text-[8px] font-bold text-gray-400 shrink-0">
-                            {initials}
-                          </span>
-                        )}
-                        <span className="flex-1 text-[11px] text-gray-300 truncate">{u.name}</span>
-                        <span className={`text-[10px] font-semibold uppercase tracking-wide shrink-0 ${t.color}`}>
-                          {t.label}
-                        </span>
-                        <span className={`text-xs font-bold tabular-nums shrink-0 ${t.color}`}>
-                          +{u.puntosGanados}
-                        </span>
-                      </div>
-                    );
-                  })}
+              {isFinished ? (
+                <div className="flex flex-col items-center gap-0.5 leading-tight">
+                  <span className="text-xl lg:text-2xl font-bold text-white tabular-nums">
+                    {partido.golesLocalReal}–{partido.golesVisitanteReal}
+                  </span>
+                  <span className="text-[9px] uppercase tracking-widest text-gray-600">
+                    resultado
+                  </span>
                 </div>
+              ) : (
+                <span className="text-2xl lg:text-3xl font-bold text-gray-600 leading-[3rem] select-none">
+                  :
+                </span>
+              )}
+              {odds && (
+                <span className="flex flex-col items-center gap-0.5">
+                  <span className="text-[10px] font-mono tabular-nums text-gray-400 bg-white/[0.03] border border-white/[0.06] rounded-full px-2 py-0.5 mt-1">
+                    {odds.draw.toFixed(2)}
+                  </span>
+                </span>
               )}
             </div>
+
+            {/* ── Equipo Visitante ────────────────────── */}
+            <div className="flex flex-col items-center gap-2 min-w-0">
+              <span className="text-4xl lg:text-5xl leading-none drop-shadow-sm">
+                {flagVisitante ?? <span className="text-gray-700">?</span>}
+              </span>
+              <span className={`text-sm lg:text-base font-bold text-center leading-tight truncate w-full ${flagVisitante ? "text-gray-100" : "text-gray-600 italic"}`}>
+                {displayVisitante}
+              </span>
+              {showInputs ? (
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={visitante}
+                  placeholder="-"
+                  onFocus={(e) => e.target.select()}
+                  onChange={(e) => {
+                    const v = e.target.value.replace(/[^0-9]/g, "");
+                    setVisitante(v);
+                    setError(null);
+                    setSaved(false);
+                  }}
+                  aria-label={`Goles ${displayVisitante}`}
+                  className="score-input"
+                />
+              ) : (
+                <span className="score-input flex items-center justify-center text-gray-400 select-none">
+                  {visitanteValue ?? "–"}
+                </span>
+              )}
+              {odds && (
+                <span className="text-[10px] font-mono tabular-nums text-gray-400 bg-white/[0.04] border border-white/[0.08] rounded-full px-2 py-0.5">
+                  {odds.away.toFixed(2)}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Acción / feedback */}
+          {showInputs && (
+            <div className="mt-3 flex items-center justify-center gap-3 min-h-[2.5rem]">
+              {saved ? (
+                <span
+                  className="inline-flex items-center gap-1.5 text-[#00e87a] text-xs font-semibold uppercase tracking-wider"
+                  style={{ filter: "drop-shadow(0 0 8px rgba(0,232,122,0.55))" }}
+                >
+                  <CheckIcon />
+                  Guardado
+                </span>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={pending || local === "" || visitante === ""}
+                  className="btn-save h-9 px-5 text-xs font-bold tracking-widest uppercase disabled:opacity-40"
+                >
+                  {pending ? (
+                    <span className="animate-pulse">Guardando…</span>
+                  ) : (
+                    "Guardar"
+                  )}
+                </button>
+              )}
+              {error && <span className="text-xs text-red-400">{error}</span>}
+            </div>
           )}
-        </div>
-      )}
 
-      {/* ── H2H ────────────────────────────────────────────────────────── */}
-      {!teamsUnknown && (
-        <div className="border-t border-white/[0.05]">
-          <button
-            type="button"
-            onClick={toggleH2H}
-            className="w-full flex items-center justify-between px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-gray-600 hover:text-gray-400 transition-colors"
-          >
-            <span>Historial en Mundiales</span>
-            <span className="text-[9px]">{h2hOpen ? "▲" : "▼"}</span>
-          </button>
-
-          {h2hOpen && (
-            <div className="px-4 pb-4 space-y-3">
-              {h2hLoading && (
-                <p className="text-center text-xs text-gray-600 py-2 animate-pulse">
-                  Cargando…
-                </p>
-              )}
-
-              {!h2hLoading && h2hData?.partidosJugados === 0 && (
-                <p className="text-center text-[11px] text-gray-700 py-2">
-                  Sin enfrentamientos previos en Mundiales
-                </p>
-              )}
-
-              {!h2hLoading && h2hData && h2hData.partidosJugados > 0 && (
+          {/* Puntos — solo cuando el partido ha finalizado */}
+          {isFinished && (
+            <div className="mt-3 flex items-center justify-center gap-2 min-h-[2rem]">
+              {pronostico != null && tier != null ? (
                 <>
-                  {/* Barra de resultados */}
-                  <H2HSummaryBar
-                    team1={partido.equipoLocal}
-                    team2={partido.equipoVisitante}
-                    data={h2hData}
-                  />
-
-                  {/* Historial de partidos */}
-                  <div className="space-y-1 max-h-52 overflow-y-auto scrollbar-none">
-                    {h2hData.historial.map((p, i) => (
-                      <H2HMatchRow key={i} partido={p} />
-                    ))}
-                  </div>
+                  <span
+                    className={`text-base font-bold tabular-nums ${tier.color}`}
+                    style={{ filter: `drop-shadow(0 0 6px ${tier.glow})` }}
+                  >
+                    {pronostico.puntosGanados > 0
+                      ? `+${pronostico.puntosGanados}`
+                      : "0"}{" "}
+                    pts
+                  </span>
+                  <span
+                    className={`text-[10px] font-semibold uppercase tracking-wider opacity-70 ${tier.color}`}
+                  >
+                    · {tier.label}
+                  </span>
                 </>
+              ) : (
+                <span className="text-[10px] uppercase tracking-wider text-gray-600">
+                  Sin pronóstico
+                </span>
               )}
             </div>
           )}
-        </div>
-      )}
-    </div>
+        </form>
+
+        {/* ── Puntuaciones ────────────────────────────────────────────── */}
+        {isFinished && (
+          <div className="border-t border-white/[0.05]">
+            <button
+              type="button"
+              onClick={togglePuntos}
+              className="w-full flex items-center justify-between px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-gray-600 hover:text-gray-400 transition-colors"
+            >
+              <span>Puntuaciones jugadores Quiniela</span>
+              <span className="text-[9px]">{puntosOpen ? "▲" : "▼"}</span>
+            </button>
+
+            {puntosOpen && (
+              <div className="px-4 pb-4">
+                {puntosLoading && (
+                  <p className="text-center text-xs text-gray-600 py-2 animate-pulse">Cargando…</p>
+                )}
+                {!puntosLoading && puntosData?.length === 0 && (
+                  <p className="text-center text-[11px] text-gray-700 py-2">Nadie acertó este partido</p>
+                )}
+                {!puntosLoading && puntosData && puntosData.length > 0 && (
+                  <div className="space-y-1 max-h-52 overflow-y-auto scrollbar-none">
+                    {puntosData.map((u, i) => {
+                      const t = getTier(u.puntosGanados, partido.fase);
+                      const initials = u.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+                      return (
+                        <div key={i} className="flex items-center gap-2.5 py-1.5 border-b border-white/[0.04] last:border-0">
+                          {u.image ? (
+                            <img src={u.image} alt={u.name} className="size-5 rounded-full shrink-0 object-cover" />
+                          ) : (
+                            <span className="size-5 rounded-full bg-white/10 flex items-center justify-center text-[8px] font-bold text-gray-400 shrink-0">
+                              {initials}
+                            </span>
+                          )}
+                          <span className="flex-1 text-[11px] text-gray-300 truncate">{u.name}</span>
+                          <span className={`text-[10px] font-semibold uppercase tracking-wide shrink-0 ${t.color}`}>
+                            {t.label}
+                          </span>
+                          <span className={`text-xs font-bold tabular-nums shrink-0 ${t.color}`}>
+                            +{u.puntosGanados}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── H2H ────────────────────────────────────────────────────────── */}
+        {!teamsUnknown && (
+          <div className="border-t border-white/[0.05]">
+            <button
+              type="button"
+              onClick={toggleH2H}
+              className="w-full flex items-center justify-between px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-gray-600 hover:text-gray-400 transition-colors"
+            >
+              <span>Historial en Mundiales H2H</span>
+              <span className="text-[9px]">{h2hOpen ? "▲" : "▼"}</span>
+            </button>
+
+            {h2hOpen && (
+              <div className="px-4 pb-4 space-y-3">
+                {h2hLoading && (
+                  <p className="text-center text-xs text-gray-600 py-2 animate-pulse">
+                    Cargando…
+                  </p>
+                )}
+
+                {!h2hLoading && h2hData?.partidosJugados === 0 && (
+                  <p className="text-center text-[11px] text-gray-700 py-2">
+                    Sin enfrentamientos previos en Mundiales
+                  </p>
+                )}
+
+                {!h2hLoading && h2hData && h2hData.partidosJugados > 0 && (
+                  <>
+                    {/* Barra de resultados */}
+                    <H2HSummaryBar
+                      team1={partido.equipoLocal}
+                      team2={partido.equipoVisitante}
+                      data={h2hData}
+                    />
+
+                    {/* Historial de partidos */}
+                    <div className="space-y-1 max-h-52 overflow-y-auto scrollbar-none">
+                      {h2hData.historial.map((p, i) => (
+                        <H2HMatchRow key={i} partido={p} />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </>
   );
 }
