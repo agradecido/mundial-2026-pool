@@ -53,13 +53,19 @@ const fetchLiveScore = unstable_cache(
     if (!match) return null;
 
     const swapped = norm(match.homeTeam.name) === team2;
-    const rawHome = match.score.fullTime.home ?? 0;
-    const rawAway = match.score.fullTime.away ?? 0;
+    const rawHome = match.score.fullTime.home;
+    const rawAway = match.score.fullTime.away;
+
+    // If the match is finished but scores are not yet populated by the API, treat as in-play
+    const effectiveStatus =
+      match.status === "FINISHED" && (rawHome === null || rawAway === null)
+        ? "IN_PLAY"
+        : match.status;
 
     return {
-      home: swapped ? rawAway : rawHome,
-      away: swapped ? rawHome : rawAway,
-      status: match.status,
+      home: swapped ? (rawAway ?? 0) : (rawHome ?? 0),
+      away: swapped ? (rawHome ?? 0) : (rawAway ?? 0),
+      status: effectiveStatus,
     };
   },
   ["score-live"],
