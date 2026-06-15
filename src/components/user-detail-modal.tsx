@@ -79,10 +79,11 @@ export default function UserDetailModal({ detail, position, onClose, onPrev, onN
   }
 
   // Stats
-  const exactos = detail.pronosticos.filter((p) => p.puntosGanados === 5 || p.puntosGanados === 10).length;
-  const tendencias = detail.pronosticos.filter((p) => p.puntosGanados === 3 || p.puntosGanados === 6).length;
-  const consolacion = detail.pronosticos.filter((p) => p.puntosGanados === 1 || p.puntosGanados === 2).length;
-  const fallos = detail.pronosticos.filter((p) => p.puntosGanados === 0).length;
+  const jugados = detail.pronosticos.filter((p) => p.partido.golesLocalReal !== null);
+  const exactos = jugados.filter((p) => p.puntosGanados === 5 || p.puntosGanados === 10).length;
+  const tendencias = jugados.filter((p) => p.puntosGanados === 3 || p.puntosGanados === 6).length;
+  const consolacion = jugados.filter((p) => p.puntosGanados === 1 || p.puntosGanados === 2).length;
+  const fallos = jugados.filter((p) => p.puntosGanados === 0).length;
   const ptsPartidos = detail.pronosticos.reduce((s, p) => s + p.puntosGanados, 0);
   const pf = detail.prediccionFutura;
   const ptsEspeciales = pf ? pf.puntosCampeon + pf.puntosSubcampeon : 0;
@@ -259,9 +260,15 @@ export default function UserDetailModal({ detail, position, onClose, onPrev, onN
                       <span className="text-base shrink-0">{getFlag(p.partido.equipoVisitante)}</span>
 
                       {/* Badge */}
-                      <span className={`ml-2 shrink-0 w-10 text-center text-[11px] font-semibold rounded-md border px-1.5 py-0.5 tabular-nums ${badge.cls}`}>
-                        {badge.label}
-                      </span>
+                      {hasReal ? (
+                        <span className={`ml-2 shrink-0 w-10 text-center text-[11px] font-semibold rounded-md border px-1.5 py-0.5 tabular-nums ${badge.cls}`}>
+                          {badge.label}
+                        </span>
+                      ) : (
+                        <span className="ml-2 shrink-0 w-10 text-center text-[11px] text-gray-700 tabular-nums">
+                          —
+                        </span>
+                      )}
                     </div>
                   );
                 })}
