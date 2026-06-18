@@ -53,7 +53,7 @@ src/
 │   ├── admin/               # Componentes del panel admin
 │   ├── bracket-tree.tsx     # Árbol visual del bracket (desktop + mobile por rondas)
 │   ├── llaves-selector.tsx  # Editor de la porra (grupos → terceros → eliminatorias)
-│   ├── partido-card.tsx     # Tarjeta de partido para la quiniela
+│   ├── partido-card.tsx     # Tarjeta de partido para la quiniela (ver nota en sección 6)
 │   └── ...
 └── lib/
     ├── auth.ts              # NextAuth config completa (con PrismaAdapter, para servidor)
@@ -273,3 +273,9 @@ Si la rama `dev` no existe o necesita resetearse desde el estado actual de produ
 - **The Odds API**: se usa únicamente para mostrar cuotas de apuestas en el bracket. Plan gratuito (500 req/mes). Las respuestas se cachean mediante `fetch` con `next.revalidate`. Si `ODDS_API_KEY` no está configurada, el bracket funciona sin cuotas.
 - **Resend**: se usa para el envío masivo de emails desde `/admin/emails`. El dominio remitente es `porramundial.mdv.red`.
 - **Teams ocultos en eliminatorias**: los equipos de la fase eliminatoria no se muestran hasta que se conoce el resultado de la fase anterior (lógica en `bracket.ts` con `resolveSlot`).
+- **Partido destacado en `/quiniela`**: la página muestra siempre arriba del todo, separado de los tabs, el partido en curso (`EN_PROGRESO`) o, si no hay ninguno, el próximo partido pendiente. Se calcula en el Server Component (`src/app/quiniela/page.tsx`) y se renderiza con `PartidoCard` + un ring visual diferenciador (amarillo para en directo, neutro para próximo).
+- **Dropdown Pronósticos/Puntuaciones en `PartidoCard`**: el desplegable es visible para **todos** los estados del partido:
+  - `PROGRAMADO` → etiqueta "Pronósticos", lista todos los pronósticos introducidos (`/api/partidos/pronosticos`) mostrando el marcador elegido.
+  - `EN_PROGRESO` → etiqueta "Puntuaciones", proyección en tiempo real con el marcador live.
+  - `FINALIZADO` → etiqueta "Puntuaciones", muestra puntos ganados + marcador pronosticado de cada usuario.
+  - El endpoint `/api/partidos/puntos` devuelve también `golesLocal` y `golesVisitante` para mostrarlos junto a los puntos.
