@@ -5,6 +5,8 @@ export interface PuntosEntry {
   name: string;
   image: string | null;
   puntosGanados: number;
+  golesLocal: number;
+  golesVisitante: number;
 }
 
 export async function GET(req: NextRequest) {
@@ -13,7 +15,7 @@ export async function GET(req: NextRequest) {
 
   const rows = await prisma.pronostico.findMany({
     where: { partidoId, puntosGanados: { gt: 0 } },
-    select: { puntosGanados: true, user: { select: { name: true, image: true } } },
+    select: { puntosGanados: true, golesLocal: true, golesVisitante: true, user: { select: { name: true, image: true } } },
     orderBy: { puntosGanados: "desc" },
   });
 
@@ -21,6 +23,8 @@ export async function GET(req: NextRequest) {
     name: r.user.name ?? "–",
     image: r.user.image,
     puntosGanados: r.puntosGanados,
+    golesLocal: r.golesLocal,
+    golesVisitante: r.golesVisitante,
   }));
 
   return NextResponse.json(data);

@@ -151,7 +151,7 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
 
   // ── Puntuaciones ──────────────────────────────────────────────────────────
   const [puntosOpen, setPuntosOpen] = useState(false);
-  const [puntosData, setPuntosData] = useState<{ name: string; image: string | null; puntosGanados: number }[] | null>(null);
+  const [puntosData, setPuntosData] = useState<{ name: string; image: string | null; puntosGanados: number; golesLocal: number; golesVisitante: number }[] | null>(null);
   const [puntosLoading, setPuntosLoading] = useState(false);
   const [pronosticosData, setPronosticosData] = useState<{ name: string; image: string | null; golesLocal: number; golesVisitante: number }[] | null>(null);
 
@@ -566,7 +566,7 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
                 )}
                 {!puntosLoading && isFinished && puntosData && puntosData.length > 0 && (
                   <ScoreList
-                    entries={puntosData.map(u => ({ name: u.name, image: u.image, pts: u.puntosGanados }))}
+                    entries={puntosData.map(u => ({ name: u.name, image: u.image, pts: u.puntosGanados, golesLocal: u.golesLocal, golesVisitante: u.golesVisitante }))}
                     fase={partido.fase}
                   />
                 )}
@@ -582,7 +582,7 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
                 )}
                 {!puntosLoading && isActuallyLive && liveScore && liveEntries && liveEntries.length > 0 && (
                   <ScoreList
-                    entries={liveEntries.map(u => ({ name: u.name, image: u.image, pts: u.pts }))}
+                    entries={liveEntries.map(u => ({ name: u.name, image: u.image, pts: u.pts, golesLocal: u.golesLocal, golesVisitante: u.golesVisitante }))}
                     fase={partido.fase}
                   />
                 )}
@@ -645,7 +645,7 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
 
 // ── ScoreList ─────────────────────────────────────────────────────────────────
 
-function ScoreList({ entries, fase }: { entries: { name: string; image: string | null; pts: number }[]; fase: Fase }) {
+function ScoreList({ entries, fase }: { entries: { name: string; image: string | null; pts: number; golesLocal: number; golesVisitante: number }[]; fase: Fase }) {
   return (
     <div className="space-y-1 max-h-52 overflow-y-auto scrollbar-none">
       {entries.map((u, i) => {
@@ -661,6 +661,9 @@ function ScoreList({ entries, fase }: { entries: { name: string; image: string |
               </span>
             )}
             <span className="flex-1 text-[11px] text-gray-300 truncate">{u.name}</span>
+            <span className="text-[11px] font-mono tabular-nums text-gray-500 shrink-0">
+              {u.golesLocal}–{u.golesVisitante}
+            </span>
             <span className={`text-[10px] font-semibold uppercase tracking-wide shrink-0 ${t.color}`}>
               {t.label}
             </span>
