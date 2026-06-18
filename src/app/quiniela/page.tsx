@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { LinkSpinner } from "@/components/nav-button";
 import PartidosTabs from "@/components/partidos-tabs";
+import PartidoCard from "@/components/partido-card";
 import ResetQuinielaButton from "@/components/reset-quiniela-button";
 import { getMundialOdds, buildOddsMap } from "@/lib/odds-api";
 
@@ -58,6 +59,12 @@ export default async function PartidosPage() {
     fechaPartido: p.fechaPartido.toISOString(),
   }));
 
+  const liveMatch = serializedPartidos.find((p) => p.estado === "EN_PROGRESO");
+  const nextMatch = !liveMatch
+    ? serializedPartidos.find((p) => p.estado === "PROGRAMADO" && new Date(p.fechaPartido) > new Date())
+    : null;
+  const featuredMatch = liveMatch ?? nextMatch ?? null;
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -75,9 +82,35 @@ export default async function PartidosPage() {
           </Link>
           <ResetQuinielaButton />
         </div>
-
       </div>
       <p className="mt-1 mb-4 text-sm text-gray-500">Pronostica el marcador de cada partido hasta 15 minutos antes del inicio.</p>
+
+      {/* Partido destacado */}
+      {featuredMatch && (
+        <section>
+          <div className="mb-3 flex items-center gap-2">
+            {liveMatch ? (
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-yellow-300">
+                <span className="size-1.5 rounded-full bg-yellow-300 animate-pulse" />
+                En juego
+              </span>
+            ) : (
+              <span className="text-[11px] font-semibold uppercase tracking-widest text-gray-500">
+                Próximo partido
+              </span>
+            )}
+          </div>
+          <div className={liveMatch ? "ring-1 ring-yellow-400/20 rounded-2xl" : "ring-1 ring-white/[0.08] rounded-2xl"}>
+            <PartidoCard
+              partido={featuredMatch}
+              pronostico={pronosticoMap[featuredMatch.id] ?? null}
+              odds={oddsMap?.[featuredMatch.id] ?? null}
+            />
+          </div>
+          <div className="mt-8 border-t border-white/[0.05]" />
+        </section>
+      )}
+
       <PartidosTabs partidos={serializedPartidos} pronosticoMap={pronosticoMap} oddsMap={oddsMap} />
     </div>
   );
