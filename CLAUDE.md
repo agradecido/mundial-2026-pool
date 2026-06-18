@@ -156,6 +156,8 @@ Los admins pueden crear modales de anuncios (`Modal`) que aparecen a los usuario
 
 ## 4. Scripts y Comandos del Entorno
 
+**NUNCA hacer `git push` sin autorización explícita del usuario.** Siempre esperar a que el usuario pida el push antes de ejecutarlo.
+
 Siempre ejecuta `npm install` antes de cualquier compilación.
 
 ```bash
