@@ -652,9 +652,12 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
 // ── PredictionList ────────────────────────────────────────────────────────────
 
 function PredictionList({ entries }: { entries: { name: string; image: string | null; golesLocal: number; golesVisitante: number }[] }) {
+  const sorted = [...entries].sort((a, b) =>
+    b.golesLocal - a.golesLocal || b.golesVisitante - a.golesVisitante
+  );
   return (
     <div className="space-y-1">
-      {entries.map((u, i) => {
+      {sorted.map((u, i) => {
         const initials = u.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
         return (
           <div key={i} className="flex items-center gap-2.5 py-1.5 border-b border-white/[0.04] last:border-0">
