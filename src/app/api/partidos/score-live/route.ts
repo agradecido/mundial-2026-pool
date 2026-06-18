@@ -8,6 +8,7 @@ const BASE_URL = "https://api.football-data.org/v4";
 
 const FD_TO_DB: Record<string, string> = {
   "Bosnia and Herzegovina": "Bosnia & Herzegovina",
+  "Bosnia-Herzegovina": "Bosnia & Herzegovina",
   "Congo DR": "DR Congo",
   "Korea Republic": "South Korea",
   "United States": "USA",
