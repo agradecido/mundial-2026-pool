@@ -653,7 +653,7 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
 
 function PredictionList({ entries }: { entries: { name: string; image: string | null; golesLocal: number; golesVisitante: number }[] }) {
   return (
-    <div className="space-y-1 max-h-52 overflow-y-auto scrollbar-none">
+    <div className="space-y-1">
       {entries.map((u, i) => {
         const initials = u.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
         return (
@@ -680,7 +680,7 @@ function PredictionList({ entries }: { entries: { name: string; image: string | 
 
 function ScoreList({ entries, fase }: { entries: { name: string; image: string | null; pts: number; golesLocal: number; golesVisitante: number }[]; fase: Fase }) {
   return (
-    <div className="space-y-1 max-h-52 overflow-y-auto scrollbar-none">
+    <div className="space-y-1">
       {entries.map((u, i) => {
         const t = getTier(u.pts, fase);
         const initials = u.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
