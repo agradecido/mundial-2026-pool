@@ -6,6 +6,26 @@ import { getUserDetail } from "@/app/ranking/actions";
 import UserDetailModal from "@/components/user-detail-modal";
 import type { UserDetail } from "@/app/ranking/actions";
 
+type TendenciaReciente = "up2" | "up1" | "flat" | "down1" | "down2" | null;
+
+const TREND_CONFIG: Record<NonNullable<TendenciaReciente>, { symbol: string; color: string; title: string }> = {
+  up2:   { symbol: "▲▲", color: "text-emerald-400", title: "Racha ascendente" },
+  up1:   { symbol: "▲",  color: "text-emerald-500", title: "Tendencia al alza" },
+  flat:  { symbol: "–",  color: "text-gray-500",    title: "Tendencia estable" },
+  down1: { symbol: "▼",  color: "text-orange-400",  title: "Tendencia a la baja" },
+  down2: { symbol: "▼▼", color: "text-red-400",     title: "Racha descendente" },
+};
+
+function TrendBadge({ trend }: { trend: TendenciaReciente }) {
+  if (!trend) return null;
+  const { symbol, color, title } = TREND_CONFIG[trend];
+  return (
+    <span className={`ml-1.5 text-[10px] font-bold leading-none ${color}`} title={title}>
+      {symbol}
+    </span>
+  );
+}
+
 const MEDALS = ["🥇", "🥈", "🥉"];
 
 const PODIUM = [
@@ -21,6 +41,7 @@ export interface RankedUser {
   total: number;
   exactos: number;
   tendencias: number;
+  tendenciaReciente: TendenciaReciente;
 }
 
 interface Props {
@@ -162,6 +183,7 @@ export default function RankingView({ ranking, currentUserId }: Props) {
                   <p className="text-base font-semibold text-white leading-snug">
                     {user.name ?? "—"}
                     {isMe && <span className="ml-1.5 text-xs font-medium text-[#00e87a]">tú</span>}
+                    <TrendBadge trend={user.tendenciaReciente} />
                   </p>
                   <p className={`text-4xl font-bold mt-1.5 tabular-nums ${c.text}`}>
                     {isLoading ? "…" : user.total}
@@ -217,6 +239,7 @@ export default function RankingView({ ranking, currentUserId }: Props) {
                         <span className={`font-medium ${isMe ? "text-[#00e87a]" : "text-gray-200"}`}>
                           {user.name ?? "—"}
                           {isMe && <span className="ml-1.5 text-xs text-gray-500">(tú)</span>}
+                          <TrendBadge trend={user.tendenciaReciente} />
                         </span>
                       </div>
                     </td>

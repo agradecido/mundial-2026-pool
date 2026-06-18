@@ -17,6 +17,7 @@ interface QuinielaEntry {
     total: number;
     exactos: number;
     tendencias: number;
+    tendenciaReciente: "up2" | "up1" | "flat" | "down1" | "down2" | null;
 }
 
 type Tab = "quiniela" | "porra" | "grupos";

@@ -6,6 +6,20 @@ import RankingView from "@/components/ranking-view";
 import PreTournamentWithModal from "@/components/pre-tournament-with-modal";
 import type { PreTournamentEntry } from "@/components/pre-tournament-list";
 
+type TendenciaReciente = "up2" | "up1" | "flat" | "down1" | "down2" | null;
+
+function computeTrend(pts: number[]): TendenciaReciente {
+  if (pts.length < 10) return null;
+  const recentAvg = pts.slice(0, 5).reduce((s, p) => s + p, 0) / 5;
+  const olderAvg = pts.slice(5, 10).reduce((s, p) => s + p, 0) / 5;
+  const diff = recentAvg - olderAvg;
+  if (diff > 1.5) return "up2";
+  if (diff > 0.5) return "up1";
+  if (diff < -1.5) return "down2";
+  if (diff < -0.5) return "down1";
+  return "flat";
+}
+
 export default async function QuinielaRankingPage() {
     const session = await auth();
     const currentUserId = session!.user.id;
@@ -19,7 +33,10 @@ export default async function QuinielaRankingPage() {
                 fechaRegistro: true,
                 ultimoAcceso: true,
                 pronosticos: {
-                    select: { puntosGanados: true },
+                    select: {
+                        puntosGanados: true,
+                        partido: { select: { fechaPartido: true, estado: true } },
+                    },
                 },
                 prediccionFutura: {
                     select: { puntosCampeon: true, puntosSubcampeon: true },
@@ -37,19 +54,25 @@ export default async function QuinielaRankingPage() {
 
     const ranking = users
         .map((u) => {
-            const puntosPartidos = u.pronosticos.reduce((s, p) => s + p.puntosGanados, 0);
+            const finished = u.pronosticos.filter((p) => p.partido.estado === "FINALIZADO");
+            const puntosPartidos = finished.reduce((s, p) => s + p.puntosGanados, 0);
             const pf = u.prediccionFutura;
             const puntosEspeciales = pf
                 ? pf.puntosCampeon + pf.puntosSubcampeon
                 : 0;
             const total = puntosPartidos + puntosEspeciales;
-            const exactos = u.pronosticos.filter(
+            const exactos = finished.filter(
                 (p) => p.puntosGanados === 5 || p.puntosGanados === 10
             ).length;
-            const tendencias = u.pronosticos.filter(
+            const tendencias = finished.filter(
                 (p) => p.puntosGanados === 3 || p.puntosGanados === 6
             ).length;
-            return { id: u.id, name: u.name, image: u.image, total, exactos, tendencias, fechaRegistro: u.fechaRegistro };
+            const last10pts = [...finished]
+                .sort((a, b) => b.partido.fechaPartido.getTime() - a.partido.fechaPartido.getTime())
+                .slice(0, 10)
+                .map((p) => p.puntosGanados);
+            const tendenciaReciente = computeTrend(last10pts);
+            return { id: u.id, name: u.name, image: u.image, total, exactos, tendencias, tendenciaReciente, fechaRegistro: u.fechaRegistro };
         })
         .sort((a, b) => {
             if (b.total !== a.total) return b.total - a.total;
