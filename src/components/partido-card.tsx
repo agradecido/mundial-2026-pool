@@ -201,7 +201,7 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
   function togglePuntos() {
     if (!puntosOpen) {
       if (partido.estado === "FINALIZADO" && !puntosData) fetchPuntos();
-      else if (isActuallyLive && !pronosticosData) fetchPronosticos();
+      else if (!pronosticosData) fetchPronosticos();
     }
     setPuntosOpen((v) => !v);
   }
@@ -539,57 +539,63 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
           )}
         </form>
 
-        {/* ── Puntuaciones ────────────────────────────────────────────── */}
-        {(isFinished || isActuallyLive) && (
-          <div className="border-t border-white/[0.05]">
-            <button
-              type="button"
-              onClick={togglePuntos}
-              className="w-full flex items-center justify-between px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-gray-600 hover:text-gray-400 transition-colors"
-            >
-              <span className="flex items-center gap-1.5">
-                Puntuaciones
-                {isActuallyLive && <span className="size-1.5 rounded-full bg-yellow-300 animate-pulse" />}
-              </span>
-              <span className="text-[9px]">{puntosOpen ? "▲" : "▼"}</span>
-            </button>
+        {/* ── Pronósticos / Puntuaciones ──────────────────────────────── */}
+        <div className="border-t border-white/[0.05]">
+          <button
+            type="button"
+            onClick={togglePuntos}
+            className="w-full flex items-center justify-between px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-gray-600 hover:text-gray-400 transition-colors"
+          >
+            <span className="flex items-center gap-1.5">
+              {isFinished || isActuallyLive ? "Puntuaciones" : "Pronósticos"}
+              {isActuallyLive && <span className="size-1.5 rounded-full bg-yellow-300 animate-pulse" />}
+            </span>
+            <span className="text-[9px]">{puntosOpen ? "▲" : "▼"}</span>
+          </button>
 
-            {puntosOpen && (
-              <div className="px-4 pb-4">
-                {puntosLoading && (
-                  <p className="text-center text-xs text-gray-600 py-2 animate-pulse">Cargando…</p>
-                )}
+          {puntosOpen && (
+            <div className="px-4 pb-4">
+              {puntosLoading && (
+                <p className="text-center text-xs text-gray-600 py-2 animate-pulse">Cargando…</p>
+              )}
 
-                {/* ── FINALIZADO ── */}
-                {!puntosLoading && isFinished && puntosData?.length === 0 && (
-                  <p className="text-center text-[11px] text-gray-700 py-2">Nadie acertó este partido</p>
-                )}
-                {!puntosLoading && isFinished && puntosData && puntosData.length > 0 && (
-                  <ScoreList
-                    entries={puntosData.map(u => ({ name: u.name, image: u.image, pts: u.puntosGanados, golesLocal: u.golesLocal, golesVisitante: u.golesVisitante }))}
-                    fase={partido.fase}
-                  />
-                )}
+              {/* ── FINALIZADO ── */}
+              {!puntosLoading && isFinished && puntosData?.length === 0 && (
+                <p className="text-center text-[11px] text-gray-700 py-2">Nadie acertó este partido</p>
+              )}
+              {!puntosLoading && isFinished && puntosData && puntosData.length > 0 && (
+                <ScoreList
+                  entries={puntosData.map(u => ({ name: u.name, image: u.image, pts: u.puntosGanados, golesLocal: u.golesLocal, golesVisitante: u.golesVisitante }))}
+                  fase={partido.fase}
+                />
+              )}
 
-                {/* ── EN PROGRESO ── */}
-                {!puntosLoading && isActuallyLive && !liveScore && (
-                  <p className="text-center text-xs text-gray-600 py-2 animate-pulse">Esperando marcador…</p>
-                )}
-                {!puntosLoading && isActuallyLive && liveScore && liveEntries?.length === 0 && (
-                  <p className="text-center text-[11px] text-gray-700 py-2">
-                    Nadie puntúa con el marcador actual
-                  </p>
-                )}
-                {!puntosLoading && isActuallyLive && liveScore && liveEntries && liveEntries.length > 0 && (
-                  <ScoreList
-                    entries={liveEntries.map(u => ({ name: u.name, image: u.image, pts: u.pts, golesLocal: u.golesLocal, golesVisitante: u.golesVisitante }))}
-                    fase={partido.fase}
-                  />
-                )}
-              </div>
-            )}
-          </div>
-        )}
+              {/* ── EN PROGRESO ── */}
+              {!puntosLoading && isActuallyLive && !liveScore && (
+                <p className="text-center text-xs text-gray-600 py-2 animate-pulse">Esperando marcador…</p>
+              )}
+              {!puntosLoading && isActuallyLive && liveScore && liveEntries?.length === 0 && (
+                <p className="text-center text-[11px] text-gray-700 py-2">
+                  Nadie puntúa con el marcador actual
+                </p>
+              )}
+              {!puntosLoading && isActuallyLive && liveScore && liveEntries && liveEntries.length > 0 && (
+                <ScoreList
+                  entries={liveEntries.map(u => ({ name: u.name, image: u.image, pts: u.pts, golesLocal: u.golesLocal, golesVisitante: u.golesVisitante }))}
+                  fase={partido.fase}
+                />
+              )}
+
+              {/* ── PROGRAMADO ── */}
+              {!puntosLoading && !isFinished && !isActuallyLive && pronosticosData?.length === 0 && (
+                <p className="text-center text-[11px] text-gray-700 py-2">Sin pronósticos todavía</p>
+              )}
+              {!puntosLoading && !isFinished && !isActuallyLive && pronosticosData && pronosticosData.length > 0 && (
+                <PredictionList entries={pronosticosData} />
+              )}
+            </div>
+          )}
+        </div>
 
         {/* ── H2H ────────────────────────────────────────────────────────── */}
         {!teamsUnknown && (
@@ -640,6 +646,33 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
         )}
       </div>
     </>
+  );
+}
+
+// ── PredictionList ────────────────────────────────────────────────────────────
+
+function PredictionList({ entries }: { entries: { name: string; image: string | null; golesLocal: number; golesVisitante: number }[] }) {
+  return (
+    <div className="space-y-1 max-h-52 overflow-y-auto scrollbar-none">
+      {entries.map((u, i) => {
+        const initials = u.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
+        return (
+          <div key={i} className="flex items-center gap-2.5 py-1.5 border-b border-white/[0.04] last:border-0">
+            {u.image ? (
+              <img src={u.image} alt={u.name} className="size-5 rounded-full shrink-0 object-cover" />
+            ) : (
+              <span className="size-5 rounded-full bg-white/10 flex items-center justify-center text-[8px] font-bold text-gray-400 shrink-0">
+                {initials}
+              </span>
+            )}
+            <span className="flex-1 text-[11px] text-gray-300 truncate">{u.name}</span>
+            <span className="text-[11px] font-mono tabular-nums text-gray-500 shrink-0">
+              {u.golesLocal}–{u.golesVisitante}
+            </span>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
