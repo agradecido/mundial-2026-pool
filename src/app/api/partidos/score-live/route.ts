@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { recalcularPuntosPartido } from "@/lib/scoring";
 import { revalidatePath, revalidateTag } from "next/cache";
@@ -21,57 +20,64 @@ function norm(name: string) { return FD_TO_DB[name] ?? name; }
 
 type ScoreData = { home: number; away: number; status: string };
 
-// Cached 60s so concurrent users share one FD API call per live match
-const fetchLiveScore = unstable_cache(
-  async (team1: string, team2: string): Promise<ScoreData | null> => {
-    const apiKey = process.env.FOOTBALL_DATA_API_TOKEN;
-    if (!apiKey) return null;
+// In-memory cache — only stores successful (non-null) results for 60s.
+// Null results (API error, match not found, missing key) are never cached
+// so the next request always retries immediately.
+const scoreCache = new Map<string, { data: ScoreData; expiresAt: number }>();
 
-    const now = new Date();
-    const dateFrom = new Date(now.getTime() - 86_400_000).toISOString().split("T")[0];
-    const dateTo   = new Date(now.getTime() + 86_400_000).toISOString().split("T")[0];
+async function fetchLiveScore(team1: string, team2: string): Promise<ScoreData | null> {
+  const cacheKey = `${team1}|${team2}`;
+  const cached = scoreCache.get(cacheKey);
+  if (cached && Date.now() < cached.expiresAt) return cached.data;
 
-    const res = await fetch(
-      `${BASE_URL}/competitions/WC/matches?dateFrom=${dateFrom}&dateTo=${dateTo}`,
-      { headers: { "X-Auth-Token": apiKey }, cache: "no-store" },
-    );
-    if (!res.ok) return null;
+  const apiKey = process.env.FOOTBALL_DATA_API_TOKEN;
+  if (!apiKey) return null;
 
-    const { matches } = await res.json() as {
-      matches: Array<{
-        status: string;
-        homeTeam: { name: string };
-        awayTeam: { name: string };
-        score: { fullTime: { home: number | null; away: number | null } };
-      }>;
-    };
+  const now = new Date();
+  const dateFrom = new Date(now.getTime() - 86_400_000).toISOString().split("T")[0];
+  const dateTo   = new Date(now.getTime() + 86_400_000).toISOString().split("T")[0];
 
-    const match = matches.find((m) => {
-      const home = norm(m.homeTeam.name);
-      const away = norm(m.awayTeam.name);
-      return (home === team1 && away === team2) || (home === team2 && away === team1);
-    });
-    if (!match) return null;
+  const res = await fetch(
+    `${BASE_URL}/competitions/WC/matches?dateFrom=${dateFrom}&dateTo=${dateTo}`,
+    { headers: { "X-Auth-Token": apiKey }, cache: "no-store" },
+  );
+  if (!res.ok) return null;
 
-    const swapped = norm(match.homeTeam.name) === team2;
-    const rawHome = match.score.fullTime.home;
-    const rawAway = match.score.fullTime.away;
+  const { matches } = await res.json() as {
+    matches: Array<{
+      status: string;
+      homeTeam: { name: string };
+      awayTeam: { name: string };
+      score: { fullTime: { home: number | null; away: number | null } };
+    }>;
+  };
 
-    // If the match is finished but scores are not yet populated by the API, treat as in-play
-    const effectiveStatus =
-      match.status === "FINISHED" && (rawHome === null || rawAway === null)
-        ? "IN_PLAY"
-        : match.status;
+  const match = matches.find((m) => {
+    const home = norm(m.homeTeam.name);
+    const away = norm(m.awayTeam.name);
+    return (home === team1 && away === team2) || (home === team2 && away === team1);
+  });
+  if (!match) return null;
 
-    return {
-      home: swapped ? (rawAway ?? 0) : (rawHome ?? 0),
-      away: swapped ? (rawHome ?? 0) : (rawAway ?? 0),
-      status: effectiveStatus,
-    };
-  },
-  ["score-live"],
-  { revalidate: 60 },
-);
+  const swapped = norm(match.homeTeam.name) === team2;
+  const rawHome = match.score.fullTime.home;
+  const rawAway = match.score.fullTime.away;
+
+  // If the match is finished but scores are not yet populated by the API, treat as in-play
+  const effectiveStatus =
+    match.status === "FINISHED" && (rawHome === null || rawAway === null)
+      ? "IN_PLAY"
+      : match.status;
+
+  const result: ScoreData = {
+    home: swapped ? (rawAway ?? 0) : (rawHome ?? 0),
+    away: swapped ? (rawHome ?? 0) : (rawAway ?? 0),
+    status: effectiveStatus,
+  };
+
+  scoreCache.set(cacheKey, { data: result, expiresAt: Date.now() + 60_000 });
+  return result;
+}
 
 // Runs on every request (not cached) — updates DB estado when FD shows a transition
 async function syncMatchState(team1: string, team2: string, score: ScoreData) {
