@@ -90,12 +90,15 @@ export default async function PartidosPage() {
         <div>
           <h1 className="text-3xl font-bold text-white tracking-tight">Quiniela</h1>
           {userBadge && (
-            <p className="mt-1.5 flex items-center gap-1.5 text-sm">
-              <span className="text-base leading-none">{userBadge.emoji}</span>
-              <span className="font-semibold text-gray-200">{userBadge.titulo}</span>
-              <span className="text-gray-600">·</span>
-              <span className="text-gray-500">{userBadge.descripcion}</span>
-            </p>
+            <div className="mt-3 space-y-0.5">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-600">Lo que la IA dice de ti</p>
+              <p className="flex items-center gap-1.5 text-sm">
+                <span className="text-base leading-none">{userBadge.emoji}</span>
+                <span className="font-semibold text-gray-200">{userBadge.titulo}</span>
+                <span className="text-gray-600">·</span>
+                <span className="text-gray-500">{userBadge.descripcion}</span>
+              </p>
+            </div>
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
