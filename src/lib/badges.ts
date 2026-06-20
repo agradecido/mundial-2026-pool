@@ -129,7 +129,7 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura exacta:
 }`;
 
   const response = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "gpt-5.4-mini",
     response_format: { type: "json_object" },
     messages: [{ role: "user", content: prompt }],
     temperature: 0.9,
