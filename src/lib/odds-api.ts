@@ -1,38 +1,11 @@
-// Cliente para API-Football — https://api-football.com
-// Free tier: 100 req/día. Caché BD-first (24h) para no desperdiciar cuota.
+// Cliente para The Odds API — https://the-odds-api.com
+// Plan gratuito: 500 req/mes. Caché BD-first (24h) — con 1 req/día son ~30/mes.
 
 import { prisma } from "@/lib/prisma";
 
-const BASE_URL = "https://v3.football.api-sports.io";
-const LEAGUE_ID = 1;   // FIFA World Cup
-const SEASON = 2026;
-const BET_ID = 1;      // Match Winner (1X2)
+const BASE_URL = "https://api.the-odds-api.com/v4";
+const SPORT_KEY = "soccer_fifa_world_cup";
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24h
-
-// Nombres que API-Football usa diferente a nuestra BD
-const AF_TO_DB: Record<string, string> = {
-  "Bosnia and Herzegovina": "Bosnia & Herzegovina",
-  "Bosnia & Herzegovina": "Bosnia & Herzegovina",
-  "DR Congo": "DR Congo",
-  "Congo DR": "DR Congo",
-  "Republic of Congo": "Congo",
-  "South Korea": "South Korea",
-  "Korea Republic": "South Korea",
-  "United States": "USA",
-  "Cape Verde Islands": "Cape Verde",
-  "Cape Verde": "Cape Verde",
-  "Ivory Coast": "Ivory Coast",
-  "Côte d'Ivoire": "Ivory Coast",
-  "Cote d'Ivoire": "Ivory Coast",
-  "Czech Republic": "Czech Republic",
-  "Czechia": "Czech Republic",
-};
-
-function normalizeTeamName(name: string): string {
-  return AF_TO_DB[name] ?? name;
-}
-
-// ── Tipos públicos (misma interfaz que antes) ─────────────────────────────
 
 export interface OddsEvent {
   id: string;
@@ -78,13 +51,16 @@ export interface PairOdds {
 async function getCachedOdds(key: string): Promise<OddsEvent[]> {
   try {
     const row = await prisma.oddsCache.findUnique({ where: { key } });
-    return row ? (row.data as unknown as OddsEvent[]) : [];
+    if (!row) return [];
+    const data = row.data as unknown as OddsEvent[];
+    return Array.isArray(data) && data.length > 0 ? data : [];
   } catch {
     return [];
   }
 }
 
 async function setCachedOdds(key: string, data: OddsEvent[]): Promise<void> {
+  if (data.length === 0) return; // nunca sobreescribir caché válida con vacío
   try {
     await prisma.oddsCache.upsert({
       where: { key },
@@ -100,96 +76,12 @@ async function isCacheFresh(key: string): Promise<boolean> {
   try {
     const row = await prisma.oddsCache.findUnique({ where: { key } });
     if (!row) return false;
+    const data = row.data as unknown as OddsEvent[];
+    if (!Array.isArray(data) || data.length === 0) return false; // caché vacía = no válida
     return Date.now() - row.updatedAt.getTime() < CACHE_TTL_MS;
   } catch {
     return false;
   }
-}
-
-// ── Tipos internos API-Football ───────────────────────────────────────────
-
-interface AFValue {
-  value: string; // "Home" | "Draw" | "Away"
-  odd: string;   // decimal como string, ej: "2.35"
-}
-
-interface AFBet {
-  id: number;
-  name: string;
-  values: AFValue[];
-}
-
-interface AFBookmaker {
-  id: number;
-  name: string;
-  bets: AFBet[];
-}
-
-interface AFOddsEntry {
-  update: string;
-  fixture: { id: number };
-  teams: {
-    home: { id: number; name: string };
-    away: { id: number; name: string };
-  };
-  bookmakers: AFBookmaker[];
-}
-
-interface AFResponse {
-  response: AFOddsEntry[];
-}
-
-// ── Fetch + conversión ────────────────────────────────────────────────────
-
-async function fetchFromApiFootball(): Promise<OddsEvent[]> {
-  const apiKey = process.env.APIFOOTBALL_API_KEY;
-  if (!apiKey) return [];
-
-  const url = new URL(`${BASE_URL}/odds`);
-  url.searchParams.set("league", String(LEAGUE_ID));
-  url.searchParams.set("season", String(SEASON));
-  url.searchParams.set("bet", String(BET_ID));
-
-  const res = await fetch(url.toString(), {
-    headers: { "x-apisports-key": apiKey },
-    cache: "no-store",
-  });
-
-  if (!res.ok) {
-    throw new Error(`API-Football error: ${res.status} ${await res.text()}`);
-  }
-
-  const json = (await res.json()) as AFResponse;
-
-  return (json.response ?? []).map((entry): OddsEvent => {
-    const homeTeam = normalizeTeamName(entry.teams.home.name);
-    const awayTeam = normalizeTeamName(entry.teams.away.name);
-
-    const bookmakers: Bookmaker[] = entry.bookmakers.map((bk) => {
-      const matchWinner = bk.bets.find((b) => b.id === BET_ID);
-      const outcomes: Outcome[] = (matchWinner?.values ?? []).map((v) => ({
-        // Traducir "Home"/"Draw"/"Away" a los nombres reales para que avgH2HOdds funcione
-        name: v.value === "Home" ? homeTeam : v.value === "Away" ? awayTeam : "Draw",
-        price: parseFloat(v.odd),
-      }));
-
-      return {
-        key: String(bk.id),
-        title: bk.name,
-        last_update: entry.update,
-        markets: [{ key: "h2h", outcomes }],
-      };
-    });
-
-    return {
-      id: String(entry.fixture.id),
-      sport_key: "soccer_fifa_world_cup",
-      commence_time: entry.update,
-      home_team: homeTeam,
-      away_team: awayTeam,
-      bookmakers,
-    };
-  });
 }
 
 // ── API pública ───────────────────────────────────────────────────────────
@@ -205,21 +97,32 @@ export async function getMundialOdds(): Promise<OddsEvent[]> {
     return getCachedOdds(CACHE_KEY);
   }
 
-  if (!process.env.APIFOOTBALL_API_KEY) {
-    return getCachedOdds(CACHE_KEY);
-  }
+  const apiKey = process.env.ODDS_API_KEY;
+  if (!apiKey) return getCachedOdds(CACHE_KEY);
+
+  const url = new URL(`${BASE_URL}/sports/${SPORT_KEY}/odds`);
+  url.searchParams.set("apiKey", apiKey);
+  url.searchParams.set("regions", "eu");
+  url.searchParams.set("markets", "h2h");
+  url.searchParams.set("oddsFormat", "decimal");
+  url.searchParams.set("dateFormat", "iso");
 
   try {
-    const data = await fetchFromApiFootball();
+    const res = await fetch(url.toString(), { cache: "no-store" });
+    if (!res.ok) {
+      console.error(`Odds API error: ${res.status} ${await res.text()}`);
+      return getCachedOdds(CACHE_KEY);
+    }
+    const data = (await res.json()) as OddsEvent[];
     await setCachedOdds(CACHE_KEY, data);
     return data;
   } catch (err) {
-    console.error("API-Football fetch failed:", err);
+    console.error("Odds API fetch failed:", err);
     return getCachedOdds(CACHE_KEY);
   }
 }
 
-// ── Helpers de lookup (sin cambios) ──────────────────────────────────────
+// ── Helpers de lookup ─────────────────────────────────────────────────────
 
 export function avgH2HOdds(event: OddsEvent): H2HOdds | null {
   const h2hMarkets = event.bookmakers
