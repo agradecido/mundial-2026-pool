@@ -133,7 +133,7 @@ Los tres porcentajes deben sumar exactamente 100. El marcador debe ser el result
   const response = await openai.chat.completions.create({
     model: "gpt-5.4-mini",
     messages: [{ role: "user", content: prompt }],
-    max_tokens: 100,
+    max_completion_tokens: 100,
     temperature: 0.3,
     response_format: { type: "json_object" },
   });

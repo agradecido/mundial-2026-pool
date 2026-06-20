@@ -127,7 +127,7 @@ Tono: amigable, de porra entre amigos, conciso y directo. Sin emojis.`;
   const response = await openai.chat.completions.create({
     model: "gpt-5.4-mini",
     messages: [{ role: "user", content: prompt }],
-    max_tokens: 250,
+    max_completion_tokens: 250,
     temperature: 0.7,
   });
 
