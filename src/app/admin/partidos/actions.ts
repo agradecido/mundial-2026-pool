@@ -3,6 +3,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { recalcularPuntosPartido } from "@/lib/scoring";
+import { generarBadges } from "@/lib/badges";
 import { revalidatePath, revalidateTag } from "next/cache";
 import type { EstadoPartido } from "@prisma/client";
 
@@ -64,6 +65,10 @@ export async function actualizarPartido(
     });
 
     await recalcularPuntosPartido(id);
+
+    if (data.estado === "FINALIZADO") {
+        void generarBadges();
+    }
 
     revalidateTag("ranking", "max");
     revalidatePath("/admin/partidos");
