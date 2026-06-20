@@ -48,6 +48,7 @@ interface Props {
     puntosGanados: number;
   } | null;
   odds?: { home: number; draw: number; away: number } | null;
+  leaderPronostico?: { name: string | null; golesLocal: number; golesVisitante: number } | null;
 }
 
 function isPlaceholder(name: string): boolean {
@@ -127,7 +128,7 @@ function CheckIcon() {
   );
 }
 
-export default function PartidoCard({ partido, pronostico, odds }: Props) {
+export default function PartidoCard({ partido, pronostico, odds, leaderPronostico }: Props) {
   const router = useRouter();
   const refreshed = useRef(false);
   const [locked, setLocked] = useState(false);
@@ -538,6 +539,18 @@ export default function PartidoCard({ partido, pronostico, odds }: Props) {
             </div>
           )}
         </form>
+
+        {/* ── Líder ────────────────────────────────────────────────────── */}
+        {leaderPronostico && (
+          <div className="mx-4 mb-3 flex flex-col items-center gap-1 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 text-center">
+            <span className="text-xs text-gray-500">
+              <span className="text-yellow-400/80">👑</span> El líder de la quiniela ha pronosticado:
+            </span>
+            <span className="font-mono text-base font-bold tabular-nums text-gray-200">
+              {leaderPronostico.golesLocal}–{leaderPronostico.golesVisitante}
+            </span>
+          </div>
+        )}
 
         {/* ── Pronósticos / Puntuaciones ──────────────────────────────── */}
         <div className="border-t border-white/[0.05]">

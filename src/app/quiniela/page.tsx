@@ -18,6 +18,7 @@ export default async function PartidosPage() {
     prisma.user.findMany({
       select: {
         id: true,
+        name: true,
         fechaRegistro: true,
         pronosticos: { select: { puntosGanados: true } },
         prediccionFutura: { select: { puntosCampeon: true, puntosSubcampeon: true } },
@@ -65,6 +66,22 @@ export default async function PartidosPage() {
     : null;
   const featuredMatch = liveMatch ?? nextMatch ?? null;
 
+  const leaderId = scored[0]?.id ?? null;
+  let leaderPronostico: { name: string | null; golesLocal: number; golesVisitante: number } | null = null;
+  if (leaderId && featuredMatch) {
+    const pred = await prisma.pronostico.findFirst({
+      where: { userId: leaderId, partidoId: featuredMatch.id },
+      select: { golesLocal: true, golesVisitante: true },
+    });
+    if (pred) {
+      leaderPronostico = {
+        name: allUsers.find((u) => u.id === leaderId)?.name ?? null,
+        golesLocal: pred.golesLocal,
+        golesVisitante: pred.golesVisitante,
+      };
+    }
+  }
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -105,6 +122,7 @@ export default async function PartidosPage() {
               partido={featuredMatch}
               pronostico={pronosticoMap[featuredMatch.id] ?? null}
               odds={oddsMap?.[featuredMatch.id] ?? null}
+              leaderPronostico={leaderPronostico}
             />
           </div>
           <div className="mt-8 border-t border-white/[0.05]" />
