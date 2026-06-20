@@ -118,6 +118,15 @@ export default function PartidosTabs({
 
   const fechasOrdenadas = Object.keys(porFecha).sort();
   const todayKey = getDayKey(new Date().toISOString());
+
+  const _yesterday = new Date(); _yesterday.setDate(_yesterday.getDate() - 1);
+  const _tomorrow = new Date(); _tomorrow.setDate(_tomorrow.getDate() + 1);
+  const yesterdayKey = getDayKey(_yesterday.toISOString());
+  const tomorrowKey = getDayKey(_tomorrow.toISOString());
+  function isInPrediccionWindow(dayKey: string): boolean {
+    return dayKey >= yesterdayKey && dayKey <= tomorrowKey;
+  }
+
   // Past days (before today) descending, then today + future days ascending
   const pastFechas = fechasOrdenadas.filter(k => k < todayKey).reverse();
   const futureFechas = fechasOrdenadas.filter(k => k >= todayKey);
@@ -185,6 +194,7 @@ export default function PartidosTabs({
                         partido={p}
                         pronostico={pronosticoMap[p.id] ?? null}
                         odds={oddsMap?.[p.id] ?? null}
+                        showPrediccion={isInPrediccionWindow(getDayKey(p.fechaPartido))}
                       />
                     ))}
                   </div>
@@ -211,6 +221,7 @@ export default function PartidosTabs({
                       partido={p}
                       pronostico={pronosticoMap[p.id] ?? null}
                       odds={oddsMap?.[p.id] ?? null}
+                      showPrediccion={isInPrediccionWindow(getDayKey(p.fechaPartido))}
                     />
                   ))}
                 </div>
@@ -270,6 +281,7 @@ export default function PartidosTabs({
                         partido={p}
                         pronostico={pronosticoMap[p.id] ?? null}
                         odds={oddsMap?.[p.id] ?? null}
+                        showPrediccion={isInPrediccionWindow(key)}
                       />
                     ))}
                   </div>

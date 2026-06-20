@@ -90,6 +90,7 @@ model Partido {
 
   pronosticos Pronostico[]
   analisis    AnalisisPartido?
+  prediccion  PrediccionPartido?
 }
 
 enum Fase {
@@ -237,6 +238,18 @@ model AnalisisPartido {
   partidoId  String   @unique
   texto      String
   generadoEn DateTime @default(now())
+
+  partido Partido @relation(fields: [partidoId], references: [id], onDelete: Cascade)
+}
+
+model PrediccionPartido {
+  id          String   @id @default(cuid())
+  partidoId   String   @unique
+  homePercent Int
+  drawPercent Int
+  awayPercent Int
+  marcador    String
+  generadoEn  DateTime @default(now())
 
   partido Partido @relation(fields: [partidoId], references: [id], onDelete: Cascade)
 }

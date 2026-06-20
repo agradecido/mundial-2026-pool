@@ -49,6 +49,7 @@ interface Props {
   } | null;
   odds?: { home: number; draw: number; away: number } | null;
   leaderPronostico?: { name: string | null; golesLocal: number; golesVisitante: number } | null;
+  showPrediccion?: boolean;
 }
 
 function isPlaceholder(name: string): boolean {
@@ -128,7 +129,7 @@ function CheckIcon() {
   );
 }
 
-export default function PartidoCard({ partido, pronostico, odds, leaderPronostico }: Props) {
+export default function PartidoCard({ partido, pronostico, odds, leaderPronostico, showPrediccion }: Props) {
   const router = useRouter();
   const refreshed = useRef(false);
   const [locked, setLocked] = useState(false);
@@ -154,6 +155,13 @@ export default function PartidoCard({ partido, pronostico, odds, leaderPronostic
   const [analisisOpen, setAnalisisOpen] = useState(false);
   const [analisisTexto, setAnalisisTexto] = useState<string | null>(null);
   const [analisisLoading, setAnalisisLoading] = useState(false);
+
+  // ── Predicción IA ─────────────────────────────────────────────────────────
+  const [prediccionOpen, setPrediccionOpen] = useState(false);
+  const [prediccionData, setPrediccionData] = useState<{
+    homePercent: number; drawPercent: number; awayPercent: number; marcador: string;
+  } | null>(null);
+  const [prediccionLoading, setPrediccionLoading] = useState(false);
 
   // ── Puntuaciones ──────────────────────────────────────────────────────────
   const [puntosOpen, setPuntosOpen] = useState(false);
@@ -203,6 +211,24 @@ export default function PartidoCard({ partido, pronostico, odds, leaderPronostic
   function toggleAnalisis() {
     if (!analisisOpen && !analisisTexto) fetchAnalisis();
     setAnalisisOpen((v) => !v);
+  }
+
+  async function fetchPrediccion() {
+    if (prediccionData || prediccionLoading) return;
+    setPrediccionLoading(true);
+    try {
+      const params = new URLSearchParams({ partidoId: partido.id });
+      if (odds?.home) params.set("homeOdd", String(odds.home));
+      if (odds?.draw) params.set("drawOdd", String(odds.draw));
+      if (odds?.away) params.set("awayOdd", String(odds.away));
+      const res = await fetch(`/api/partidos/prediccion-ia?${params}`);
+      if (res.ok) {
+        const data = await res.json() as { homePercent: number; drawPercent: number; awayPercent: number; marcador: string };
+        setPrediccionData(data);
+      }
+    } finally {
+      setPrediccionLoading(false);
+    }
   }
 
   async function fetchPuntos() {
@@ -580,6 +606,39 @@ export default function PartidoCard({ partido, pronostico, odds, leaderPronostic
           </div>
         )}
 
+        {/* ── Predicción IA ────────────────────────────────────────────── */}
+        {showPrediccion && !teamsUnknown && (
+          <div className="px-4 pb-3">
+            {!prediccionOpen ? (
+              <button
+                type="button"
+                onClick={() => { setPrediccionOpen(true); fetchPrediccion(); }}
+                className="w-full rounded-xl border border-white/[0.08] bg-white/[0.03] py-2 text-[11px] font-semibold uppercase tracking-wider text-gray-500 hover:text-gray-300 hover:border-white/[0.15] transition-colors flex items-center justify-center gap-1.5"
+              >
+                <span>✦</span>
+                <span>Predicción IA</span>
+              </button>
+            ) : (
+              <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 space-y-2.5">
+                {prediccionLoading && (
+                  <p className="text-center text-xs text-gray-600 animate-pulse">Calculando…</p>
+                )}
+                {!prediccionLoading && prediccionData && (
+                  <PrediccionDisplay
+                    data={prediccionData}
+                    local={partido.equipoLocal}
+                    visitante={partido.equipoVisitante}
+                    onClose={() => setPrediccionOpen(false)}
+                  />
+                )}
+                {!prediccionLoading && !prediccionData && (
+                  <p className="text-center text-[11px] text-gray-700 py-1">No se pudo generar la predicción</p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* ── Pronósticos / Puntuaciones ──────────────────────────────── */}
         <div className="border-t border-white/[0.05]">
           <button
@@ -856,6 +915,60 @@ function H2HSummaryBar({
         <span className="text-gray-600">{data.empates}E</span>
         <span className="text-rose-400">{data.victoriasTeam2}V</span>
       </div>
+    </div>
+  );
+}
+
+// ── PrediccionDisplay ─────────────────────────────────────────────────────────
+
+function PrediccionDisplay({
+  data,
+  local,
+  visitante,
+  onClose,
+}: {
+  data: { homePercent: number; drawPercent: number; awayPercent: number; marcador: string };
+  local: string;
+  visitante: string;
+  onClose: () => void;
+}) {
+  const { homePercent, drawPercent, awayPercent, marcador } = data;
+
+  return (
+    <div className="space-y-2">
+      {/* Header con botón cerrar */}
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-600 flex items-center gap-1">
+          <span>✦</span> Predicción IA
+        </span>
+        <button type="button" onClick={onClose} className="text-[10px] text-gray-700 hover:text-gray-500 transition-colors">✕</button>
+      </div>
+
+      {/* Labels de porcentaje */}
+      <div className="flex items-center justify-between text-[11px]">
+        <span className="font-semibold text-[#00e87a] tabular-nums">{local.split(" ").pop()} {homePercent}%</span>
+        <span className="text-gray-600 tabular-nums">Empate {drawPercent}%</span>
+        <span className="font-semibold text-rose-400 tabular-nums">{visitante.split(" ").pop()} {awayPercent}%</span>
+      </div>
+
+      {/* Barra tricolor */}
+      <div className="flex h-1.5 w-full rounded-full overflow-hidden gap-px">
+        {homePercent > 0 && (
+          <div className="bg-[#00e87a] rounded-l-full" style={{ width: `${homePercent}%` }} />
+        )}
+        {drawPercent > 0 && (
+          <div className="bg-white/20" style={{ width: `${drawPercent}%` }} />
+        )}
+        {awayPercent > 0 && (
+          <div className="bg-rose-500 rounded-r-full" style={{ width: `${awayPercent}%` }} />
+        )}
+      </div>
+
+      {/* Marcador más probable */}
+      <p className="text-center text-[11px] text-gray-500">
+        Marcador más probable:{" "}
+        <span className="font-mono font-bold text-gray-300 tabular-nums">{marcador}</span>
+      </p>
     </div>
   );
 }

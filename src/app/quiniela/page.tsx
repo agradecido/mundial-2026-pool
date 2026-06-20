@@ -135,6 +135,7 @@ export default async function PartidosPage() {
               pronostico={pronosticoMap[featuredMatch.id] ?? null}
               odds={oddsMap?.[featuredMatch.id] ?? null}
               leaderPronostico={leaderPronostico}
+              showPrediccion
             />
           </div>
           <div className="mt-8 border-t border-white/[0.05]" />
