@@ -89,6 +89,7 @@ model Partido {
   estado             EstadoPartido @default(PROGRAMADO)
 
   pronosticos Pronostico[]
+  analisis    AnalisisPartido?
 }
 
 enum Fase {
@@ -229,6 +230,15 @@ model Jugador {
 
   @@index([seleccion])
   @@unique([seleccion, dorsal])
+}
+
+model AnalisisPartido {
+  id         String   @id @default(cuid())
+  partidoId  String   @unique
+  texto      String
+  generadoEn DateTime @default(now())
+
+  partido Partido @relation(fields: [partidoId], references: [id], onDelete: Cascade)
 }
 
 model BadgeUsuario {

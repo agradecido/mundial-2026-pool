@@ -150,6 +150,11 @@ export default function PartidoCard({ partido, pronostico, odds, leaderPronostic
   const [h2hData, setH2hData] = useState<H2HData | null>(null);
   const [h2hLoading, setH2hLoading] = useState(false);
 
+  // ── Análisis IA ───────────────────────────────────────────────────────────
+  const [analisisOpen, setAnalisisOpen] = useState(false);
+  const [analisisTexto, setAnalisisTexto] = useState<string | null>(null);
+  const [analisisLoading, setAnalisisLoading] = useState(false);
+
   // ── Puntuaciones ──────────────────────────────────────────────────────────
   const [puntosOpen, setPuntosOpen] = useState(false);
   const [puntosData, setPuntosData] = useState<{ name: string; image: string | null; puntosGanados: number; golesLocal: number; golesVisitante: number }[] | null>(null);
@@ -175,6 +180,29 @@ export default function PartidoCard({ partido, pronostico, odds, leaderPronostic
   function toggleH2H() {
     if (!h2hOpen && !h2hData) fetchH2H();
     setH2hOpen((v) => !v);
+  }
+
+  async function fetchAnalisis() {
+    if (analisisTexto || analisisLoading) return;
+    setAnalisisLoading(true);
+    try {
+      const params = new URLSearchParams({ partidoId: partido.id });
+      if (odds?.home) params.set("homeOdd", String(odds.home));
+      if (odds?.draw) params.set("drawOdd", String(odds.draw));
+      if (odds?.away) params.set("awayOdd", String(odds.away));
+      const res = await fetch(`/api/partidos/analisis-ia?${params}`);
+      if (res.ok) {
+        const data = await res.json() as { texto: string };
+        setAnalisisTexto(data.texto);
+      }
+    } finally {
+      setAnalisisLoading(false);
+    }
+  }
+
+  function toggleAnalisis() {
+    if (!analisisOpen && !analisisTexto) fetchAnalisis();
+    setAnalisisOpen((v) => !v);
   }
 
   async function fetchPuntos() {
@@ -652,6 +680,43 @@ export default function PartidoCard({ partido, pronostico, odds, leaderPronostic
                       ))}
                     </div>
                   </>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Análisis IA ──────────────────────────────────────────────── */}
+        {!teamsUnknown && (
+          <div className="border-t border-white/[0.05]">
+            <button
+              type="button"
+              onClick={toggleAnalisis}
+              className="w-full flex items-center justify-between px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-gray-600 hover:text-gray-400 transition-colors"
+            >
+              <span className="flex items-center gap-1.5">
+                <span>✦</span>
+                <span>Lo que la IA dice de este partido</span>
+              </span>
+              <span className="text-[9px]">{analisisOpen ? "▲" : "▼"}</span>
+            </button>
+
+            {analisisOpen && (
+              <div className="px-4 pb-4">
+                {analisisLoading && (
+                  <p className="text-center text-xs text-gray-600 py-2 animate-pulse">
+                    Analizando…
+                  </p>
+                )}
+                {!analisisLoading && analisisTexto && (
+                  <p className="text-[13px] text-gray-400 leading-relaxed">
+                    {analisisTexto}
+                  </p>
+                )}
+                {!analisisLoading && !analisisTexto && (
+                  <p className="text-center text-[11px] text-gray-700 py-2">
+                    No se pudo generar el análisis
+                  </p>
                 )}
               </div>
             )}
