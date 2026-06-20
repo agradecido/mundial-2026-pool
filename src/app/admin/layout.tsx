@@ -52,6 +52,7 @@ export default async function AdminLayout({
         { href: "/admin/grupos", label: "Grupos" },
         { href: "/admin/modales", label: "Modales" },
         { href: "/admin/emails", label: "Emails" },
+        { href: "/admin/badges", label: "Badges IA" },
     ];
 
     return (
