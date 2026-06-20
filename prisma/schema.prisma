@@ -66,6 +66,7 @@ model User {
   modalDismissals   ModalDismissal[]
   gruposCreados     Grupo[]          @relation("GruposCreados")
   grupos            GrupoMiembro[]
+  badge             BadgeUsuario?
 }
 
 enum Role {
@@ -228,6 +229,17 @@ model Jugador {
 
   @@index([seleccion])
   @@unique([seleccion, dorsal])
+}
+
+model BadgeUsuario {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  titulo      String
+  emoji       String
+  descripcion String
+  generadoEn  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model PartidoHistorico {

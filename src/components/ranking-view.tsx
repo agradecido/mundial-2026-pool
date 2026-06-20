@@ -44,12 +44,15 @@ export interface RankedUser {
   tendenciaReciente: TendenciaReciente;
 }
 
+type Badge = { userId: string; titulo: string; emoji: string; descripcion: string };
+
 interface Props {
   ranking: RankedUser[];
   currentUserId: string;
+  badgeMap?: Record<string, Badge>;
 }
 
-export default function RankingView({ ranking, currentUserId }: Props) {
+export default function RankingView({ ranking, currentUserId, badgeMap = {} }: Props) {
   const [detail, setDetail] = useState<UserDetail | null>(null);
   const [loading, setLoading] = useState<string | null>(null); // userId being loaded
   const [navigating, setNavigating] = useState(false);
@@ -185,6 +188,12 @@ export default function RankingView({ ranking, currentUserId }: Props) {
                     {isMe && <span className="ml-1.5 text-xs font-medium text-[#00e87a]">tú</span>}
                     <TrendBadge trend={user.tendenciaReciente} />
                   </p>
+                  {badgeMap[user.id] && (
+                    <p className="mt-1 text-xs text-gray-400 flex items-center justify-center gap-1">
+                      <span>{badgeMap[user.id].emoji}</span>
+                      <span className="font-medium text-gray-300">{badgeMap[user.id].titulo}</span>
+                    </p>
+                  )}
                   <p className={`text-4xl font-bold mt-1.5 tabular-nums ${c.text}`}>
                     {isLoading ? "…" : user.total}
                   </p>
@@ -236,11 +245,19 @@ export default function RankingView({ ranking, currentUserId }: Props) {
                             {user.name?.[0] ?? "?"}
                           </div>
                         )}
-                        <span className={`font-medium ${isMe ? "text-[#00e87a]" : "text-gray-200"}`}>
-                          {user.name ?? "—"}
-                          {isMe && <span className="ml-1.5 text-xs text-gray-500">(tú)</span>}
-                          <TrendBadge trend={user.tendenciaReciente} />
-                        </span>
+                        <div>
+                          <span className={`font-medium ${isMe ? "text-[#00e87a]" : "text-gray-200"}`}>
+                            {user.name ?? "—"}
+                            {isMe && <span className="ml-1.5 text-xs text-gray-500">(tú)</span>}
+                            <TrendBadge trend={user.tendenciaReciente} />
+                          </span>
+                          {badgeMap[user.id] && (
+                            <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-1">
+                              <span>{badgeMap[user.id].emoji}</span>
+                              <span>{badgeMap[user.id].titulo}</span>
+                            </p>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td className="px-4 py-3.5 text-right font-bold text-white tabular-nums">

@@ -24,7 +24,7 @@ export default async function QuinielaRankingPage() {
     const session = await auth();
     const currentUserId = session!.user.id;
 
-    const [users, firstPartido] = await Promise.all([
+    const [users, firstPartido, badges] = await Promise.all([
         prisma.user.findMany({
             select: {
                 id: true,
@@ -46,6 +46,9 @@ export default async function QuinielaRankingPage() {
         prisma.partido.findFirst({
             orderBy: { fechaPartido: "asc" },
             select: { fechaPartido: true },
+        }),
+        prisma.badgeUsuario.findMany({
+            select: { userId: true, titulo: true, emoji: true, descripcion: true },
         }),
     ]);
 
@@ -81,6 +84,8 @@ export default async function QuinielaRankingPage() {
             return a.fechaRegistro.getTime() - b.fechaRegistro.getTime();
         })
         .map(({ fechaRegistro: _, ...u }) => u); // drop non-serializable Date
+
+    const badgeMap = Object.fromEntries(badges.map((b) => [b.userId, b]));
 
     const preTournamentEntries: PreTournamentEntry[] = [...users]
         .sort((a, b) => {
@@ -122,7 +127,7 @@ export default async function QuinielaRankingPage() {
                     subtitle="El ranking se mostrará cuando empiece el Mundial. Participantes ordenados por pronósticos de quiniela completados."
                 />
             ) : (
-                <RankingView ranking={ranking} currentUserId={currentUserId} />
+                <RankingView ranking={ranking} currentUserId={currentUserId} badgeMap={badgeMap} />
             )}
         </div>
     );

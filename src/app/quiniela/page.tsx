@@ -11,7 +11,7 @@ export default async function PartidosPage() {
   const session = await auth();
   const userId = session!.user.id;
 
-  const [partidos, pronosticos, oddsEvents, allUsers] = await Promise.all([
+  const [partidos, pronosticos, oddsEvents, allUsers, userBadge] = await Promise.all([
     prisma.partido.findMany({ orderBy: { fechaPartido: "asc" } }),
     prisma.pronostico.findMany({ where: { userId } }),
     getMundialOdds(),
@@ -24,6 +24,7 @@ export default async function PartidosPage() {
         prediccionFutura: { select: { puntosCampeon: true, puntosSubcampeon: true } },
       },
     }),
+    prisma.badgeUsuario.findUnique({ where: { userId } }),
   ]);
 
   // Ranking position (mismo criterio que quiniela/ranking)
@@ -88,6 +89,14 @@ export default async function PartidosPage() {
       <div className="flex items-start justify-between gap-4 mb-4">
         <div>
           <h1 className="text-3xl font-bold text-white tracking-tight">Quiniela</h1>
+          {userBadge && (
+            <p className="mt-1.5 flex items-center gap-1.5 text-sm">
+              <span className="text-base leading-none">{userBadge.emoji}</span>
+              <span className="font-semibold text-gray-200">{userBadge.titulo}</span>
+              <span className="text-gray-600">·</span>
+              <span className="text-gray-500">{userBadge.descripcion}</span>
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <Link

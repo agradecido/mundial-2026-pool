@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { LinkSpinner } from "@/components/nav-button";
+import GenerarBadgesButton from "@/components/generar-badges-button";
 
 export default async function AdminDashboard() {
     const session = await auth();
@@ -91,6 +92,7 @@ export default async function AdminDashboard() {
                     Exportar porras PDF
                     <LinkSpinner className="size-4 shrink-0" />
                 </Link>
+                <GenerarBadgesButton />
             </div>
         </div>
     );
