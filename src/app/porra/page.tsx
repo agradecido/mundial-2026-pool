@@ -70,7 +70,7 @@ export default async function LlavesPage() {
           <p className="mt-1 text-sm text-gray-500">Tu bracket del Mundial 2026</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <ShareBracketButton userName={session!.user.name ?? "tú"} />
+          <ShareBracketButton userName={session!.user.name ?? "tú"} picks={picks} grupos={grupos} />
           <Link
             href="/porra/ranking"
             className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs text-gray-400 hover:border-white/20 hover:text-white transition-colors shrink-0"
