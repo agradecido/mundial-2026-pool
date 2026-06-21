@@ -31,7 +31,7 @@ export default function ShareBracketButton({ userName }: Props) {
       }
 
       const { toPng } = await import("html-to-image");
-      const dataUrl = await toPng(el, { backgroundColor: "#0f0f0f", pixelRatio: 2 });
+      const dataUrl = await toPng(el, { backgroundColor: "#ffffff", pixelRatio: 2 });
 
       // Restore hidden ancestors
       hiddenAncestors.forEach(n => { n.style.display = ""; });
@@ -59,14 +59,14 @@ export default function ShareBracketButton({ userName }: Props) {
         hour: "2-digit", minute: "2-digit",
       });
 
-      ctx.fillStyle = "#0f0f0f";
+      ctx.fillStyle = "#ffffff";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      ctx.fillStyle = "#00e87a";
+      ctx.fillStyle = "#007a3d";
       ctx.font = `700 ${11 * PR}px ${font}`;
       ctx.fillText("PORRA DEL MUNDIAL 2026", PAD_X, 22 * PR);
 
-      ctx.fillStyle = "#ffffff";
+      ctx.fillStyle = "#111111";
       ctx.font = `700 ${19 * PR}px ${font}`;
       ctx.fillText(`Porra de ${userName}`, PAD_X, 50 * PR);
 
