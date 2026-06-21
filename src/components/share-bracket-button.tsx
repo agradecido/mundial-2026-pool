@@ -30,8 +30,30 @@ export default function ShareBracketButton({ userName }: Props) {
         await new Promise<void>(r => requestAnimationFrame(() => { requestAnimationFrame(() => r()); }));
       }
 
+      // Override winner styles for print-friendly PNG (black border + bold, no green tint)
+      const winnerBoxes = el.querySelectorAll<HTMLElement>("[data-bracket-winner='1']");
+      const winnerTexts = el.querySelectorAll<HTMLElement>("[data-bracket-winner-text='1']");
+      winnerBoxes.forEach(n => {
+        n.style.backgroundColor = "transparent";
+        n.style.borderColor = "#000000";
+      });
+      winnerTexts.forEach(n => {
+        n.style.fontWeight = "700";
+        n.style.color = "#111111";
+      });
+
       const { toPng } = await import("html-to-image");
       const dataUrl = await toPng(el, { backgroundColor: "#ffffff", pixelRatio: 2 });
+
+      // Revert winner style overrides
+      winnerBoxes.forEach(n => {
+        n.style.backgroundColor = "";
+        n.style.borderColor = "";
+      });
+      winnerTexts.forEach(n => {
+        n.style.fontWeight = "";
+        n.style.color = "";
+      });
 
       // Restore hidden ancestors
       hiddenAncestors.forEach(n => { n.style.display = ""; });
