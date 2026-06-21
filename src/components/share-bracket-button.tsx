@@ -36,8 +36,9 @@ export default function ShareBracketButton({ userName, picks, grupos }: Props) {
         await new Promise<void>(r => requestAnimationFrame(() => { requestAnimationFrame(() => r()); }));
       }
 
-      // ── Grupos element (off-screen, always rendered) ───────────────────────
+      // ── Grupos element: reveal for capture (opacity 0 → 1) ───────────────────
       const gruposEl = document.getElementById("grupos-print-inner") as HTMLElement | null;
+      if (gruposEl) gruposEl.style.opacity = "1";
 
       // ── Apply print overrides to bracket winner elements ───────────────────
       const winnerBoxes = bracketEl.querySelectorAll<HTMLElement>("[data-bracket-winner='1']");
@@ -59,6 +60,7 @@ export default function ShareBracketButton({ userName, picks, grupos }: Props) {
         : null;
 
       // ── Revert overrides ───────────────────────────────────────────────────
+      if (gruposEl) gruposEl.style.opacity = "0";
       winnerBoxes.forEach(n => { n.style.backgroundColor = ""; n.style.borderColor = ""; });
       winnerTexts.forEach(n => { n.style.fontWeight = ""; n.style.color = ""; });
       hiddenAncestors.forEach(n => { n.style.display = ""; });
@@ -147,9 +149,12 @@ export default function ShareBracketButton({ userName, picks, grupos }: Props) {
         aria-hidden="true"
         style={{
           position: "fixed",
-          left: -9999,
+          left: 0,
           top: 0,
           width: 1150,
+          opacity: 0,
+          pointerEvents: "none",
+          zIndex: -9999,
           backgroundColor: "#ffffff",
           padding: "20px 24px 24px",
           fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
