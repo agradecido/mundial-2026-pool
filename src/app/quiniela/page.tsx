@@ -135,7 +135,7 @@ export default async function PartidosPage() {
         <section className="space-y-6">
           {featuredMatches.map((match, idx) => {
             if (!match) return null;
-            const isLive = liveMatch && match.id === liveMatch.id;
+            const isLive = idx === 0 && liveMatch !== undefined;
             return (
               <div key={match.id}>
                 <div className="mb-3 flex items-center gap-2">
