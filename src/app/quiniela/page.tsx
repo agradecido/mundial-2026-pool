@@ -117,9 +117,9 @@ export default async function PartidosPage() {
 
       {/* AI Badge - Full width on mobile */}
       {userBadge && (
-        <div className="space-y-0.5 mt-4 mb-4">
+        <div className="space-y-0.5 mt-4 mb-4 w-full">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-600">Lo que la IA dice de ti</p>
-          <p className="flex items-center gap-1.5 text-sm">
+          <p className="flex flex-wrap items-center gap-1.5 text-sm">
             <span className="text-base leading-none">{userBadge.emoji}</span>
             <span className="font-semibold text-gray-200">{userBadge.titulo}</span>
             <span className="text-gray-600">·</span>
