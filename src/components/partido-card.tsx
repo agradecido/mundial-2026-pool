@@ -588,11 +588,11 @@ export default function PartidoCard({ partido, pronostico, odds, leaderPronostic
           )}
         </form>
 
-        {/* ── Líder ────────────────────────────────────────────────────── */}
+        {/* ── Marcador más elegido ────────────────────────────────────── */}
         {leaderPronostico && (
           <div className="mx-4 mb-3 flex flex-col items-center gap-1 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 text-center">
             <span className="text-xs text-gray-500">
-              <span className="text-yellow-400/80">👑</span> El líder de la quiniela ha pronosticado:
+              <span className="text-yellow-400/80">🎯</span> El marcador más elegido es:
             </span>
             <span className="font-mono text-base font-bold tabular-nums text-gray-200">
               {leaderPronostico.golesLocal}–{leaderPronostico.golesVisitante}

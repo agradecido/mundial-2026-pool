@@ -67,18 +67,26 @@ export default async function PartidosPage() {
     : null;
   const featuredMatch = liveMatch ?? nextMatch ?? null;
 
-  const leaderId = scored[0]?.id ?? null;
   let leaderPronostico: { name: string | null; golesLocal: number; golesVisitante: number } | null = null;
-  if (leaderId && featuredMatch) {
-    const pred = await prisma.pronostico.findFirst({
-      where: { userId: leaderId, partidoId: featuredMatch.id },
+  if (featuredMatch) {
+    const pronosticosDelPartido = await prisma.pronostico.findMany({
+      where: { partidoId: featuredMatch.id },
       select: { golesLocal: true, golesVisitante: true },
     });
-    if (pred) {
+
+    if (pronosticosDelPartido.length > 0) {
+      const conteo = new Map<string, number>();
+      for (const p of pronosticosDelPartido) {
+        const key = `${p.golesLocal}-${p.golesVisitante}`;
+        conteo.set(key, (conteo.get(key) ?? 0) + 1);
+      }
+
+      const topMarcador = Array.from(conteo.entries()).sort((a, b) => b[1] - a[1])[0];
+      const [golesLocal, golesVisitante] = topMarcador[0].split("-").map(Number);
       leaderPronostico = {
-        name: allUsers.find((u) => u.id === leaderId)?.name ?? null,
-        golesLocal: pred.golesLocal,
-        golesVisitante: pred.golesVisitante,
+        name: null,
+        golesLocal,
+        golesVisitante,
       };
     }
   }
