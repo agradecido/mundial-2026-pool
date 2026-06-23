@@ -62,15 +62,15 @@ export default async function PartidosPage() {
   }));
 
   const liveMatch = serializedPartidos.find((p) => p.estado === "EN_PROGRESO");
-  const nextMatch = !liveMatch
-    ? serializedPartidos.find((p) => p.estado === "PROGRAMADO" && new Date(p.fechaPartido) > new Date())
-    : null;
-  const featuredMatch = liveMatch ?? nextMatch ?? null;
+  const nextMatch = serializedPartidos.find((p) => p.estado === "PROGRAMADO" && new Date(p.fechaPartido) > new Date());
+  const featuredMatches: typeof liveMatch[] = [];
+  if (liveMatch) featuredMatches.push(liveMatch);
+  if (nextMatch) featuredMatches.push(nextMatch);
 
-  let leaderPronostico: { name: string | null; golesLocal: number; golesVisitante: number } | null = null;
-  if (featuredMatch) {
+  const getLeaderPronostico = async (match: typeof liveMatch) => {
+    if (!match) return null;
     const pronosticosDelPartido = await prisma.pronostico.findMany({
-      where: { partidoId: featuredMatch.id },
+      where: { partidoId: match.id },
       select: { golesLocal: true, golesVisitante: true },
     });
 
@@ -83,13 +83,18 @@ export default async function PartidosPage() {
 
       const topMarcador = Array.from(conteo.entries()).sort((a, b) => b[1] - a[1])[0];
       const [golesLocal, golesVisitante] = topMarcador[0].split("-").map(Number);
-      leaderPronostico = {
+      return {
         name: null,
         golesLocal,
         golesVisitante,
       };
     }
-  }
+    return null;
+  };
+
+  const leaderPronosticos = await Promise.all(
+    featuredMatches.map((m) => getLeaderPronostico(m))
+  );
 
   return (
     <div className="space-y-8">
@@ -125,28 +130,36 @@ export default async function PartidosPage() {
 
       <p className="mt-0 mb-4 text-sm text-gray-500">Pronostica el marcador de cada partido hasta 15 minutos antes del inicio.</p>
 
-      {/* Partido destacado */}
-      {featuredMatch && (
-        <section>
-          <div className="mb-3 flex items-center gap-2">
-            {liveMatch ? (
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-yellow-300">
-                <span className="size-1.5 rounded-full bg-yellow-300 animate-pulse" />En juego`</span>
-            ) : (
-              <span className="text-[11px] font-semibold uppercase tracking-widest text-gray-500">
-                Próximo partido
-              </span>
-            )}
-          </div>
-          <div className={liveMatch ? "ring-1 ring-yellow-400/20 rounded-2xl" : "ring-1 ring-white/[0.08] rounded-2xl"}>
-            <PartidoCard
-              partido={featuredMatch}
-              pronostico={pronosticoMap[featuredMatch.id] ?? null}
-              odds={oddsMap?.[featuredMatch.id] ?? null}
-              leaderPronostico={leaderPronostico}
-              showPrediccion
-            />
-          </div>
+      {/* Partidos destacados */}
+      {featuredMatches.length > 0 && (
+        <section className="space-y-6">
+          {featuredMatches.map((match, idx) => {
+            if (!match) return null;
+            const isLive = liveMatch && match.id === liveMatch.id;
+            return (
+              <div key={match.id}>
+                <div className="mb-3 flex items-center gap-2">
+                  {isLive ? (
+                    <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-yellow-300">
+                      <span className="size-1.5 rounded-full bg-yellow-300 animate-pulse" />En juego
+                    </span>
+                  ) : (
+                    <span className="text-[11px] font-semibold uppercase tracking-widest text-gray-500">
+                      Próximo partido
+                    </span>
+                  )}
+                </div>
+                <div className={isLive ? "ring-1 ring-yellow-400/20 rounded-2xl" : "ring-1 ring-white/[0.08] rounded-2xl"}>
+                  <PartidoCard
+                    partido={match}
+                    pronostico={pronosticoMap[match.id] ?? null}
+                    odds={oddsMap?.[match.id] ?? null}
+                    leaderPronostico={leaderPronosticos[idx] ?? null}
+                  />
+                </div>
+              </div>
+            );
+          })}
           <div className="mt-8 border-t border-white/[0.05]" />
         </section>
       )}
