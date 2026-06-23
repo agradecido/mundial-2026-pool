@@ -86,20 +86,9 @@ export default async function PartidosPage() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4 mb-4">
-        <div>
+      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-4">
+        <div className="flex-1">
           <h1 className="text-3xl font-bold text-white tracking-tight">Quiniela</h1>
-          {userBadge && (
-            <div className="mt-3 space-y-0.5">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-600">Lo que la IA dice de ti</p>
-              <p className="flex items-center gap-1.5 text-sm">
-                <span className="text-base leading-none">{userBadge.emoji}</span>
-                <span className="font-semibold text-gray-200">{userBadge.titulo}</span>
-                <span className="text-gray-600">·</span>
-                <span className="text-gray-500">{userBadge.descripcion}</span>
-              </p>
-            </div>
-          )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <Link
@@ -112,7 +101,21 @@ export default async function PartidosPage() {
           <ResetQuinielaButton />
         </div>
       </div>
-      <p className="mt-1 mb-4 text-sm text-gray-500">Pronostica el marcador de cada partido hasta 15 minutos antes del inicio.</p>
+
+      {/* AI Badge - Full width on mobile */}
+      {userBadge && (
+        <div className="space-y-0.5 mt-4 mb-4">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-600">Lo que la IA dice de ti</p>
+          <p className="flex items-center gap-1.5 text-sm">
+            <span className="text-base leading-none">{userBadge.emoji}</span>
+            <span className="font-semibold text-gray-200">{userBadge.titulo}</span>
+            <span className="text-gray-600">·</span>
+            <span className="text-gray-500">{userBadge.descripcion}</span>
+          </p>
+        </div>
+      )}
+
+      <p className="mt-0 mb-4 text-sm text-gray-500">Pronostica el marcador de cada partido hasta 15 minutos antes del inicio.</p>
 
       {/* Partido destacado */}
       {featuredMatch && (
@@ -120,9 +123,7 @@ export default async function PartidosPage() {
           <div className="mb-3 flex items-center gap-2">
             {liveMatch ? (
               <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-yellow-300">
-                <span className="size-1.5 rounded-full bg-yellow-300 animate-pulse" />
-                En juego
-              </span>
+                <span className="size-1.5 rounded-full bg-yellow-300 animate-pulse" />En juego`</span>
             ) : (
               <span className="text-[11px] font-semibold uppercase tracking-widest text-gray-500">
                 Próximo partido
