@@ -191,7 +191,6 @@ export default function ProfileModal({ open: controlledOpen, onClose, onSaved, r
                             onBlur={handleBlur}
                             onKeyDown={handleKeyDown}
                             maxLength={NICK_MAX}
-                            autoFocus
                             placeholder="Tu nombre o nick"
                             disabled={pending}
                             className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white placeholder:text-gray-600 focus:border-[#00e87a]/40 focus:outline-none focus:ring-1 focus:ring-[#00e87a]/30 disabled:opacity-50"
@@ -202,13 +201,6 @@ export default function ProfileModal({ open: controlledOpen, onClose, onSaved, r
                             </span>
                             <span className="font-mono text-gray-600 tabular-nums">{value.length}/{NICK_MAX}</span>
                         </div>
-                        <button
-                            onClick={handleSave}
-                            disabled={pending || value.trim().length < 2}
-                            className="hidden sm:block w-full px-4 py-2 bg-[#00e87a] hover:bg-[#00d970] text-black text-sm font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {pending ? "Guardando…" : "Guardar nombre"}
-                        </button>
                     </div>
 
                     {/* Acciones */}
