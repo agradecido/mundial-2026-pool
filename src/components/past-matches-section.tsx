@@ -46,7 +46,7 @@ export default function PastMatchesSection({ partidos, pronosticoMap, oddsMap }:
 
       {isExpanded && (
         <div className="space-y-1.5 pl-0">
-          {partidos.map((partido) => (
+          {[...partidos].reverse().map((partido) => (
             <PartidoCard
               key={`${partido.id}-past`}
               partido={partido}
