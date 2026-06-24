@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import PartidoCard from "./partido-card";
 import type { SerializedPartido } from "./partidos-tabs";
 
@@ -16,19 +16,6 @@ export default function PastMatchesSection({ partidos, pronosticoMap, oddsMap }:
   const handleToggle = () => {
     setIsExpanded(!isExpanded);
   };
-
-  useEffect(() => {
-    if (isExpanded || !isExpanded) {
-      // Scroll to main match after toggle
-      const timer = setTimeout(() => {
-        const mainMatch = document.querySelector('[data-main-match]');
-        if (mainMatch) {
-          mainMatch.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 50);
-      return () => clearTimeout(timer);
-    }
-  }, [isExpanded]);
 
   return (
     <section className="space-y-4">
