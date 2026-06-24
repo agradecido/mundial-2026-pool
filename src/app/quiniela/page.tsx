@@ -67,16 +67,15 @@ export default async function PartidosPage() {
   const enJuego = serializedPartidos.filter((p) => p.estado === "EN_PROGRESO");
   const programados = serializedPartidos.filter((p) => p.estado === "PROGRAMADO" && new Date(p.fechaPartido) > new Date());
 
-  // Determine main match (first EN_PROGRESO or first PROGRAMADO)
-  const mainMatch = enJuego.length > 0 ? enJuego[0] : programados[0] ?? null;
+  // Determine featured matches: all live matches, or first scheduled if none live
+  const featuredMatches = enJuego.length > 0 ? enJuego : (programados[0] ? [programados[0]] : []);
 
-  // Get remaining upcoming matches (EN_PROGRESO that isn't main, plus PROGRAMADO excluding main)
-  const upcomingMatches = [
-    ...enJuego.slice(1),
-    ...programados.filter((p) => mainMatch && p.id !== mainMatch.id),
-  ];
+  // Get remaining upcoming matches (only scheduled, excluding featured)
+  const upcomingMatches = programados.filter(
+    (p) => !featuredMatches.some((f) => f.id === p.id)
+  );
 
-  const getLeaderPronostico = async (match: typeof mainMatch) => {
+  const getLeaderPronostico = async (match: typeof featuredMatches[0] | null) => {
     if (!match) return null;
     const pronosticosDelPartido = await prisma.pronostico.findMany({
       where: { partidoId: match.id },
@@ -101,7 +100,7 @@ export default async function PartidosPage() {
     return null;
   };
 
-  const mainPronostico = await getLeaderPronostico(mainMatch);
+  const featuredPronosticos = await Promise.all(featuredMatches.map((m) => getLeaderPronostico(m)));
   const upcomingPronosticos = await Promise.all(upcomingMatches.map((m) => getLeaderPronostico(m)));
 
   return (
@@ -143,30 +142,32 @@ export default async function PartidosPage() {
         <PastMatchesSection partidos={finalizados} pronosticoMap={pronosticoMap} oddsMap={oddsMap} />
       )}
 
-      {/* Partido principal */}
-      {mainMatch && (
+      {/* Featured matches (all live or first scheduled) */}
+      {featuredMatches.length > 0 && (
         <section className="space-y-6">
-          <div>
-            <div className="mb-3 flex items-center gap-2">
-              {enJuego.length > 0 ? (
-                <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-yellow-300">
-                  <span className="size-1.5 rounded-full bg-yellow-300 animate-pulse" />En juego
-                </span>
-              ) : (
-                <span className="text-[11px] font-semibold uppercase tracking-widest text-gray-500">
-                  Próximo partido
-                </span>
-              )}
+          {featuredMatches.map((match, idx) => (
+            <div key={`${match.id}-featured`}>
+              <div className="mb-3 flex items-center gap-2">
+                {enJuego.length > 0 ? (
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-yellow-300">
+                    <span className="size-1.5 rounded-full bg-yellow-300 animate-pulse" />En juego
+                  </span>
+                ) : (
+                  <span className="text-[11px] font-semibold uppercase tracking-widest text-gray-500">
+                    Próximo partido
+                  </span>
+                )}
+              </div>
+              <div className={enJuego.length > 0 ? "ring-1 ring-yellow-400/20 rounded-2xl" : "ring-1 ring-white/[0.08] rounded-2xl"}>
+                <PartidoCard
+                  partido={match}
+                  pronostico={pronosticoMap[match.id] ?? null}
+                  odds={oddsMap?.[match.id] ?? null}
+                  leaderPronostico={featuredPronosticos[idx] ?? null}
+                />
+              </div>
             </div>
-            <div className={enJuego.length > 0 ? "ring-1 ring-yellow-400/20 rounded-2xl" : "ring-1 ring-white/[0.08] rounded-2xl"}>
-              <PartidoCard
-                partido={mainMatch}
-                pronostico={pronosticoMap[mainMatch.id] ?? null}
-                odds={oddsMap?.[mainMatch.id] ?? null}
-                leaderPronostico={mainPronostico}
-              />
-            </div>
-          </div>
+          ))}
 
           {/* Próximos partidos */}
           {upcomingMatches.length > 0 && (
@@ -174,27 +175,17 @@ export default async function PartidosPage() {
               <div className="mt-8 border-t border-white/[0.05]" />
               <div className="space-y-3">
                 <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-500">Próximos partidos</h2>
-                <div className="space-y-3">
-                  {upcomingMatches.map((match, idx) => {
-                    const isMatchLive = match.estado === "EN_PROGRESO";
-                    return (
-                      <div key={`${match.id}-upcoming`} className={isMatchLive ? "ring-1 ring-yellow-400/20 rounded-2xl" : "ring-1 ring-white/[0.08] rounded-2xl"}>
-                        {isMatchLive && (
-                          <div className="px-4 pt-3 pb-2 flex items-center gap-1.5">
-                            <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-yellow-300">
-                              <span className="size-1.5 rounded-full bg-yellow-300 animate-pulse" />En juego
-                            </span>
-                          </div>
-                        )}
-                        <PartidoCard
-                          partido={match}
-                          pronostico={pronosticoMap[match.id] ?? null}
-                          odds={oddsMap?.[match.id] ?? null}
-                          leaderPronostico={upcomingPronosticos[idx] ?? null}
-                        />
-                      </div>
-                    );
-                  })}
+                <div className="space-y-1.5">
+                  {upcomingMatches.map((match, idx) => (
+                    <div key={`${match.id}-upcoming`} className="ring-1 ring-white/[0.08] rounded-2xl">
+                      <PartidoCard
+                        partido={match}
+                        pronostico={pronosticoMap[match.id] ?? null}
+                        odds={oddsMap?.[match.id] ?? null}
+                        leaderPronostico={upcomingPronosticos[idx] ?? null}
+                      />
+                    </div>
+                  ))}
                 </div>
               </div>
             </>
