@@ -145,7 +145,7 @@ export default async function PartidosPage() {
 
       {/* Partido principal */}
       {mainMatch && (
-        <section className="space-y-6">
+        <section className="space-y-6" data-main-match>
           <div>
             <div className="mb-3 flex items-center gap-2">
               {enJuego.length > 0 ? (

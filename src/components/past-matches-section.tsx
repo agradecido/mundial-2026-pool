@@ -12,25 +12,23 @@ interface Props {
 
 export default function PastMatchesSection({ partidos, pronosticoMap, oddsMap }: Props) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [scrollPos, setScrollPos] = useState(0);
 
   const handleToggle = () => {
-    if (!isExpanded) {
-      // Save current scroll position before expanding
-      setScrollPos(window.scrollY);
-    }
     setIsExpanded(!isExpanded);
   };
 
   useEffect(() => {
-    if (isExpanded && scrollPos !== undefined) {
-      // Restore scroll position after content is rendered
+    if (isExpanded || !isExpanded) {
+      // Scroll to main match after toggle
       const timer = setTimeout(() => {
-        window.scrollTo(0, scrollPos);
-      }, 0);
+        const mainMatch = document.querySelector('[data-main-match]');
+        if (mainMatch) {
+          mainMatch.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 50);
       return () => clearTimeout(timer);
     }
-  }, [isExpanded, scrollPos]);
+  }, [isExpanded]);
 
   return (
     <section className="space-y-4">
