@@ -5,6 +5,7 @@ import { LinkSpinner } from "@/components/nav-button";
 import PartidosTabs from "@/components/partidos-tabs";
 import PartidoCard from "@/components/partido-card";
 import ResetQuinielaButton from "@/components/reset-quiniela-button";
+import PastMatchesSection from "@/components/past-matches-section";
 import { getMundialOdds, buildOddsMap } from "@/lib/odds-api";
 
 export default async function PartidosPage() {
@@ -61,13 +62,21 @@ export default async function PartidosPage() {
     fechaPartido: p.fechaPartido.toISOString(),
   }));
 
-  const liveMatch = serializedPartidos.find((p) => p.estado === "EN_PROGRESO");
-  const nextMatch = serializedPartidos.find((p) => p.estado === "PROGRAMADO" && new Date(p.fechaPartido) > new Date());
-  const featuredMatches: typeof liveMatch[] = [];
-  if (liveMatch) featuredMatches.push(liveMatch);
-  if (nextMatch) featuredMatches.push(nextMatch);
+  // Categorize matches
+  const finalizados = serializedPartidos.filter((p) => p.estado === "FINALIZADO");
+  const enJuego = serializedPartidos.filter((p) => p.estado === "EN_PROGRESO");
+  const programados = serializedPartidos.filter((p) => p.estado === "PROGRAMADO" && new Date(p.fechaPartido) > new Date());
 
-  const getLeaderPronostico = async (match: typeof liveMatch) => {
+  // Determine main match (first EN_PROGRESO or first PROGRAMADO)
+  const mainMatch = enJuego.length > 0 ? enJuego[0] : programados[0] ?? null;
+
+  // Get remaining upcoming matches (EN_PROGRESO that isn't main, plus PROGRAMADO excluding main)
+  const upcomingMatches = [
+    ...enJuego.slice(1),
+    ...programados.filter((p) => mainMatch && p.id !== mainMatch.id),
+  ];
+
+  const getLeaderPronostico = async (match: typeof mainMatch) => {
     if (!match) return null;
     const pronosticosDelPartido = await prisma.pronostico.findMany({
       where: { partidoId: match.id },
@@ -92,9 +101,8 @@ export default async function PartidosPage() {
     return null;
   };
 
-  const leaderPronosticos = await Promise.all(
-    featuredMatches.map((m) => getLeaderPronostico(m))
-  );
+  const mainPronostico = await getLeaderPronostico(mainMatch);
+  const upcomingPronosticos = await Promise.all(upcomingMatches.map((m) => getLeaderPronostico(m)));
 
   return (
     <div className="space-y-8">
@@ -130,37 +138,56 @@ export default async function PartidosPage() {
 
       <p className="mt-0 mb-4 text-sm text-gray-500">Pronostica el marcador de cada partido hasta 15 minutos antes del inicio.</p>
 
-      {/* Partidos destacados */}
-      {featuredMatches.length > 0 && (
+      {/* Partidos anteriores (colapsible) */}
+      {finalizados.length > 0 && (
+        <PastMatchesSection partidos={finalizados} pronosticoMap={pronosticoMap} oddsMap={oddsMap} />
+      )}
+
+      {/* Partido principal */}
+      {mainMatch && (
         <section className="space-y-6">
-          {featuredMatches.map((match, idx) => {
-            if (!match) return null;
-            const isLive = idx === 0 && liveMatch !== undefined;
-            return (
-              <div key={match.id}>
-                <div className="mb-3 flex items-center gap-2">
-                  {isLive ? (
-                    <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-yellow-300">
-                      <span className="size-1.5 rounded-full bg-yellow-300 animate-pulse" />En juego
-                    </span>
-                  ) : (
-                    <span className="text-[11px] font-semibold uppercase tracking-widest text-gray-500">
-                      Próximo partido
-                    </span>
-                  )}
-                </div>
-                <div className={isLive ? "ring-1 ring-yellow-400/20 rounded-2xl" : "ring-1 ring-white/[0.08] rounded-2xl"}>
-                  <PartidoCard
-                    partido={match}
-                    pronostico={pronosticoMap[match.id] ?? null}
-                    odds={oddsMap?.[match.id] ?? null}
-                    leaderPronostico={leaderPronosticos[idx] ?? null}
-                  />
+          <div>
+            <div className="mb-3 flex items-center gap-2">
+              {enJuego.length > 0 ? (
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-yellow-300">
+                  <span className="size-1.5 rounded-full bg-yellow-300 animate-pulse" />En juego
+                </span>
+              ) : (
+                <span className="text-[11px] font-semibold uppercase tracking-widest text-gray-500">
+                  Próximo partido
+                </span>
+              )}
+            </div>
+            <div className={enJuego.length > 0 ? "ring-1 ring-yellow-400/20 rounded-2xl" : "ring-1 ring-white/[0.08] rounded-2xl"}>
+              <PartidoCard
+                partido={mainMatch}
+                pronostico={pronosticoMap[mainMatch.id] ?? null}
+                odds={oddsMap?.[mainMatch.id] ?? null}
+                leaderPronostico={mainPronostico}
+              />
+            </div>
+          </div>
+
+          {/* Próximos partidos */}
+          {upcomingMatches.length > 0 && (
+            <>
+              <div className="mt-8 border-t border-white/[0.05]" />
+              <div className="space-y-3">
+                <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-500">Próximos partidos</h2>
+                <div className="space-y-1.5">
+                  {upcomingMatches.map((match, idx) => (
+                    <PartidoCard
+                      key={`${match.id}-upcoming`}
+                      partido={match}
+                      pronostico={pronosticoMap[match.id] ?? null}
+                      odds={oddsMap?.[match.id] ?? null}
+                      leaderPronostico={upcomingPronosticos[idx] ?? null}
+                    />
+                  ))}
                 </div>
               </div>
-            );
-          })}
-          <div className="mt-8 border-t border-white/[0.05]" />
+            </>
+          )}
         </section>
       )}
 
