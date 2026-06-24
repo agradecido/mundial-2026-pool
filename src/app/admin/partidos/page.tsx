@@ -145,6 +145,7 @@ export default async function AdminPartidosPage({
                                         month: "short",
                                         hour: "2-digit",
                                         minute: "2-digit",
+                                        timeZone: "Europe/Madrid",
                                     })}
                                 </td>
                                 <td className="px-4 py-3">

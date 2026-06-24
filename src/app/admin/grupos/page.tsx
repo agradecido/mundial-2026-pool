@@ -69,6 +69,7 @@ export default async function AdminGruposPage() {
                                             day: "2-digit",
                                             month: "short",
                                             year: "numeric",
+                                            timeZone: "Europe/Madrid",
                                         })}
                                     </td>
                                 </tr>

@@ -69,7 +69,7 @@ export default async function AdminBadgesPage() {
                                     </td>
                                     <td className="px-4 py-3 text-gray-400 hidden sm:table-cell">{u.badge!.descripcion}</td>
                                     <td className="px-4 py-3 text-right text-gray-600 text-xs hidden md:table-cell whitespace-nowrap">
-                                        {new Date(u.badge!.generadoEn).toLocaleDateString("es-ES", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                                        {new Date(u.badge!.generadoEn).toLocaleDateString("es-ES", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Madrid" })}
                                     </td>
                                 </tr>
                             ))}
