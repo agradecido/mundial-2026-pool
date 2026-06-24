@@ -174,16 +174,27 @@ export default async function PartidosPage() {
               <div className="mt-8 border-t border-white/[0.05]" />
               <div className="space-y-3">
                 <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-500">Próximos partidos</h2>
-                <div className="space-y-1.5">
-                  {upcomingMatches.map((match, idx) => (
-                    <PartidoCard
-                      key={`${match.id}-upcoming`}
-                      partido={match}
-                      pronostico={pronosticoMap[match.id] ?? null}
-                      odds={oddsMap?.[match.id] ?? null}
-                      leaderPronostico={upcomingPronosticos[idx] ?? null}
-                    />
-                  ))}
+                <div className="space-y-3">
+                  {upcomingMatches.map((match, idx) => {
+                    const isMatchLive = match.estado === "EN_PROGRESO";
+                    return (
+                      <div key={`${match.id}-upcoming`} className={isMatchLive ? "ring-1 ring-yellow-400/20 rounded-2xl" : "ring-1 ring-white/[0.08] rounded-2xl"}>
+                        {isMatchLive && (
+                          <div className="px-4 pt-3 pb-2 flex items-center gap-1.5">
+                            <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-yellow-300">
+                              <span className="size-1.5 rounded-full bg-yellow-300 animate-pulse" />En juego
+                            </span>
+                          </div>
+                        )}
+                        <PartidoCard
+                          partido={match}
+                          pronostico={pronosticoMap[match.id] ?? null}
+                          odds={oddsMap?.[match.id] ?? null}
+                          leaderPronostico={upcomingPronosticos[idx] ?? null}
+                        />
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </>
