@@ -127,11 +127,6 @@ export default function PartidosTabs({
     return dayKey >= yesterdayKey && dayKey <= tomorrowKey;
   }
 
-  // Past days (before today) descending, then today + future days ascending
-  const pastFechas = fechasOrdenadas.filter(k => k < todayKey).reverse();
-  const futureFechas = fechasOrdenadas.filter(k => k >= todayKey);
-  const fechasParaMostrar = [...pastFechas, ...futureFechas];
-
   // For lista: FINALIZADO matches in reverse order, then upcoming ascending
   const partidosLista = [
     ...partidos.filter(p => p.estado === "FINALIZADO").reverse(),
@@ -157,16 +152,18 @@ export default function PartidosTabs({
             </button>
           ))}
         </div>
-        <button
-          onClick={() => setHidePast((v) => !v)}
-          className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
-            hidePast
-              ? "border-white/10 bg-white/[0.04] text-gray-500 hover:text-gray-300 hover:border-white/20"
-              : "border-amber-400/30 bg-amber-400/10 text-amber-400 hover:bg-amber-400/15"
-          }`}
-        >
-          {hidePast ? "Mostrar partidos anteriores" : "Ocultar partidos anteriores"}
-        </button>
+        {tab !== "fecha" && (
+          <button
+            onClick={() => setHidePast((v) => !v)}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
+              hidePast
+                ? "border-white/10 bg-white/[0.04] text-gray-500 hover:text-gray-300 hover:border-white/20"
+                : "border-amber-400/30 bg-amber-400/10 text-amber-400 hover:bg-amber-400/15"
+            }`}
+          >
+            {hidePast ? "Mostrar partidos anteriores" : "Ocultar partidos anteriores"}
+          </button>
+        )}
       </div>
 
       {/* ── Vista: Por grupos ── */}
@@ -263,32 +260,32 @@ export default function PartidosTabs({
       {/* ── Vista: Por fecha ── */}
       {tab === "fecha" && (
         <div className="space-y-8">
-          {fechasParaMostrar.map((key) => {
-            const all = porFecha[key];
-            const isToday = key === todayKey;
-            const dayPartidos = hidePast ? all.filter((p) => p.estado !== "FINALIZADO" || isToday) : all;
-            if (dayPartidos.length === 0) return null;
-            return (
-              <section key={key}>
-                <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-gray-500 capitalize">
-                  {formatDayHeader(dayPartidos[0].fechaPartido)}
-                </h2>
-                <div className="glass-card p-4">
-                  <div className="space-y-1.5">
-                    {dayPartidos.map((p) => (
-                      <PartidoCard
-                        key={`${p.id}-${pronosticoMap[p.id] ? 1 : 0}`}
-                        partido={p}
-                        pronostico={pronosticoMap[p.id] ?? null}
-                        odds={oddsMap?.[p.id] ?? null}
-                        showPrediccion={isInPrediccionWindow(key)}
-                      />
-                    ))}
+          {fechasOrdenadas
+            .filter((k) => k >= yesterdayKey)
+            .map((key) => {
+              const dayPartidos = porFecha[key];
+              if (!dayPartidos?.length) return null;
+              return (
+                <section key={key}>
+                  <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-gray-500 capitalize">
+                    {formatDayHeader(dayPartidos[0].fechaPartido)}
+                  </h2>
+                  <div className="glass-card p-4">
+                    <div className="space-y-1.5">
+                      {dayPartidos.map((p) => (
+                        <PartidoCard
+                          key={`${p.id}-${pronosticoMap[p.id] ? 1 : 0}`}
+                          partido={p}
+                          pronostico={pronosticoMap[p.id] ?? null}
+                          odds={oddsMap?.[p.id] ?? null}
+                          showPrediccion={isInPrediccionWindow(key)}
+                        />
+                      ))}
+                    </div>
                   </div>
-                </div>
-              </section>
-            );
-          })}
+                </section>
+              );
+            })}
         </div>
       )}
     </div>
