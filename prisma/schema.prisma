@@ -87,6 +87,7 @@ model Partido {
   golesLocalReal     Int?
   golesVisitanteReal Int?
   estado             EstadoPartido @default(PROGRAMADO)
+  bracketMatchId     String?       @unique
 
   pronosticos Pronostico[]
   analisis    AnalisisPartido?

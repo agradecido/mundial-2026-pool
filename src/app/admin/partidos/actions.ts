@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { recalcularPuntosPartido } from "@/lib/scoring";
 import { generarBadges } from "@/lib/badges";
+import { resolveKnockoutParticipants } from "@/lib/knockout-resolver";
 import { revalidatePath, revalidateTag } from "next/cache";
 import type { EstadoPartido } from "@prisma/client";
 
@@ -70,6 +71,19 @@ export async function actualizarPartido(
         void generarBadges();
     }
 
+    // Trigger knockout resolver whenever a group match gets a result
+    const partidoActualizado = await prisma.partido.findUnique({
+        where: { id },
+        select: { fase: true, golesLocalReal: true, golesVisitanteReal: true },
+    });
+    if (
+        partidoActualizado?.fase === "GRUPOS" &&
+        partidoActualizado.golesLocalReal !== null &&
+        partidoActualizado.golesVisitanteReal !== null
+    ) {
+        void resolveKnockoutParticipants();
+    }
+
     revalidateTag("ranking", "max");
     revalidatePath("/admin/partidos");
     revalidatePath(`/admin/partidos/${id}`);
@@ -80,4 +94,18 @@ export async function actualizarPartido(
     revalidatePath("/ranking");
 
     return { ok: true };
+}
+
+export async function triggerKnockoutResolver() {
+    const session = await auth();
+    if (session?.user?.role !== "ADMIN") throw new Error("No autorizado");
+
+    const result = await resolveKnockoutParticipants();
+
+    if (result.updated.length > 0) {
+        revalidatePath("/admin/partidos");
+        revalidatePath("/quiniela");
+    }
+
+    return result;
 }

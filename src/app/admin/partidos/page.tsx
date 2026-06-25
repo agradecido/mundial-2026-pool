@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { LinkSpinner } from "@/components/nav-button";
 import { getFlag } from "@/lib/flags";
+import { ResolverButton } from "./resolver-button";
 import type { Fase, EstadoPartido } from "@prisma/client";
 
 const FASE_LABELS: Record<Fase, string> = {
@@ -35,6 +36,7 @@ export default async function AdminPartidosPage({
 }) {
     const session = await auth();
     if (session?.user?.role !== "ADMIN" && session?.user?.role !== "EDITOR") redirect("/");
+    const isAdmin = session?.user?.role === "ADMIN";
 
     const params = await searchParams;
     const { fase, q, estado } = params;
@@ -59,7 +61,10 @@ export default async function AdminPartidosPage({
         <div className="space-y-5">
             <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-white">Partidos</h2>
-                <span className="text-xs text-gray-500">{partidos.length} partidos</span>
+                <div className="flex items-center gap-3">
+                    {isAdmin && <ResolverButton />}
+                    <span className="text-xs text-gray-500">{partidos.length} partidos</span>
+                </div>
             </div>
 
             {/* Filtros */}

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { recalcularPuntosPartido } from "@/lib/scoring";
+import { resolveKnockoutParticipants } from "@/lib/knockout-resolver";
 import { revalidatePath, revalidateTag } from "next/cache";
 
 const BASE_URL = "https://api.football-data.org/v4";
@@ -117,5 +118,15 @@ export async function GET(request: NextRequest) {
     revalidatePath("/admin/resultados");
   }
 
-  return NextResponse.json({ ok: true, setLive, setFinished });
+  let resolverUpdated = 0;
+  if (setFinished > 0) {
+    const resolverResult = await resolveKnockoutParticipants();
+    resolverUpdated = resolverResult.updated.length;
+    if (resolverUpdated > 0) {
+      revalidatePath("/quiniela");
+      revalidatePath("/admin/partidos");
+    }
+  }
+
+  return NextResponse.json({ ok: true, setLive, setFinished, resolverUpdated });
 }
