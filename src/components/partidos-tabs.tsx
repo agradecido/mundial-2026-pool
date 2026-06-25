@@ -134,8 +134,8 @@ export default function PartidosTabs({
 
   // For lista: FINALIZADO matches in reverse order, then upcoming ascending
   const partidosLista = [
-    ...partidos.filter(p => isDefined(p) && p.estado === "FINALIZADO").reverse(),
-    ...partidos.filter(p => isDefined(p) && p.estado !== "FINALIZADO"),
+    ...partidos.filter(p => p.estado === "FINALIZADO").reverse(),
+    ...partidos.filter(p => p.estado !== "FINALIZADO"),
   ];
 
   return (
@@ -215,7 +215,7 @@ export default function PartidosTabs({
                   <div className="absolute inset-x-0 top-0 h-px rounded-t-xl bg-gradient-to-r from-transparent via-[#00e87a]/40 to-transparent" />
                 )}
                 <div className="space-y-1.5">
-                  {porFase[fase].filter((p) => isDefined(p) && (!hidePast || p.estado !== "FINALIZADO" || getDayKey(p.fechaPartido) === todayKey)).map((p) => (
+                  {porFase[fase].filter((p) => !hidePast || p.estado !== "FINALIZADO" || getDayKey(p.fechaPartido) === todayKey).map((p) => (
                     <PartidoCard
                       key={`${p.id}-${pronosticoMap[p.id] ? 1 : 0}`}
                       partido={p}
@@ -264,7 +264,7 @@ export default function PartidosTabs({
       {tab === "fecha" && (
         <div className="space-y-8">
           {fechasParaMostrar.map((key) => {
-            const all = porFecha[key].filter(isDefined);
+            const all = porFecha[key];
             const isToday = key === todayKey;
             const dayPartidos = hidePast ? all.filter((p) => p.estado !== "FINALIZADO" || isToday) : all;
             if (dayPartidos.length === 0) return null;
