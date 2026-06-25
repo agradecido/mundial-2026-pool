@@ -42,14 +42,7 @@ interface Props {
   partidos: SerializedPartido[];
   pronosticoMap: Record<string, { golesLocal: number; golesVisitante: number; puntosGanados: number }>;
   oddsMap?: Record<string, { home: number; draw: number; away: number }>;
-}
-
-function isPlaceholder(name: string): boolean {
-  return /^\d/.test(name) || name.includes("/") || /^[WL]\d/.test(name);
-}
-
-function isDefined(p: SerializedPartido): boolean {
-  return !isPlaceholder(p.equipoLocal) || !isPlaceholder(p.equipoVisitante);
+  userBadge?: { emoji: string; titulo: string; descripcion: string } | null;
 }
 
 function getDayKey(iso: string): string {
@@ -74,11 +67,11 @@ function formatDayHeader(iso: string): string {
   });
 }
 
-
 export default function PartidosTabs({
   partidos,
   pronosticoMap,
   oddsMap,
+  userBadge,
 }: Props) {
   const [tab, setTab] = useState<"grupos" | "fecha" | "lista">("fecha");
   const [hidePast, setHidePast] = useState(true);
@@ -127,15 +120,24 @@ export default function PartidosTabs({
     return dayKey >= yesterdayKey && dayKey <= tomorrowKey;
   }
 
-  // For lista: FINALIZADO matches in reverse order, then upcoming ascending
+  // Featured match: all EN_PROGRESO, or first future PROGRAMADO
+  const enJuego = partidos.filter((p) => p.estado === "EN_PROGRESO");
+  const programadosFuturos = partidos.filter(
+    (p) => p.estado === "PROGRAMADO" && new Date(p.fechaPartido) > new Date(),
+  );
+  const featuredList = enJuego.length > 0 ? enJuego : programadosFuturos.slice(0, 1);
+  const featuredIds = new Set(featuredList.map((p) => p.id));
+  const isLive = enJuego.length > 0;
+
+  // ── Lista view ───────────────────────────────────────────────
   const partidosLista = [
     ...partidos.filter(p => p.estado === "FINALIZADO").reverse(),
     ...partidos.filter(p => p.estado !== "FINALIZADO"),
   ];
 
   return (
-    <div className="space-y-8">
-      {/* Controles */}
+    <div className="space-y-6">
+      {/* Botonera */}
       <div className="flex items-center gap-3 flex-wrap">
         <div className="flex gap-1 p-1 rounded-xl bg-white/[0.04] border border-white/[0.06]">
           {(["fecha", "grupos", "lista"] as const).map((t) => (
@@ -165,6 +167,83 @@ export default function PartidosTabs({
           </button>
         )}
       </div>
+
+      {/* Badge e info (siempre visibles) */}
+      {userBadge && (
+        <div className="space-y-0.5">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-600">Lo que la IA dice de ti</p>
+          <p className="flex flex-wrap items-center gap-1.5 text-sm">
+            <span className="text-base leading-none">{userBadge.emoji}</span>
+            <span className="font-semibold text-gray-200">{userBadge.titulo}</span>
+            <span className="text-gray-600">·</span>
+            <span className="text-gray-500">{userBadge.descripcion}</span>
+          </p>
+        </div>
+      )}
+      <p className="text-sm text-gray-500">Pronostica el marcador de cada partido hasta 15 minutos antes del inicio.</p>
+
+      {/* ── Vista: Por fecha ── */}
+      {tab === "fecha" && (
+        <div className="space-y-6">
+          {/* Partido destacado */}
+          {featuredList.length > 0 && (
+            <div className="space-y-3">
+              <h2 className="text-[11px] font-semibold uppercase tracking-widest text-gray-500">
+                {isLive ? (
+                  <span className="inline-flex items-center gap-1.5 text-yellow-300">
+                    <span className="size-1.5 rounded-full bg-yellow-300 animate-pulse" />
+                    En juego
+                  </span>
+                ) : (
+                  "Próximo partido"
+                )}
+              </h2>
+              {featuredList.map((match) => (
+                <div
+                  key={`${match.id}-featured`}
+                  className={isLive ? "ring-1 ring-yellow-400/20 rounded-2xl" : "ring-1 ring-white/[0.08] rounded-2xl"}
+                >
+                  <PartidoCard
+                    partido={match}
+                    pronostico={pronosticoMap[match.id] ?? null}
+                    odds={oddsMap?.[match.id] ?? null}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Partidos por día — solo PROGRAMADO/EN_PROGRESO, desde hoy */}
+          {fechasOrdenadas
+            .filter((k) => k >= todayKey)
+            .map((key) => {
+              const dayPartidos = (porFecha[key] ?? []).filter(
+                (p) => p.estado !== "FINALIZADO" && !featuredIds.has(p.id),
+              );
+              if (!dayPartidos.length) return null;
+              return (
+                <section key={key}>
+                  <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-gray-500 capitalize">
+                    {formatDayHeader(dayPartidos[0].fechaPartido)}
+                  </h2>
+                  <div className="glass-card p-4">
+                    <div className="space-y-1.5">
+                      {dayPartidos.map((p) => (
+                        <PartidoCard
+                          key={`${p.id}-${pronosticoMap[p.id] ? 1 : 0}`}
+                          partido={p}
+                          pronostico={pronosticoMap[p.id] ?? null}
+                          odds={oddsMap?.[p.id] ?? null}
+                          showPrediccion={isInPrediccionWindow(key)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </section>
+              );
+            })}
+        </div>
+      )}
 
       {/* ── Vista: Por grupos ── */}
       {tab === "grupos" && (
@@ -205,9 +284,7 @@ export default function PartidosTabs({
               <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-gray-500">
                 {FASE_LABEL[fase]}
               </h2>
-              <div
-                className={`glass-card p-4 ${fase === "FINAL" ? "border-[#00e87a]/20" : ""}`}
-              >
+              <div className={`glass-card p-4 ${fase === "FINAL" ? "border-[#00e87a]/20" : ""}`}>
                 {fase === "FINAL" && (
                   <div className="absolute inset-x-0 top-0 h-px rounded-t-xl bg-gradient-to-r from-transparent via-[#00e87a]/40 to-transparent" />
                 )}
@@ -254,38 +331,6 @@ export default function PartidosTabs({
                 ))}
             </tbody>
           </table>
-        </div>
-      )}
-
-      {/* ── Vista: Por fecha ── */}
-      {tab === "fecha" && (
-        <div className="space-y-8">
-          {fechasOrdenadas
-            .filter((k) => k >= yesterdayKey)
-            .map((key) => {
-              const dayPartidos = porFecha[key];
-              if (!dayPartidos?.length) return null;
-              return (
-                <section key={key}>
-                  <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-gray-500 capitalize">
-                    {formatDayHeader(dayPartidos[0].fechaPartido)}
-                  </h2>
-                  <div className="glass-card p-4">
-                    <div className="space-y-1.5">
-                      {dayPartidos.map((p) => (
-                        <PartidoCard
-                          key={`${p.id}-${pronosticoMap[p.id] ? 1 : 0}`}
-                          partido={p}
-                          pronostico={pronosticoMap[p.id] ?? null}
-                          odds={oddsMap?.[p.id] ?? null}
-                          showPrediccion={isInPrediccionWindow(key)}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </section>
-              );
-            })}
         </div>
       )}
     </div>

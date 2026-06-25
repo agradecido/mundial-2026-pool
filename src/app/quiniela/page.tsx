@@ -3,9 +3,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { LinkSpinner } from "@/components/nav-button";
 import PartidosTabs from "@/components/partidos-tabs";
-import PartidoCard from "@/components/partido-card";
 import ResetQuinielaButton from "@/components/reset-quiniela-button";
-import PastMatchesSection from "@/components/past-matches-section";
 import { getMundialOdds, buildOddsMap } from "@/lib/odds-api";
 
 export default async function PartidosPage() {
@@ -62,51 +60,10 @@ export default async function PartidosPage() {
     fechaPartido: p.fechaPartido.toISOString(),
   }));
 
-  // Categorize matches
-  const finalizados = serializedPartidos.filter((p) => p.estado === "FINALIZADO");
-  const enJuego = serializedPartidos.filter((p) => p.estado === "EN_PROGRESO");
-  const programados = serializedPartidos.filter((p) => p.estado === "PROGRAMADO" && new Date(p.fechaPartido) > new Date());
-
-  // Determine featured matches: all live matches, or first scheduled if none live
-  const featuredMatches = enJuego.length > 0 ? enJuego : (programados[0] ? [programados[0]] : []);
-
-  // Get remaining upcoming matches (only scheduled, excluding featured)
-  const upcomingMatches = programados.filter(
-    (p) => !featuredMatches.some((f) => f.id === p.id)
-  );
-
-  const getLeaderPronostico = async (match: typeof featuredMatches[0] | null) => {
-    if (!match) return null;
-    const pronosticosDelPartido = await prisma.pronostico.findMany({
-      where: { partidoId: match.id },
-      select: { golesLocal: true, golesVisitante: true },
-    });
-
-    if (pronosticosDelPartido.length > 0) {
-      const conteo = new Map<string, number>();
-      for (const p of pronosticosDelPartido) {
-        const key = `${p.golesLocal}-${p.golesVisitante}`;
-        conteo.set(key, (conteo.get(key) ?? 0) + 1);
-      }
-
-      const topMarcador = Array.from(conteo.entries()).sort((a, b) => b[1] - a[1])[0];
-      const [golesLocal, golesVisitante] = topMarcador[0].split("-").map(Number);
-      return {
-        name: null,
-        golesLocal,
-        golesVisitante,
-      };
-    }
-    return null;
-  };
-
-  const featuredPronosticos = await Promise.all(featuredMatches.map((m) => getLeaderPronostico(m)));
-  const upcomingPronosticos = await Promise.all(upcomingMatches.map((m) => getLeaderPronostico(m)));
-
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-4">
+      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
         <div className="flex-1">
           <h1 className="text-3xl font-bold text-white tracking-tight">Quiniela</h1>
         </div>
@@ -122,78 +79,12 @@ export default async function PartidosPage() {
         </div>
       </div>
 
-      {/* AI Badge - Full width on mobile */}
-      {userBadge && (
-        <div className="space-y-0.5 mt-4 mb-4 w-full">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-600">Lo que la IA dice de ti</p>
-          <p className="flex flex-wrap items-center gap-1.5 text-sm">
-            <span className="text-base leading-none">{userBadge.emoji}</span>
-            <span className="font-semibold text-gray-200">{userBadge.titulo}</span>
-            <span className="text-gray-600">·</span>
-            <span className="text-gray-500">{userBadge.descripcion}</span>
-          </p>
-        </div>
-      )}
-
-      <p className="mt-0 mb-4 text-sm text-gray-500">Pronostica el marcador de cada partido hasta 15 minutos antes del inicio.</p>
-
-      {/* Partidos anteriores (colapsible) */}
-      {finalizados.length > 0 && (
-        <PastMatchesSection partidos={finalizados} pronosticoMap={pronosticoMap} oddsMap={oddsMap} />
-      )}
-
-      {/* Featured matches (all live or first scheduled) */}
-      {featuredMatches.length > 0 && (
-        <section className="space-y-6">
-          {featuredMatches.map((match, idx) => (
-            <div key={`${match.id}-featured`}>
-              <div className="mb-3 flex items-center gap-2">
-                {enJuego.length > 0 ? (
-                  <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-yellow-300">
-                    <span className="size-1.5 rounded-full bg-yellow-300 animate-pulse" />En juego
-                  </span>
-                ) : (
-                  <span className="text-[11px] font-semibold uppercase tracking-widest text-gray-500">
-                    Próximo partido
-                  </span>
-                )}
-              </div>
-              <div className={enJuego.length > 0 ? "ring-1 ring-yellow-400/20 rounded-2xl" : "ring-1 ring-white/[0.08] rounded-2xl"}>
-                <PartidoCard
-                  partido={match}
-                  pronostico={pronosticoMap[match.id] ?? null}
-                  odds={oddsMap?.[match.id] ?? null}
-                  leaderPronostico={featuredPronosticos[idx] ?? null}
-                />
-              </div>
-            </div>
-          ))}
-
-          {/* Próximos partidos */}
-          {upcomingMatches.length > 0 && (
-            <>
-              <div className="mt-8 border-t border-white/[0.05]" />
-              <div className="space-y-3">
-                <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-500">Próximos partidos</h2>
-                <div className="space-y-1.5">
-                  {upcomingMatches.map((match, idx) => (
-                    <div key={`${match.id}-upcoming`} className="ring-1 ring-white/[0.08] rounded-2xl">
-                      <PartidoCard
-                        partido={match}
-                        pronostico={pronosticoMap[match.id] ?? null}
-                        odds={oddsMap?.[match.id] ?? null}
-                        leaderPronostico={upcomingPronosticos[idx] ?? null}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
-        </section>
-      )}
-
-      <PartidosTabs partidos={serializedPartidos} pronosticoMap={pronosticoMap} oddsMap={oddsMap} />
+      <PartidosTabs
+        partidos={serializedPartidos}
+        pronosticoMap={pronosticoMap}
+        oddsMap={oddsMap}
+        userBadge={userBadge ? { emoji: userBadge.emoji, titulo: userBadge.titulo, descripcion: userBadge.descripcion } : null}
+      />
     </div>
   );
 }
