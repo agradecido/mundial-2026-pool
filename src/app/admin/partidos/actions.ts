@@ -81,3 +81,30 @@ export async function actualizarPartido(
 
     return { ok: true };
 }
+
+export async function recalcularTodosFinalizados() {
+    await requireAdminOrEditor();
+
+    const [partidos, users] = await Promise.all([
+        prisma.partido.findMany({
+            where: { estado: "FINALIZADO" },
+            select: { id: true },
+        }),
+        prisma.user.findMany({ select: { id: true } }),
+    ]);
+
+    for (const partido of partidos) {
+        await prisma.pronostico.createMany({
+            data: users.map((u) => ({ userId: u.id, partidoId: partido.id, golesLocal: 0, golesVisitante: 0 })),
+            skipDuplicates: true,
+        });
+        await recalcularPuntosPartido(partido.id);
+    }
+
+    revalidateTag("ranking", "max");
+    revalidatePath("/ranking");
+    revalidatePath("/quiniela/ranking");
+    revalidatePath("/quiniela");
+
+    return { ok: true, count: partidos.length };
+}

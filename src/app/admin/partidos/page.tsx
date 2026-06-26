@@ -5,6 +5,7 @@ import Link from "next/link";
 import { LinkSpinner } from "@/components/nav-button";
 import { getFlag } from "@/lib/flags";
 import type { Fase, EstadoPartido } from "@prisma/client";
+import RecalcularTodosButton from "./recalcular-button";
 
 const FASE_LABELS: Record<Fase, string> = {
     GRUPOS: "Grupos",
@@ -57,9 +58,12 @@ export default async function AdminPartidosPage({
 
     return (
         <div className="space-y-5">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-3">
                 <h2 className="text-lg font-semibold text-white">Partidos</h2>
-                <span className="text-xs text-gray-500">{partidos.length} partidos</span>
+                <div className="flex items-center gap-4">
+                    <RecalcularTodosButton />
+                    <span className="text-xs text-gray-500">{partidos.length} partidos</span>
+                </div>
             </div>
 
             {/* Filtros */}
