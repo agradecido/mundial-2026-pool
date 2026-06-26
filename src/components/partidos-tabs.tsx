@@ -214,34 +214,53 @@ export default function PartidosTabs({
           )}
 
           {/* Partidos por día — solo PROGRAMADO/EN_PROGRESO, desde hoy */}
-          {fechasOrdenadas
-            .filter((k) => k >= todayKey)
-            .map((key) => {
-              const dayPartidos = (porFecha[key] ?? []).filter(
-                (p) => p.estado !== "FINALIZADO" && !featuredIds.has(p.id),
-              );
-              if (!dayPartidos.length) return null;
-              return (
-                <section key={key}>
-                  <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-gray-500 capitalize">
-                    {formatDayHeader(dayPartidos[0].fechaPartido)}
-                  </h2>
-                  <div className="glass-card p-4">
-                    <div className="space-y-1.5">
-                      {dayPartidos.map((p) => (
-                        <PartidoCard
-                          key={`${p.id}-${pronosticoMap[p.id] ? 1 : 0}`}
-                          partido={p}
-                          pronostico={pronosticoMap[p.id] ?? null}
-                          odds={oddsMap?.[p.id] ?? null}
-                          showPrediccion={isInPrediccionWindow(key)}
-                        />
-                      ))}
-                    </div>
+          {(() => {
+            let knockoutSeparatorShown = false;
+            return fechasOrdenadas
+              .filter((k) => k >= todayKey)
+              .map((key) => {
+                const dayPartidos = (porFecha[key] ?? []).filter(
+                  (p) => p.estado !== "FINALIZADO" && !featuredIds.has(p.id),
+                );
+                if (!dayPartidos.length) return null;
+
+                const hasKnockout = dayPartidos.some((p) => p.fase !== "GRUPOS");
+                const showSeparator = hasKnockout && !knockoutSeparatorShown;
+                if (hasKnockout) knockoutSeparatorShown = true;
+
+                return (
+                  <div key={key}>
+                    {showSeparator && (
+                      <div className="flex items-center gap-4 my-8">
+                        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+                        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-400/70 shrink-0">
+                          Fase Eliminatoria
+                        </span>
+                        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+                      </div>
+                    )}
+                    <section>
+                      <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-gray-500 capitalize">
+                        {formatDayHeader(dayPartidos[0].fechaPartido)}
+                      </h2>
+                      <div className="glass-card p-4">
+                        <div className="space-y-1.5">
+                          {dayPartidos.map((p) => (
+                            <PartidoCard
+                              key={`${p.id}-${pronosticoMap[p.id] ? 1 : 0}`}
+                              partido={p}
+                              pronostico={pronosticoMap[p.id] ?? null}
+                              odds={oddsMap?.[p.id] ?? null}
+                              showPrediccion={isInPrediccionWindow(key)}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    </section>
                   </div>
-                </section>
-              );
-            })}
+                );
+              });
+          })()}
         </div>
       )}
 
@@ -278,6 +297,16 @@ export default function PartidosTabs({
               ))}
             </div>
           </section>
+
+          {FASES_ORDEN.some((f) => porFase[f]?.length) && (
+            <div className="flex items-center gap-4">
+              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-400/70 shrink-0">
+                Fase Eliminatoria
+              </span>
+              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+            </div>
+          )}
 
           {FASES_ORDEN.filter((f) => porFase[f]?.length).map((fase) => (
             <section key={fase}>
