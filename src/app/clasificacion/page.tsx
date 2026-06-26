@@ -119,11 +119,44 @@ const getActualBracket = unstable_cache(
     const pastPartidos = partidos.filter(p => p.fechaPartido <= now);
     const bracket = computeActualBracket(pastPartidos);
 
-    // Only expose qualifiers from groups where every match is done — partial
-    // standings are provisional and should not fill the bracket slots yet.
+    // Exact qualifiers for finished groups.
     const grupos = Object.fromEntries(
       Object.entries(bracket.grupos).filter(([g]) => completeGroups.has(g))
     );
+
+    // Also add mathematically confirmed qualifiers from incomplete groups:
+    // build current standings + remaining matches, then check if STRICTLY
+    // fewer than 2 other teams can surpass a team's current points.
+    type TeamData = { pts: number; remaining: number };
+    const groupStandings: Record<string, Record<string, TeamData>> = {};
+    for (const p of partidos) {
+      if (p.fase !== "GRUPOS" || !p.grupo) continue;
+      const g = p.grupo;
+      groupStandings[g] ??= {};
+      groupStandings[g][p.equipoLocal] ??= { pts: 0, remaining: 0 };
+      groupStandings[g][p.equipoVisitante] ??= { pts: 0, remaining: 0 };
+      if (p.estado === "FINALIZADO" && p.golesLocalReal !== null && p.golesVisitanteReal !== null) {
+        const gl = p.golesLocalReal, gv = p.golesVisitanteReal;
+        if (gl > gv) groupStandings[g][p.equipoLocal].pts += 3;
+        else if (gl < gv) groupStandings[g][p.equipoVisitante].pts += 3;
+        else { groupStandings[g][p.equipoLocal].pts++; groupStandings[g][p.equipoVisitante].pts++; }
+      } else if (p.estado !== "FINALIZADO") {
+        groupStandings[g][p.equipoLocal].remaining++;
+        groupStandings[g][p.equipoVisitante].remaining++;
+      }
+    }
+    for (const [grupo, teams] of Object.entries(groupStandings)) {
+      if (completeGroups.has(grupo)) continue;
+      const sorted = Object.entries(teams)
+        .map(([team, d]) => ({ team, ...d }))
+        .sort((a, b) => b.pts - a.pts);
+      const maxPts = (t: (typeof sorted)[0]) => t.pts + 3 * t.remaining;
+      const confirmed = sorted.filter(
+        (c) => sorted.filter((t) => t.team !== c.team && maxPts(t) > c.pts).length < 2
+      );
+      if (confirmed.length > 0)
+        grupos[grupo] = confirmed.slice(0, 2).map((t) => t.team);
+    }
 
     // Build team→group map to filter terceros from incomplete groups.
     const teamToGroup: Record<string, string> = {};
