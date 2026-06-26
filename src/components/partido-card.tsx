@@ -52,6 +52,15 @@ interface Props {
   showPrediccion?: boolean;
 }
 
+const FASE_LABEL: Record<string, string> = {
+  DIECISEISAVOS: "Dieciseisavos de Final",
+  OCTAVOS: "Octavos de Final",
+  CUARTOS: "Cuartos de Final",
+  SEMIFINAL: "Semifinal",
+  TERCER_PUESTO: "3er y 4º Puesto",
+  FINAL: "Gran Final",
+};
+
 function isPlaceholder(name: string): boolean {
   return /^\d/.test(name) || name.includes("/") || /^[WL]\d/.test(name);
 }
@@ -383,6 +392,11 @@ export default function PartidoCard({ partido, pronostico, odds, leaderPronostic
         {/* Header: fecha + sede + badge de estado */}
         <div className="flex items-center justify-between px-4 pt-3 pb-1">
           <div className="flex flex-col gap-0.5">
+            {FASE_LABEL[partido.fase] && (
+              <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-amber-400/90">
+                {FASE_LABEL[partido.fase]}
+              </span>
+            )}
             <span className="text-[12px] uppercase tracking-[0.18em] text-gray-200 font-medium tabular-nums">
               {formatFecha(partido.fechaPartido)}
             </span>
