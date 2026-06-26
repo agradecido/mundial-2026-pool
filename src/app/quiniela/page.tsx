@@ -133,16 +133,31 @@ export default async function PartidosPage() {
     if (odds) oddsMap[p.id] = odds;
   }
 
+  // Detect DB slot codes (e.g. "1E", "2B", "W74", "3A/B/C/D/F")
+  // vs. real team names already entered by an admin.
+  const isSlotCode = (name: string) =>
+    /^\d/.test(name) || name.includes("/") || /^[WL]\d/.test(name);
+
   const serializedPartidos = partidos.flatMap((p) => {
     const base = { ...p, fechaPartido: p.fechaPartido.toISOString() };
     if (p.fase === "GRUPOS") return [base];
 
-    // Resolve slot codes to real team names
-    const resolvedLocal = resolveDbCode(p.equipoLocal, actualBracket);
-    const resolvedVisitante = resolveDbCode(p.equipoVisitante, actualBracket);
+    const localIsSlot = isSlotCode(p.equipoLocal);
+    const visitanteIsSlot = isSlotCode(p.equipoVisitante);
 
-    // Skip knockout matches where neither team is known yet
-    if (!resolvedLocal && !resolvedVisitante) return [];
+    // Both are already real team names (admin updated) — show as-is
+    if (!localIsSlot && !visitanteIsSlot) return [base];
+
+    // Resolve whichever slots we can; keep real names unchanged
+    const resolvedLocal = localIsSlot
+      ? resolveDbCode(p.equipoLocal, actualBracket)
+      : p.equipoLocal;
+    const resolvedVisitante = visitanteIsSlot
+      ? resolveDbCode(p.equipoVisitante, actualBracket)
+      : p.equipoVisitante;
+
+    // Skip only if every slot is still unresolved
+    if (resolvedLocal === undefined && resolvedVisitante === undefined) return [];
 
     return [{
       ...base,
