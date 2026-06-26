@@ -99,11 +99,40 @@ const getActualBracket = unstable_cache(
       }
     }
 
-    // Only pass matches that have already started; this prevents future matches
-    // accidentally marked as FINALIZADO from polluting group standings.
+    // Count total and finalizado matches per group to detect complete groups.
+    const totalPerGroup: Record<string, number> = {};
+    const finalizadoPerGroup: Record<string, number> = {};
+    for (const p of partidos) {
+      if (p.fase !== "GRUPOS" || !p.grupo) continue;
+      totalPerGroup[p.grupo] = (totalPerGroup[p.grupo] ?? 0) + 1;
+      if (p.estado === "FINALIZADO" && p.fechaPartido <= now) {
+        finalizadoPerGroup[p.grupo] = (finalizadoPerGroup[p.grupo] ?? 0) + 1;
+      }
+    }
+    const completeGroups = new Set(
+      Object.entries(totalPerGroup)
+        .filter(([g, total]) => (finalizadoPerGroup[g] ?? 0) >= total)
+        .map(([g]) => g)
+    );
+
+    // Only pass matches that have already started.
     const pastPartidos = partidos.filter(p => p.fechaPartido <= now);
     const bracket = computeActualBracket(pastPartidos);
-    return { ...bracket, allGrupos };
+
+    // Only expose qualifiers from groups where every match is done — partial
+    // standings are provisional and should not fill the bracket slots yet.
+    const grupos = Object.fromEntries(
+      Object.entries(bracket.grupos).filter(([g]) => completeGroups.has(g))
+    );
+
+    // Build team→group map to filter terceros from incomplete groups.
+    const teamToGroup: Record<string, string> = {};
+    for (const [g, teams] of Object.entries(allGrupos)) {
+      for (const t of teams) teamToGroup[t] = g;
+    }
+    const terceros = bracket.terceros.filter(t => completeGroups.has(teamToGroup[t] ?? ""));
+
+    return { ...bracket, grupos, terceros, allGrupos };
   },
   ["clasificacion-bracket"],
   { tags: ["ranking"] },

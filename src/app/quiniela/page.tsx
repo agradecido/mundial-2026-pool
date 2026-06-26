@@ -5,12 +5,16 @@ import { LinkSpinner } from "@/components/nav-button";
 import PartidosTabs from "@/components/partidos-tabs";
 import ResetQuinielaButton from "@/components/reset-quiniela-button";
 import { getMundialOdds, buildOddsMap } from "@/lib/odds-api";
+import { computeActualBracket } from "@/lib/bracket-scoring";
+import { resolveDbCode } from "@/lib/bracket";
 
 export default async function PartidosPage() {
   const session = await auth();
   const userId = session!.user.id;
 
-  const [partidos, pronosticos, oddsEvents, allUsers, userBadge] = await Promise.all([
+  const now = new Date();
+
+  const [partidos, pronosticos, oddsEvents, allUsers, userBadge, allPartidosForBracket] = await Promise.all([
     prisma.partido.findMany({ orderBy: { fechaPartido: "asc" } }),
     prisma.pronostico.findMany({ where: { userId } }),
     getMundialOdds(),
@@ -24,7 +28,44 @@ export default async function PartidosPage() {
       },
     }),
     prisma.badgeUsuario.findUnique({ where: { userId } }),
+    prisma.partido.findMany({
+      select: {
+        equipoLocal: true, equipoVisitante: true,
+        golesLocalReal: true, golesVisitanteReal: true,
+        estado: true, fase: true, grupo: true, fechaPartido: true,
+      },
+    }),
   ]);
+
+  // ── Actual bracket (complete groups only) ───────────────────────────────
+  const totalPerGroup: Record<string, number> = {};
+  const finalizadoPerGroup: Record<string, number> = {};
+  const allGruposMap: Record<string, string[]> = {};
+  for (const p of allPartidosForBracket) {
+    if (p.fase !== "GRUPOS" || !p.grupo) continue;
+    totalPerGroup[p.grupo] = (totalPerGroup[p.grupo] ?? 0) + 1;
+    if (p.estado === "FINALIZADO" && p.fechaPartido <= now)
+      finalizadoPerGroup[p.grupo] = (finalizadoPerGroup[p.grupo] ?? 0) + 1;
+    if (!allGruposMap[p.grupo]) allGruposMap[p.grupo] = [];
+    for (const t of [p.equipoLocal, p.equipoVisitante])
+      if (!allGruposMap[p.grupo].includes(t)) allGruposMap[p.grupo].push(t);
+  }
+  const completeGroups = new Set(
+    Object.entries(totalPerGroup)
+      .filter(([g, total]) => (finalizadoPerGroup[g] ?? 0) >= total)
+      .map(([g]) => g)
+  );
+  const pastPartidos = allPartidosForBracket.filter(p => p.fechaPartido <= now);
+  const rawBracket = computeActualBracket(pastPartidos);
+
+  // Filter to confirmed qualifiers only
+  const bracketGrupos = Object.fromEntries(
+    Object.entries(rawBracket.grupos).filter(([g]) => completeGroups.has(g))
+  );
+  const teamToGroup: Record<string, string> = {};
+  for (const [g, ts] of Object.entries(allGruposMap)) for (const t of ts) teamToGroup[t] = g;
+  const bracketTerceros = rawBracket.terceros.filter(t => completeGroups.has(teamToGroup[t] ?? ""));
+  const actualBracket = { ...rawBracket, grupos: bracketGrupos, terceros: bracketTerceros };
 
   // Ranking position (mismo criterio que quiniela/ranking)
   const scored = allUsers
@@ -55,10 +96,23 @@ export default async function PartidosPage() {
     if (odds) oddsMap[p.id] = odds;
   }
 
-  const serializedPartidos = partidos.map((p) => ({
-    ...p,
-    fechaPartido: p.fechaPartido.toISOString(),
-  }));
+  const serializedPartidos = partidos.flatMap((p) => {
+    const base = { ...p, fechaPartido: p.fechaPartido.toISOString() };
+    if (p.fase === "GRUPOS") return [base];
+
+    // Resolve slot codes to real team names
+    const resolvedLocal = resolveDbCode(p.equipoLocal, actualBracket);
+    const resolvedVisitante = resolveDbCode(p.equipoVisitante, actualBracket);
+
+    // Skip knockout matches where neither team is known yet
+    if (!resolvedLocal && !resolvedVisitante) return [];
+
+    return [{
+      ...base,
+      equipoLocal: resolvedLocal ?? "Por definir",
+      equipoVisitante: resolvedVisitante ?? "Por definir",
+    }];
+  });
 
   return (
     <div className="space-y-6">

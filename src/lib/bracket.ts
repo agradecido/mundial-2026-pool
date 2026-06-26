@@ -82,6 +82,40 @@ export const ALL_MATCHES: Match[] = [
   ...D32_MATCHES, ...D16_MATCHES, ...QF_MATCHES, ...SF_MATCHES, FINAL_MATCH,
 ];
 
+// FIFA match number → bracket match ID (from worldcup.json `num` field)
+export const NUM_TO_MATCHID: Record<number, string> = {
+  73: "D32-3",  74: "D32-1",  75: "D32-4",  76: "D32-9",
+  77: "D32-2",  78: "D32-10", 79: "D32-11", 80: "D32-12",
+  81: "D32-7",  82: "D32-8",  83: "D32-5",  84: "D32-6",
+  85: "D32-15", 86: "D32-13", 87: "D32-16", 88: "D32-14",
+  89: "D16-1",  90: "D16-2",  91: "D16-5",  92: "D16-6",
+  93: "D16-3",  94: "D16-4",  95: "D16-7",  96: "D16-8",
+  97: "QF-1",   98: "QF-2",   99: "QF-3",  100: "QF-4",
+  101: "SF-1", 102: "SF-2",
+};
+
+/**
+ * Resolve a DB slot code (e.g. "2A", "1E", "W74") to an actual team name
+ * using the current bracket state. Returns undefined if the team is not yet known.
+ */
+export function resolveDbCode(
+  code: string,
+  bracket: { grupos: Record<string, string[]>; resultados: Record<string, string> }
+): string | undefined {
+  // "1X" or "2X" → first/second in group X
+  const gm = code.match(/^([12])([A-L])$/);
+  if (gm) return bracket.grupos[gm[2]]?.[gm[1] === "1" ? 0 : 1];
+
+  // "W{num}" → winner of a previous match
+  const wm = code.match(/^W(\d+)$/);
+  if (wm) {
+    const matchId = NUM_TO_MATCHID[parseInt(wm[1])];
+    if (matchId) return bracket.resultados[matchId];
+  }
+
+  return undefined;
+}
+
 // Matches played during each selection phase
 export const PHASE_MATCHES: Record<string, Match[]> = {
   octavos: D32_MATCHES,
