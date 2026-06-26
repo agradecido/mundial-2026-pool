@@ -37,19 +37,39 @@ export default async function PartidosPage() {
     }),
   ]);
 
-  // ── Actual bracket (complete groups only) ───────────────────────────────
+  // ── Actual bracket (confirmed qualifiers: complete groups + math-locked teams) ─
+
+  type TeamData = { pts: number; remaining: number };
   const totalPerGroup: Record<string, number> = {};
   const finalizadoPerGroup: Record<string, number> = {};
   const allGruposMap: Record<string, string[]> = {};
+  const groupStandings: Record<string, Record<string, TeamData>> = {};
+
   for (const p of allPartidosForBracket) {
     if (p.fase !== "GRUPOS" || !p.grupo) continue;
-    totalPerGroup[p.grupo] = (totalPerGroup[p.grupo] ?? 0) + 1;
-    if (p.estado === "FINALIZADO" && p.fechaPartido <= now)
-      finalizadoPerGroup[p.grupo] = (finalizadoPerGroup[p.grupo] ?? 0) + 1;
-    if (!allGruposMap[p.grupo]) allGruposMap[p.grupo] = [];
+    const g = p.grupo;
+    totalPerGroup[g] = (totalPerGroup[g] ?? 0) + 1;
+
+    if (!allGruposMap[g]) allGruposMap[g] = [];
     for (const t of [p.equipoLocal, p.equipoVisitante])
-      if (!allGruposMap[p.grupo].includes(t)) allGruposMap[p.grupo].push(t);
+      if (!allGruposMap[g].includes(t)) allGruposMap[g].push(t);
+
+    groupStandings[g] ??= {};
+    groupStandings[g][p.equipoLocal] ??= { pts: 0, remaining: 0 };
+    groupStandings[g][p.equipoVisitante] ??= { pts: 0, remaining: 0 };
+
+    if (p.estado === "FINALIZADO" && p.golesLocalReal !== null && p.golesVisitanteReal !== null) {
+      finalizadoPerGroup[g] = (finalizadoPerGroup[g] ?? 0) + 1;
+      const gl = p.golesLocalReal, gv = p.golesVisitanteReal;
+      if (gl > gv) groupStandings[g][p.equipoLocal].pts += 3;
+      else if (gl < gv) groupStandings[g][p.equipoVisitante].pts += 3;
+      else { groupStandings[g][p.equipoLocal].pts++; groupStandings[g][p.equipoVisitante].pts++; }
+    } else if (p.estado !== "FINALIZADO") {
+      groupStandings[g][p.equipoLocal].remaining++;
+      groupStandings[g][p.equipoVisitante].remaining++;
+    }
   }
+
   const completeGroups = new Set(
     Object.entries(totalPerGroup)
       .filter(([g, total]) => (finalizadoPerGroup[g] ?? 0) >= total)
@@ -58,10 +78,27 @@ export default async function PartidosPage() {
   const pastPartidos = allPartidosForBracket.filter(p => p.fechaPartido <= now);
   const rawBracket = computeActualBracket(pastPartidos);
 
-  // Filter to confirmed qualifiers only
+  // Exact qualifiers for finished groups
   const bracketGrupos = Object.fromEntries(
     Object.entries(rawBracket.grupos).filter(([g]) => completeGroups.has(g))
   );
+
+  // Add mathematically confirmed qualifiers from incomplete groups:
+  // A team is confirmed top-2 if STRICTLY fewer than 2 other teams can surpass
+  // their current points (ignoring tiebreakers — provisional only).
+  for (const [grupo, teams] of Object.entries(groupStandings)) {
+    if (completeGroups.has(grupo)) continue;
+    const sorted = Object.entries(teams)
+      .map(([team, d]) => ({ team, ...d }))
+      .sort((a, b) => b.pts - a.pts);
+    const maxPts = (t: (typeof sorted)[0]) => t.pts + 3 * t.remaining;
+    const confirmed = sorted.filter(
+      (c) => sorted.filter((t) => t.team !== c.team && maxPts(t) > c.pts).length < 2
+    );
+    if (confirmed.length > 0)
+      bracketGrupos[grupo] = confirmed.slice(0, 2).map((t) => t.team);
+  }
+
   const teamToGroup: Record<string, string> = {};
   for (const [g, ts] of Object.entries(allGruposMap)) for (const t of ts) teamToGroup[t] = g;
   const bracketTerceros = rawBracket.terceros.filter(t => completeGroups.has(teamToGroup[t] ?? ""));
