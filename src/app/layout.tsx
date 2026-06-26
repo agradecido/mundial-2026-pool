@@ -33,7 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="es" className={`${spaceGrotesk.variable} ${geistMono.variable}`}>
       <body className="min-h-dvh flex flex-col">
         <Header />
-        <main className="flex-1 mx-auto w-full max-w-[1400px] px-4 py-8 pb-24 sm:pb-8">
+        <main className="flex-1 mx-auto w-full max-w-[1600px] px-4 py-8 pb-24 sm:pb-8">
           {children}
         </main>
         <BottomTabBar />

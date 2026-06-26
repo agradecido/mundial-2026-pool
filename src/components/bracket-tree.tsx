@@ -53,6 +53,7 @@ function TeamRow({
     onChampionPath,
     onPick,
     locked,
+    compact,
 }: {
     matchId: string;
     team: string | undefined;
@@ -60,26 +61,29 @@ function TeamRow({
     onChampionPath: boolean;
     onPick?: (matchId: string, team: string) => void;
     locked?: boolean;
+    compact?: boolean;
 }) {
     const isOnPath = onChampionPath && isWinner;
+    const flagSz = compact ? "text-[18px]" : "text-[21px]";
+    const nameSz = compact ? "text-[13px]" : "text-lg";
+    const pad = compact ? "px-1.5 py-1 gap-1.5" : "px-2.5 py-2 lg:px-2 lg:py-1 gap-2 lg:gap-2";
     if (!team) {
         return (
-            <div className="flex items-center gap-2 lg:gap-2 px-2.5 py-2 lg:px-2 lg:py-1 border border-dashed border-white/[0.12] rounded-md">
-                <span className="text-gray-700 text-[21px] opacity-40">?</span>
-                <span className="text-gray-700 text-lg truncate">Por definir</span>
+            <div className={`flex items-center ${pad} border border-dashed border-white/[0.12] rounded-md`}>
+                <span className={`text-gray-700 ${flagSz} opacity-40`}>?</span>
+                <span className={`text-gray-700 ${nameSz} truncate`}>Por definir</span>
             </div>
         );
     }
     const editable = !!onPick && !locked;
-    const baseCls = `flex items-center gap-2 lg:gap-2 px-2.5 py-2 lg:px-2 lg:py-1 rounded-md transition-[background-color,border-color,transform] duration-100 w-full text-left border ${isWinner
+    const baseCls = `flex items-center ${pad} rounded-md transition-[background-color,border-color,transform] duration-100 w-full text-left border ${isWinner
         ? "bg-[#00e87a]/10 border-[#00e87a]/40"
         : "bg-white/[0.015] border-white/[0.08]"
         } ${editable ? "cursor-pointer [touch-action:manipulation] hover:bg-white/[0.06] hover:border-white/[0.20] active:scale-[0.97] active:bg-[#00e87a]/20 active:border-[#00e87a]/50" : ""}`;
     const content = (
         <>
-            <span className={`text-[21px] leading-none shrink-0 transition-opacity ${isWinner ? "opacity-100" : "opacity-60"}`}>{getFlag(team)}</span>
-            <span data-bracket-winner-text={isWinner ? "1" : undefined} className={`text-lg truncate leading-none ${isWinner ? "text-[#00e87a]" : "text-gray-400"
-                }`}>
+            <span className={`${flagSz} leading-none shrink-0 transition-opacity ${isWinner ? "opacity-100" : "opacity-60"}`}>{getFlag(team)}</span>
+            <span data-bracket-winner-text={isWinner ? "1" : undefined} className={`${nameSz} truncate leading-none ${isWinner ? "text-[#00e87a]" : "text-gray-400"}`}>
                 {team}
             </span>
         </>
@@ -186,6 +190,7 @@ function MatchCard({
     locked,
     odds,
     cardClassName,
+    compact,
 }: {
     matchId: string;
     teamA: string | undefined;
@@ -197,19 +202,23 @@ function MatchCard({
     odds?: { first: number; draw: number; second: number } | null;
     /** Override the card skin (border/bg/padding). Used by the mobile list. */
     cardClassName?: string;
+    compact?: boolean;
 }) {
+    const cardCls = cardClassName ?? (compact
+        ? "flex flex-col gap-0.5 p-1 rounded-md border border-white/[0.08] bg-white/[0.02] hover:border-white/[0.14] transition-colors"
+        : "flex flex-col gap-0.5 lg:gap-1 p-1.5 lg:p-2 rounded-lg border border-white/[0.08] bg-white/[0.02] hover:border-white/[0.14] transition-colors");
     return (
-        <div className={cardClassName ?? "flex flex-col gap-0.5 lg:gap-1 p-1.5 lg:p-2 rounded-lg border border-white/[0.08] bg-white/[0.02] hover:border-white/[0.14] transition-colors"}>
-            <TeamRow matchId={matchId} team={teamA} isWinner={winner === teamA} onChampionPath={onChampionPath} onPick={onPick} locked={locked} />
-            <div className="flex items-center justify-center gap-1.5 py-0.5">
-                <span className="text-[10px] lg:text-[9px] font-bold text-gray-700 tracking-wider">VS</span>
-                {odds && (
+        <div className={cardCls}>
+            <TeamRow matchId={matchId} team={teamA} isWinner={winner === teamA} onChampionPath={onChampionPath} onPick={onPick} locked={locked} compact={compact} />
+            <div className={`flex items-center justify-center gap-1.5 ${compact ? "py-0" : "py-0.5"}`}>
+                <span className={`${compact ? "text-[8px]" : "text-[10px] lg:text-[9px]"} font-bold text-gray-700 tracking-wider`}>VS</span>
+                {odds && !compact && (
                     <span className="text-[10px] lg:text-[9px] text-gray-500 tabular-nums">
                         {odds.first.toFixed(2)} · {odds.draw.toFixed(2)} · {odds.second.toFixed(2)}
                     </span>
                 )}
             </div>
-            <TeamRow matchId={matchId} team={teamB} isWinner={winner === teamB} onChampionPath={onChampionPath} onPick={onPick} locked={locked} />
+            <TeamRow matchId={matchId} team={teamB} isWinner={winner === teamB} onChampionPath={onChampionPath} onPick={onPick} locked={locked} compact={compact} />
         </div>
     );
 }
@@ -246,6 +255,7 @@ function SplitCell({
             <MatchCard
                 matchId={matchId} teamA={teamA} teamB={teamB} winner={winner}
                 onChampionPath={onChampionPath} onPick={onPick} locked={locked} odds={odds}
+                compact
             />
             {connectorSide && connectorSide !== "single" && (
                 <div
@@ -629,11 +639,11 @@ export default function BracketTree({
                 {/* ── Split bracket layout (clasificacion) ── */}
                 {split && (() => {
                     // Pixel-based approach: no CSS variable dependency.
-                    // D32H must exceed the rendered card height (~112px including emoji).
-                    const D32H = 130; // px per D32 slot
-                    const halfH = D32H * 8; // 1040px total per half
+                    // Compact card (text-[13px] name, text-[18px] emoji) ≈ 72px → D32H has 28px breathing room.
+                    const D32H = 100; // px per D32 slot
+                    const halfH = D32H * 8; // 800px total per half
                     const SH = { D32: D32H, D16: D32H * 2, QF: D32H * 4, SF: D32H * 8 };
-                    const colW = "min-w-[120px] lg:min-w-[140px]";
+                    const colW = "min-w-[120px] lg:min-w-[175px]";
                     const cs = connectorSide;
 
                     const cell = (m: typeof D32_MATCHES[0], i: number, mir?: boolean, slotH = SH.D32) => {
@@ -646,7 +656,7 @@ export default function BracketTree({
                     };
 
                     return (
-                        <div className="flex gap-0 items-stretch" style={{ minWidth: 1180, height: halfH }}>
+                        <div className="flex gap-0 items-stretch" style={{ minWidth: 1600, height: halfH }}>
 
                             {/* ══ Left half: flows right toward center ══ */}
                             <Column label="16avos" widthClass={colW}>
@@ -683,7 +693,7 @@ export default function BracketTree({
                             </Column>
 
                             {/* ══ Center: Final + Champion ══ */}
-                            <div className="flex flex-col min-w-[135px] lg:min-w-[160px] shrink-0">
+                            <div className="flex flex-col min-w-[135px] lg:min-w-[200px] shrink-0">
                                 <p className="text-[9px] font-semibold text-gray-600 uppercase tracking-widest text-center mb-2 shrink-0">
                                     Final
                                 </p>
