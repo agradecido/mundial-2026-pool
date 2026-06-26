@@ -227,6 +227,7 @@ export default async function PorrasPdfPage() {
         equipoVisitante: true,
         golesLocalReal: true,
         golesVisitanteReal: true,
+        estado: true,
         fase: true,
         grupo: true,
       },

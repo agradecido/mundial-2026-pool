@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { getFlag } from "@/lib/flags";
 import type { BracketPicks } from "@/lib/bracket";
+import { computeActualBracket } from "@/lib/bracket-scoring";
+import BracketTree from "@/components/bracket-tree";
 
 type Stats = {
   team: string;
@@ -70,8 +72,49 @@ const getClasificacion = unstable_cache(
   { tags: ["ranking"] },
 );
 
+const getActualBracket = unstable_cache(
+  async () => {
+    const now = new Date();
+    const partidos = await prisma.partido.findMany({
+      select: {
+        equipoLocal: true,
+        equipoVisitante: true,
+        golesLocalReal: true,
+        golesVisitanteReal: true,
+        estado: true,
+        fase: true,
+        grupo: true,
+        fechaPartido: true,
+      },
+    });
+
+    // allGrupos includes all teams regardless of match date, so the group
+    // composition is always known for third-place slot resolution.
+    const allGrupos: Record<string, string[]> = {};
+    for (const p of partidos) {
+      if (p.fase !== "GRUPOS" || !p.grupo) continue;
+      if (!allGrupos[p.grupo]) allGrupos[p.grupo] = [];
+      for (const t of [p.equipoLocal, p.equipoVisitante]) {
+        if (!allGrupos[p.grupo].includes(t)) allGrupos[p.grupo].push(t);
+      }
+    }
+
+    // Only pass matches that have already started; this prevents future matches
+    // accidentally marked as FINALIZADO from polluting group standings.
+    const pastPartidos = partidos.filter(p => p.fechaPartido <= now);
+    const bracket = computeActualBracket(pastPartidos);
+    return { ...bracket, allGrupos };
+  },
+  ["clasificacion-bracket"],
+  { tags: ["ranking"] },
+);
+
 export default async function ClasificacionPage() {
-  const [grupos, session] = await Promise.all([getClasificacion(), auth()]);
+  const [grupos, bracket, session] = await Promise.all([
+    getClasificacion(),
+    getActualBracket(),
+    auth(),
+  ]);
 
   const userBracket = session?.user
     ? await prisma.pronosticoBracket.findUnique({
@@ -82,6 +125,14 @@ export default async function ClasificacionPage() {
 
   const userGrupos = (userBracket?.picks as BracketPicks | null)?.grupos ?? {};
   const userTerceros = (userBracket?.picks as BracketPicks | null)?.terceros ?? [];
+
+  const bracketPicks: BracketPicks = {
+    grupos: bracket.grupos,
+    terceros: bracket.terceros,
+    resultados: bracket.resultados,
+  };
+
+  const hasKnockoutTeams = Object.keys(bracket.grupos).length > 0;
 
   return (
     <>
@@ -137,6 +188,22 @@ export default async function ClasificacionPage() {
             ))}
           </div>
         </>
+      )}
+
+      {/* Knockout bracket */}
+      {hasKnockoutTeams && (
+        <div className="mt-12">
+          <div className="mb-5">
+            <h2 className="text-xl font-bold text-white">Eliminatorias</h2>
+            <p className="text-sm text-gray-500 mt-1">Se actualiza conforme se confirman posiciones</p>
+          </div>
+          <BracketTree
+            picks={bracketPicks}
+            locked
+            allGrupos={bracket.allGrupos}
+            emptyChampionLabel="Por confirmar"
+          />
+        </div>
       )}
     </>
   );

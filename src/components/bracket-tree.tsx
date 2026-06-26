@@ -241,6 +241,7 @@ export default function BracketTree({
     allGrupos,
     oddsMap,
     initialRound,
+    emptyChampionLabel = "Sin pick",
 }: {
     picks: BracketPicks;
     onPick?: (matchId: string, team: string) => void;
@@ -248,6 +249,7 @@ export default function BracketTree({
     allGrupos?: Record<string, string[]>;
     oddsMap?: Record<string, { first: number; draw: number; second: number }>;
     initialRound?: string;
+    emptyChampionLabel?: string;
 }) {
     const grupos = picks.grupos ?? {};
     const terceros = picks.terceros ?? [];
@@ -333,7 +335,7 @@ export default function BracketTree({
             ) : (
                 <>
                     <span className="text-4xl leading-none text-gray-700">❓</span>
-                    <span className="text-[13px] text-gray-700 italic text-center">Sin pick</span>
+                    <span className="text-[13px] text-gray-700 italic text-center">{emptyChampionLabel}</span>
                 </>
             )}
         </div>
@@ -553,7 +555,7 @@ export default function BracketTree({
                             ) : (
                                 <>
                                     <span className="text-3xl lg:text-5xl leading-none text-gray-700">❓</span>
-                                    <span className="text-[10px] lg:text-[13px] text-gray-700 italic text-center">Sin pick</span>
+                                    <span className="text-[10px] lg:text-[13px] text-gray-700 italic text-center">{emptyChampionLabel}</span>
                                 </>
                             )}
                         </div>

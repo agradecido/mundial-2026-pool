@@ -6,19 +6,23 @@ import { LinkSpinner } from "@/components/nav-button";
 export default async function Header() {
   const session = await auth();
 
+  let adminLinks: { href: string; label: string }[] = [];
+
+  if (session?.user?.role === "ADMIN") {
+    adminLinks = [{ href: "/admin", label: "Admin" }];
+  } else if (session?.user?.role === "EDITOR") {
+    adminLinks = [{ href: "/admin/partidos", label: "Admin" }];
+  }
+
   const navLinks = [
     { href: "/porra", label: "Porra" },
     { href: "/quiniela", label: "Quiniela" },
-    { href: "/clasificacion", label: "Clasificación" },
+    { href: "/clasificacion", label: "Así va el mundial" },
     { href: "/grupos", label: "Grupos" },
     { href: "/ranking", label: "Ranking" },
-    { href: "/porra/stats", label: "Consenso" },
+    // { href: "/porra/stats", label: "Consenso" },
     { href: "/ayuda", label: "Ayuda" },
-    ...(session?.user?.role === "ADMIN"
-      ? [{ href: "/admin", label: "Admin" }]
-      : session?.user?.role === "EDITOR"
-      ? [{ href: "/admin/partidos", label: "Admin" }]
-      : []),
+    ...adminLinks,
   ];
 
   return (

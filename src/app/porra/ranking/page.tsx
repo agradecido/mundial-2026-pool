@@ -28,7 +28,7 @@ export default async function PorraRankingPage() {
       select: {
         equipoLocal: true, equipoVisitante: true,
         golesLocalReal: true, golesVisitanteReal: true,
-        fase: true, grupo: true,
+        estado: true, fase: true, grupo: true,
       },
     }),
   ]);

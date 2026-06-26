@@ -28,6 +28,7 @@ type PartidoRow = {
   equipoVisitante: string;
   golesLocalReal: number | null;
   golesVisitanteReal: number | null;
+  estado: string;
   fase: string;
   grupo: string | null;
 };
@@ -47,7 +48,7 @@ export function computeActualBracket(partidos: PartidoRow[]): ActualBracket {
   const groupMap: Record<string, Record<string, Stats>> = {};
 
   for (const p of partidos) {
-    if (p.fase !== "GRUPOS" || p.golesLocalReal === null || p.golesVisitanteReal === null) continue;
+    if (p.fase !== "GRUPOS" || p.estado !== "FINALIZADO" || p.golesLocalReal === null || p.golesVisitanteReal === null) continue;
     const g = p.grupo ?? "?";
     groupMap[g] ??= {};
 
@@ -93,7 +94,7 @@ export function computeActualBracket(partidos: PartidoRow[]): ActualBracket {
         ((r.equipoLocal === teamA && r.equipoVisitante === teamB) ||
           (r.equipoLocal === teamB && r.equipoVisitante === teamA))
     );
-    if (!p || p.golesLocalReal === null || p.golesVisitanteReal === null) continue;
+    if (!p || p.estado !== "FINALIZADO" || p.golesLocalReal === null || p.golesVisitanteReal === null) continue;
 
     if (p.golesLocalReal > p.golesVisitanteReal) resultados[match.id] = p.equipoLocal;
     else if (p.golesVisitanteReal > p.golesLocalReal) resultados[match.id] = p.equipoVisitante;

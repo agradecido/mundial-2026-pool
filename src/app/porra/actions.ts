@@ -49,6 +49,7 @@ const getCachedUserBracket = unstable_cache(
           equipoVisitante: true,
           golesLocalReal: true,
           golesVisitanteReal: true,
+          estado: true,
           fase: true,
           grupo: true,
         },
