@@ -109,6 +109,8 @@ interface MatchCellProps {
     onPick?: (matchId: string, team: string) => void;
     locked?: boolean;
     odds?: { first: number; draw: number; second: number } | null;
+    /** Flip connector to left side (for right half of split bracket) */
+    mirrored?: boolean;
 }
 
 function MatchCell({
@@ -122,25 +124,27 @@ function MatchCell({
     onPick,
     locked,
     odds,
+    mirrored,
 }: MatchCellProps) {
     // Connector geometry (inside this cell's slotHeight × column-width box):
-    //   - Card is centered at y = slotHeight/2
-    //   - Parent (next round) sits at y = slotHeight (upper of pair) or y = 0 (lower of pair)
-    //   - We draw an "L" / reversed "L" using two borders on a small box on the right gutter
     //
+    // Normal (left half):  connector on RIGHT side
     //   Upper match (┐):  box [top=slotHeight/2 .. bottom=slotHeight], borderTop + borderRight
-    //                      → horizontal stroke at card-center going right, vertical going down to slot bottom
     //   Lower match (└):  box [top=0 .. bottom=slotHeight/2], borderBottom + borderRight
-    //                      → horizontal stroke at card-center going right, vertical going up to slot top
+    //
+    // Mirrored (right half):  connector on LEFT side
+    //   Upper match (┌):  box [top=slotHeight/2 .. bottom=slotHeight], borderTop + borderLeft
+    //   Lower match (└⟵): box [top=0 .. bottom=slotHeight/2], borderBottom + borderLeft
     const connectorColor = onChampionPath ? "#00e87a99" : "rgba(255,255,255,0.22)";
     const connectorEl = connectorSide && connectorSide !== "single" ? (
         <div
             aria-hidden
-            className="absolute right-1 w-3 lg:w-4 pointer-events-none"
+            className={`absolute ${mirrored ? "left-1" : "right-1"} w-3 lg:w-4 pointer-events-none`}
             style={{
                 top: connectorSide === "top" ? `calc(var(--s) * ${slotHeight / BASE_SLOT} / 2)` : 0,
                 height: `calc(var(--s) * ${slotHeight / BASE_SLOT} / 2)`,
-                borderRight: `1px solid ${connectorColor}`,
+                borderRight: mirrored ? undefined : `1px solid ${connectorColor}`,
+                borderLeft: mirrored ? `1px solid ${connectorColor}` : undefined,
                 borderTop: connectorSide === "top" ? `1px solid ${connectorColor}` : undefined,
                 borderBottom: connectorSide === "bottom" ? `1px solid ${connectorColor}` : undefined,
             }}
@@ -150,7 +154,7 @@ function MatchCell({
     return (
         <div
             data-match={matchId}
-            className="relative flex flex-col justify-center pr-6 lg:pr-8 py-1"
+            className={`relative flex flex-col justify-center ${mirrored ? "pl-6 lg:pl-8" : "pr-6 lg:pr-8"} py-1`}
             style={{ height: `calc(var(--s) * ${slotHeight / BASE_SLOT})` }}
         >
             <MatchCard
@@ -210,16 +214,69 @@ function MatchCard({
     );
 }
 
+// ── SplitCell ────────────────────────────────────────────────────────────────
+// Bracket cell for the split view. Uses pixel heights directly instead of the
+// CSS-variable-based system used by MatchCell — avoids emoji rendering surprises.
+
+interface SplitCellProps {
+    matchId: string;
+    teamA: string | undefined;
+    teamB: string | undefined;
+    winner: string | undefined;
+    onChampionPath: boolean;
+    slotH: number;
+    connectorSide?: "top" | "bottom" | "single";
+    mirrored?: boolean;
+    onPick?: (matchId: string, team: string) => void;
+    locked?: boolean;
+    odds?: { first: number; draw: number; second: number } | null;
+}
+
+function SplitCell({
+    matchId, teamA, teamB, winner, onChampionPath, slotH,
+    connectorSide, mirrored, onPick, locked, odds,
+}: SplitCellProps) {
+    const cc = onChampionPath ? "#00e87a99" : "rgba(255,255,255,0.22)";
+    return (
+        <div
+            data-match={matchId}
+            className={`relative flex flex-col justify-center ${mirrored ? "pl-5" : "pr-5"}`}
+            style={{ height: slotH }}
+        >
+            <MatchCard
+                matchId={matchId} teamA={teamA} teamB={teamB} winner={winner}
+                onChampionPath={onChampionPath} onPick={onPick} locked={locked} odds={odds}
+            />
+            {connectorSide && connectorSide !== "single" && (
+                <div
+                    aria-hidden
+                    className={`absolute ${mirrored ? "left-0.5" : "right-0.5"} w-3 pointer-events-none`}
+                    style={{
+                        top: connectorSide === "top" ? slotH / 2 : 0,
+                        height: slotH / 2,
+                        borderRight: mirrored ? undefined : `1px solid ${cc}`,
+                        borderLeft: mirrored ? `1px solid ${cc}` : undefined,
+                        borderTop: connectorSide === "top" ? `1px solid ${cc}` : undefined,
+                        borderBottom: connectorSide === "bottom" ? `1px solid ${cc}` : undefined,
+                    }}
+                />
+            )}
+        </div>
+    );
+}
+
 // ── Column ───────────────────────────────────────────────────────────────────
 
 interface ColumnProps {
     label: string;
     children: React.ReactNode;
+    /** Override the column min-width class (default: "min-w-[130px] lg:min-w-[160px]") */
+    widthClass?: string;
 }
 
-function Column({ label, children }: ColumnProps) {
+function Column({ label, children, widthClass }: ColumnProps) {
     return (
-        <div className="flex flex-col min-w-[130px] lg:min-w-[160px]">
+        <div className={`flex flex-col ${widthClass ?? "min-w-[130px] lg:min-w-[160px]"}`}>
             <p className="text-[9px] lg:text-[11px] font-semibold text-gray-600 uppercase tracking-widest text-center mb-2 shrink-0">
                 {label}
             </p>
@@ -242,6 +299,7 @@ export default function BracketTree({
     oddsMap,
     initialRound,
     emptyChampionLabel = "Sin pick",
+    split,
 }: {
     picks: BracketPicks;
     onPick?: (matchId: string, team: string) => void;
@@ -250,6 +308,8 @@ export default function BracketTree({
     oddsMap?: Record<string, { first: number; draw: number; second: number }>;
     initialRound?: string;
     emptyChampionLabel?: string;
+    /** Render desktop bracket as two halves facing each other (for clasificacion view) */
+    split?: boolean;
 }) {
     const grupos = picks.grupos ?? {};
     const terceros = picks.terceros ?? [];
@@ -409,158 +469,294 @@ export default function BracketTree({
             </div>
 
             {/* ── Desktop: full tree ── */}
-            <div id="bracket-desktop-view" className="hidden lg:block overflow-x-auto scrollbar-none -mx-5 px-5 [--s:96px] lg:[--s:112px] [touch-action:pan-x_pan-y] [overscroll-behavior-x:contain] [-webkit-overflow-scrolling:touch]">
-                <div
-                    id="bracket-capture-inner"
-                    className="flex gap-0 items-stretch"
-                    style={{ minWidth: 1150, height: totalHeight }}
-                >
-                    {/* ── Column 1: 16avos (D32) ── */}
-                    <Column label="16avos">
-                        <div className="flex flex-col" style={{ height: totalHeight }}>
-                            {D32_MATCHES.map((m, idx) => {
-                                const { teamA, teamB, winner } = resolvedMatch(m.id, m.slotA, m.slotB);
-                                return (
-                                    <MatchCell
-                                        key={m.id}
-                                        matchId={m.id}
-                                        teamA={teamA}
-                                        teamB={teamB}
-                                        winner={winner}
-                                        onChampionPath={championPath.has(m.id)}
-                                        slotHeight={slotHeights.D32}
-                                        connectorSide={connectorSide(idx)}
-                                        onPick={onPick}
-                                        locked={locked}
-                                        odds={oddsFor(teamA, teamB)}
-                                    />
-                                );
-                            })}
-                        </div>
-                    </Column>
+            <div id="bracket-desktop-view" className="hidden lg:block overflow-x-auto scrollbar-none -mx-5 px-5 [touch-action:pan-x_pan-y] [overscroll-behavior-x:contain] [-webkit-overflow-scrolling:touch]">
 
-                    {/* ── Column 2: Octavos (D16) ── */}
-                    <Column label="1/8">
-                        <div className="flex flex-col" style={{ height: totalHeight }}>
-                            {D16_MATCHES.map((m, idx) => {
-                                const { teamA, teamB, winner } = resolvedMatch(m.id, m.slotA, m.slotB);
-                                return (
-                                    <MatchCell
-                                        key={m.id}
-                                        matchId={m.id}
-                                        teamA={teamA}
-                                        teamB={teamB}
-                                        winner={winner}
-                                        onChampionPath={championPath.has(m.id)}
-                                        slotHeight={slotHeights.D16}
-                                        connectorSide={connectorSide(idx)}
-                                        onPick={onPick}
-                                        locked={locked}
-                                        odds={oddsFor(teamA, teamB)}
-                                    />
-                                );
-                            })}
-                        </div>
-                    </Column>
+                {/* ── Single-flow layout (default) ── */}
+                {!split && (
+                    <div
+                        id="bracket-capture-inner"
+                        className="flex gap-0 items-stretch [--s:96px] lg:[--s:112px]"
+                        style={{ minWidth: 1150, height: totalHeight }}
+                    >
+                        {/* ── Column 1: 16avos (D32) ── */}
+                        <Column label="16avos">
+                            <div className="flex flex-col" style={{ height: totalHeight }}>
+                                {D32_MATCHES.map((m, idx) => {
+                                    const { teamA, teamB, winner } = resolvedMatch(m.id, m.slotA, m.slotB);
+                                    return (
+                                        <MatchCell
+                                            key={m.id}
+                                            matchId={m.id}
+                                            teamA={teamA}
+                                            teamB={teamB}
+                                            winner={winner}
+                                            onChampionPath={championPath.has(m.id)}
+                                            slotHeight={slotHeights.D32}
+                                            connectorSide={connectorSide(idx)}
+                                            onPick={onPick}
+                                            locked={locked}
+                                            odds={oddsFor(teamA, teamB)}
+                                        />
+                                    );
+                                })}
+                            </div>
+                        </Column>
 
-                    {/* ── Column 3: Cuartos (QF) ── */}
-                    <Column label="1/4">
-                        <div className="flex flex-col" style={{ height: totalHeight }}>
-                            {QF_MATCHES.map((m, idx) => {
-                                const { teamA, teamB, winner } = resolvedMatch(m.id, m.slotA, m.slotB);
-                                return (
-                                    <MatchCell
-                                        key={m.id}
-                                        matchId={m.id}
-                                        teamA={teamA}
-                                        teamB={teamB}
-                                        winner={winner}
-                                        onChampionPath={championPath.has(m.id)}
-                                        slotHeight={slotHeights.QF}
-                                        connectorSide={connectorSide(idx)}
-                                        onPick={onPick}
-                                        locked={locked}
-                                        odds={oddsFor(teamA, teamB)}
-                                    />
-                                );
-                            })}
-                        </div>
-                    </Column>
+                        {/* ── Column 2: Octavos (D16) ── */}
+                        <Column label="1/8">
+                            <div className="flex flex-col" style={{ height: totalHeight }}>
+                                {D16_MATCHES.map((m, idx) => {
+                                    const { teamA, teamB, winner } = resolvedMatch(m.id, m.slotA, m.slotB);
+                                    return (
+                                        <MatchCell
+                                            key={m.id}
+                                            matchId={m.id}
+                                            teamA={teamA}
+                                            teamB={teamB}
+                                            winner={winner}
+                                            onChampionPath={championPath.has(m.id)}
+                                            slotHeight={slotHeights.D16}
+                                            connectorSide={connectorSide(idx)}
+                                            onPick={onPick}
+                                            locked={locked}
+                                            odds={oddsFor(teamA, teamB)}
+                                        />
+                                    );
+                                })}
+                            </div>
+                        </Column>
 
-                    {/* ── Column 4: Semifinal (SF) ── */}
-                    <Column label="Semis">
-                        <div className="flex flex-col" style={{ height: totalHeight }}>
-                            {SF_MATCHES.map((m, idx) => {
-                                const { teamA, teamB, winner } = resolvedMatch(m.id, m.slotA, m.slotB);
-                                return (
-                                    <MatchCell
-                                        key={m.id}
-                                        matchId={m.id}
-                                        teamA={teamA}
-                                        teamB={teamB}
-                                        winner={winner}
-                                        onChampionPath={championPath.has(m.id)}
-                                        slotHeight={slotHeights.SF}
-                                        connectorSide={connectorSide(idx)}
-                                        onPick={onPick}
-                                        locked={locked}
-                                        odds={oddsFor(teamA, teamB)}
-                                    />
-                                );
-                            })}
-                        </div>
-                    </Column>
+                        {/* ── Column 3: Cuartos (QF) ── */}
+                        <Column label="1/4">
+                            <div className="flex flex-col" style={{ height: totalHeight }}>
+                                {QF_MATCHES.map((m, idx) => {
+                                    const { teamA, teamB, winner } = resolvedMatch(m.id, m.slotA, m.slotB);
+                                    return (
+                                        <MatchCell
+                                            key={m.id}
+                                            matchId={m.id}
+                                            teamA={teamA}
+                                            teamB={teamB}
+                                            winner={winner}
+                                            onChampionPath={championPath.has(m.id)}
+                                            slotHeight={slotHeights.QF}
+                                            connectorSide={connectorSide(idx)}
+                                            onPick={onPick}
+                                            locked={locked}
+                                            odds={oddsFor(teamA, teamB)}
+                                        />
+                                    );
+                                })}
+                            </div>
+                        </Column>
 
-                    {/* ── Column 5: Final ── */}
-                    <Column label="Final">
-                        <div className="flex flex-col" style={{ height: totalHeight }}>
-                            {(() => {
-                                const m = FINAL_MATCH;
-                                const { teamA, teamB, winner } = resolvedMatch(m.id, m.slotA, m.slotB);
-                                return (
-                                    <MatchCell
-                                        key={m.id}
-                                        matchId={m.id}
-                                        teamA={teamA}
-                                        teamB={teamB}
-                                        winner={winner}
-                                        onChampionPath={championPath.has(m.id)}
-                                        slotHeight={slotHeights.FINAL}
-                                        connectorSide="single"
-                                        onPick={onPick}
-                                        locked={locked}
-                                        odds={oddsFor(teamA, teamB)}
-                                    />
-                                );
-                            })()}
-                        </div>
-                    </Column>
+                        {/* ── Column 4: Semifinal (SF) ── */}
+                        <Column label="Semis">
+                            <div className="flex flex-col" style={{ height: totalHeight }}>
+                                {SF_MATCHES.map((m, idx) => {
+                                    const { teamA, teamB, winner } = resolvedMatch(m.id, m.slotA, m.slotB);
+                                    return (
+                                        <MatchCell
+                                            key={m.id}
+                                            matchId={m.id}
+                                            teamA={teamA}
+                                            teamB={teamB}
+                                            winner={winner}
+                                            onChampionPath={championPath.has(m.id)}
+                                            slotHeight={slotHeights.SF}
+                                            connectorSide={connectorSide(idx)}
+                                            onPick={onPick}
+                                            locked={locked}
+                                            odds={oddsFor(teamA, teamB)}
+                                        />
+                                    );
+                                })}
+                            </div>
+                        </Column>
 
-                    {/* ── Column 6: Campeón ── */}
-                    <div className="flex flex-col min-w-[140px] lg:min-w-[180px] items-center justify-center">
-                        <div className={`rounded-xl border px-4 py-4 lg:px-6 lg:py-6 flex flex-col items-center gap-2 lg:gap-3 ${champion
-                            ? "border-[#00e87a]/40 bg-[#00e87a]/5"
-                            : "border-dashed border-white/10 bg-white/[0.01]"
-                            }`}>
-                            <p className="text-[9px] lg:text-[11px] font-bold uppercase tracking-widest text-amber-400/80">
-                                Campeón del mundo
-                            </p>
-                            {champion ? (
-                                <>
-                                    <span className="text-3xl lg:text-5xl leading-none">{getFlag(champion)}</span>
-                                    <span className="text-sm lg:text-base font-bold text-[#00e87a] text-center leading-tight">
-                                        {champion}
-                                    </span>
-                                </>
-                            ) : (
-                                <>
-                                    <span className="text-3xl lg:text-5xl leading-none text-gray-700">❓</span>
-                                    <span className="text-[10px] lg:text-[13px] text-gray-700 italic text-center">{emptyChampionLabel}</span>
-                                </>
-                            )}
+                        {/* ── Column 5: Final ── */}
+                        <Column label="Final">
+                            <div className="flex flex-col" style={{ height: totalHeight }}>
+                                {(() => {
+                                    const m = FINAL_MATCH;
+                                    const { teamA, teamB, winner } = resolvedMatch(m.id, m.slotA, m.slotB);
+                                    return (
+                                        <MatchCell
+                                            key={m.id}
+                                            matchId={m.id}
+                                            teamA={teamA}
+                                            teamB={teamB}
+                                            winner={winner}
+                                            onChampionPath={championPath.has(m.id)}
+                                            slotHeight={slotHeights.FINAL}
+                                            connectorSide="single"
+                                            onPick={onPick}
+                                            locked={locked}
+                                            odds={oddsFor(teamA, teamB)}
+                                        />
+                                    );
+                                })()}
+                            </div>
+                        </Column>
+
+                        {/* ── Column 6: Campeón ── */}
+                        <div className="flex flex-col min-w-[140px] lg:min-w-[180px] items-center justify-center">
+                            <div className={`rounded-xl border px-4 py-4 lg:px-6 lg:py-6 flex flex-col items-center gap-2 lg:gap-3 ${champion
+                                ? "border-[#00e87a]/40 bg-[#00e87a]/5"
+                                : "border-dashed border-white/10 bg-white/[0.01]"
+                                }`}>
+                                <p className="text-[9px] lg:text-[11px] font-bold uppercase tracking-widest text-amber-400/80">
+                                    Campeón del mundo
+                                </p>
+                                {champion ? (
+                                    <>
+                                        <span className="text-3xl lg:text-5xl leading-none">{getFlag(champion)}</span>
+                                        <span className="text-sm lg:text-base font-bold text-[#00e87a] text-center leading-tight">
+                                            {champion}
+                                        </span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <span className="text-3xl lg:text-5xl leading-none text-gray-700">❓</span>
+                                        <span className="text-[10px] lg:text-[13px] text-gray-700 italic text-center">{emptyChampionLabel}</span>
+                                    </>
+                                )}
+                            </div>
                         </div>
                     </div>
-                </div>
+                )}
+
+                {/* ── Split bracket layout (clasificacion) ── */}
+                {split && (() => {
+                    // Pixel-based approach: no CSS variable dependency.
+                    // D32H must exceed the rendered card height (~112px including emoji).
+                    const D32H = 130; // px per D32 slot
+                    const halfH = D32H * 8; // 1040px total per half
+                    const SH = { D32: D32H, D16: D32H * 2, QF: D32H * 4, SF: D32H * 8 };
+                    const colW = "min-w-[120px] lg:min-w-[140px]";
+                    const cs = connectorSide;
+
+                    const cell = (m: typeof D32_MATCHES[0], i: number, mir?: boolean, slotH = SH.D32) => {
+                        const { teamA, teamB, winner } = resolvedMatch(m.id, m.slotA, m.slotB);
+                        return (
+                            <SplitCell key={m.id} matchId={m.id} teamA={teamA} teamB={teamB} winner={winner}
+                                onChampionPath={championPath.has(m.id)} slotH={slotH} connectorSide={cs(i)}
+                                mirrored={mir} onPick={onPick} locked={locked} odds={oddsFor(teamA, teamB)} />
+                        );
+                    };
+
+                    return (
+                        <div className="flex gap-0 items-stretch" style={{ minWidth: 1180, height: halfH }}>
+
+                            {/* ══ Left half: flows right toward center ══ */}
+                            <Column label="16avos" widthClass={colW}>
+                                <div className="flex flex-col" style={{ height: halfH }}>
+                                    {D32_MATCHES.slice(0, 8).map((m, i) => cell(m, i, false, SH.D32))}
+                                </div>
+                            </Column>
+
+                            <Column label="1/8" widthClass={colW}>
+                                <div className="flex flex-col" style={{ height: halfH }}>
+                                    {D16_MATCHES.slice(0, 4).map((m, i) => cell(m, i, false, SH.D16))}
+                                </div>
+                            </Column>
+
+                            <Column label="1/4" widthClass={colW}>
+                                <div className="flex flex-col" style={{ height: halfH }}>
+                                    {QF_MATCHES.slice(0, 2).map((m, i) => cell(m, i, false, SH.QF))}
+                                </div>
+                            </Column>
+
+                            <Column label="Semis" widthClass={colW}>
+                                <div className="flex flex-col" style={{ height: halfH }}>
+                                    {(() => {
+                                        const m = SF_MATCHES[0];
+                                        const { teamA, teamB, winner } = resolvedMatch(m.id, m.slotA, m.slotB);
+                                        return (
+                                            <SplitCell matchId={m.id} teamA={teamA} teamB={teamB} winner={winner}
+                                                onChampionPath={championPath.has(m.id)} slotH={SH.SF}
+                                                connectorSide="single" onPick={onPick} locked={locked}
+                                                odds={oddsFor(teamA, teamB)} />
+                                        );
+                                    })()}
+                                </div>
+                            </Column>
+
+                            {/* ══ Center: Final + Champion ══ */}
+                            <div className="flex flex-col min-w-[135px] lg:min-w-[160px] shrink-0">
+                                <p className="text-[9px] font-semibold text-gray-600 uppercase tracking-widest text-center mb-2 shrink-0">
+                                    Final
+                                </p>
+                                <div className="relative flex flex-col items-center justify-center gap-3 px-2"
+                                    style={{ height: halfH }}>
+                                    {(() => {
+                                        const m = FINAL_MATCH;
+                                        const { teamA, teamB, winner } = resolvedMatch(m.id, m.slotA, m.slotB);
+                                        return (
+                                            <MatchCard matchId={m.id} teamA={teamA} teamB={teamB} winner={winner}
+                                                onChampionPath={championPath.has(m.id)} onPick={onPick} locked={locked}
+                                                odds={oddsFor(teamA, teamB)} />
+                                        );
+                                    })()}
+                                    <div className={`w-full rounded-xl border px-3 py-2.5 flex flex-col items-center gap-1.5 ${
+                                        champion ? "border-[#00e87a]/40 bg-[#00e87a]/5" : "border-dashed border-white/10 bg-white/[0.01]"
+                                    }`}>
+                                        <p className="text-[9px] font-bold uppercase tracking-widest text-amber-400/80">
+                                            Campeón del mundo
+                                        </p>
+                                        {champion ? (
+                                            <>
+                                                <span className="text-2xl leading-none">{getFlag(champion)}</span>
+                                                <span className="text-xs font-bold text-[#00e87a] text-center leading-tight">{champion}</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <span className="text-2xl leading-none text-gray-700">❓</span>
+                                                <span className="text-[10px] text-gray-700 italic text-center">{emptyChampionLabel}</span>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* ══ Right half: flows left toward center (mirrored) ══ */}
+                            <Column label="Semis" widthClass={colW}>
+                                <div className="flex flex-col" style={{ height: halfH }}>
+                                    {(() => {
+                                        const m = SF_MATCHES[1];
+                                        const { teamA, teamB, winner } = resolvedMatch(m.id, m.slotA, m.slotB);
+                                        return (
+                                            <SplitCell matchId={m.id} teamA={teamA} teamB={teamB} winner={winner}
+                                                onChampionPath={championPath.has(m.id)} slotH={SH.SF}
+                                                connectorSide="single" mirrored onPick={onPick} locked={locked}
+                                                odds={oddsFor(teamA, teamB)} />
+                                        );
+                                    })()}
+                                </div>
+                            </Column>
+
+                            <Column label="1/4" widthClass={colW}>
+                                <div className="flex flex-col" style={{ height: halfH }}>
+                                    {QF_MATCHES.slice(2).map((m, i) => cell(m, i, true, SH.QF))}
+                                </div>
+                            </Column>
+
+                            <Column label="1/8" widthClass={colW}>
+                                <div className="flex flex-col" style={{ height: halfH }}>
+                                    {D16_MATCHES.slice(4).map((m, i) => cell(m, i, true, SH.D16))}
+                                </div>
+                            </Column>
+
+                            <Column label="16avos" widthClass={colW}>
+                                <div className="flex flex-col" style={{ height: halfH }}>
+                                    {D32_MATCHES.slice(8).map((m, i) => cell(m, i, true, SH.D32))}
+                                </div>
+                            </Column>
+
+                        </div>
+                    );
+                })()}
+
             </div>
         </>
     );

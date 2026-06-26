@@ -264,6 +264,7 @@ export default async function ClasificacionPage() {
             locked
             allGrupos={bracket.allGrupos}
             emptyChampionLabel="Por confirmar"
+            split
           />
         </div>
       )}
