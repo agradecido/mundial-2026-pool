@@ -67,12 +67,33 @@ export default async function AdminPartidosPage({
         }),
     ]);
 
-    const actualBracket = computeActualBracket(allPartidos);
+    const rawBracket = computeActualBracket(allPartidos);
+
+    // Only resolve group-position slots (1X, 2X) for groups where ALL matches
+    // are finalized. Otherwise a leader mid-group would appear as confirmed 1st
+    // when their position is still undecided.
+    const totalPerGroup: Record<string, number> = {};
+    const finalizedPerGroup: Record<string, number> = {};
+    for (const p of allPartidos) {
+        if (p.fase !== "GRUPOS" || !p.grupo) continue;
+        totalPerGroup[p.grupo] = (totalPerGroup[p.grupo] ?? 0) + 1;
+        if (p.estado === "FINALIZADO") finalizedPerGroup[p.grupo] = (finalizedPerGroup[p.grupo] ?? 0) + 1;
+    }
+    const completeGroups = new Set(
+        Object.keys(totalPerGroup).filter(g => (finalizedPerGroup[g] ?? 0) >= totalPerGroup[g])
+    );
+    const safeBracket = {
+        ...rawBracket,
+        grupos: Object.fromEntries(
+            Object.entries(rawBracket.grupos).filter(([g]) => completeGroups.has(g))
+        ),
+    };
+
     const isSlotCode = (name: string) =>
         /^\d/.test(name) || name.includes("/") || /^[WL]\d/.test(name);
     const resolveTeam = (name: string) => {
         if (!isSlotCode(name)) return { display: name, resolved: true };
-        const r = resolveDbCode(name, actualBracket);
+        const r = resolveDbCode(name, safeBracket);
         return r ? { display: r, resolved: true } : { display: name, resolved: false };
     };
 
