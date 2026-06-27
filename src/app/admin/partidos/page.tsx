@@ -103,6 +103,14 @@ export default async function AdminPartidosPage({
                 <h2 className="text-lg font-semibold text-white">Partidos</h2>
                 <div className="flex items-center gap-4">
                     <RecalcularTodosButton />
+                    {session?.user?.role === "ADMIN" && (
+                        <Link
+                            href="/admin/partidos/nuevo"
+                            className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-gray-300 hover:bg-white/10 transition-colors"
+                        >
+                            + Nuevo partido
+                        </Link>
+                    )}
                     <span className="text-xs text-gray-500">{partidos.length} partidos</span>
                 </div>
             </div>

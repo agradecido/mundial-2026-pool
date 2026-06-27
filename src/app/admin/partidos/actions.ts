@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { recalcularPuntosPartido } from "@/lib/scoring";
 import { generarBadges } from "@/lib/badges";
 import { revalidatePath, revalidateTag } from "next/cache";
-import type { EstadoPartido } from "@prisma/client";
+import type { EstadoPartido, Fase } from "@prisma/client";
 
 /**
  * Convierte un string "YYYY-MM-DDTHH:mm" en hora de Madrid (Europe/Madrid) a Date UTC.
@@ -94,6 +94,45 @@ export async function actualizarPartido(
     revalidatePath("/ranking");
 
     return { ok: true };
+}
+
+export async function crearPartido(data: {
+    equipoLocal: string;
+    equipoVisitante: string;
+    fechaPartido: string; // "YYYY-MM-DDTHH:mm" hora Madrid
+    fase: Fase;
+    grupo?: string;
+    estadio?: string;
+    ciudad?: string;
+}): Promise<{ ok: boolean; id?: string; error?: string }> {
+    const session = await auth();
+    if (session?.user?.role !== "ADMIN") return { ok: false, error: "No autorizado" };
+
+    const equipoLocal = data.equipoLocal.trim();
+    const equipoVisitante = data.equipoVisitante.trim();
+    if (!equipoLocal) return { ok: false, error: "El equipo local no puede estar vacío" };
+    if (!equipoVisitante) return { ok: false, error: "El equipo visitante no puede estar vacío" };
+
+    const fecha = madridLocalToUTC(data.fechaPartido);
+    if (Number.isNaN(fecha.getTime())) return { ok: false, error: "Fecha inválida" };
+
+    const partido = await prisma.partido.create({
+        data: {
+            equipoLocal,
+            equipoVisitante,
+            fechaPartido: fecha,
+            fase: data.fase,
+            grupo: data.grupo?.trim() || null,
+            estadio: data.estadio?.trim() || null,
+            ciudad: data.ciudad?.trim() || null,
+        },
+    });
+
+    revalidatePath("/admin/partidos");
+    revalidatePath("/quiniela");
+    revalidatePath("/ranking");
+
+    return { ok: true, id: partido.id };
 }
 
 export async function eliminarPartido(id: string): Promise<{ ok: boolean; error?: string }> {
