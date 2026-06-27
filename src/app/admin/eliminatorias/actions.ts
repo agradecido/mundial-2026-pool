@@ -51,3 +51,19 @@ export async function sincronizarTodos(
   revalidateAll();
   return { ok: true, count: matches.length };
 }
+
+export async function revertirAPlaceholder(
+  partidoId: string,
+  placeholderLocal: string,
+  placeholderVisitante: string,
+): Promise<{ ok: boolean; error?: string }> {
+  await requireAdmin();
+
+  await prisma.partido.update({
+    where: { id: partidoId },
+    data: { equipoLocal: placeholderLocal, equipoVisitante: placeholderVisitante },
+  });
+
+  revalidateAll();
+  return { ok: true };
+}

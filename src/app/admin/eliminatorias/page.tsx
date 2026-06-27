@@ -2,8 +2,9 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getFDKnockoutMatches, normalizeTeamName } from "@/lib/football-data";
-import EliminatoriasPanel, { type EliminatoriaRow } from "@/components/admin/eliminatorias-panel";
+import EliminatoriasPanel, { type EliminatoriaRow, type DuplicadoPar } from "@/components/admin/eliminatorias-panel";
 import type { Fase } from "@prisma/client";
+import worldcupData from "../../../../prisma/data/worldcup.json";
 
 export const dynamic = "force-dynamic";
 
@@ -25,8 +26,51 @@ const KNOCKOUT_FASES: Fase[] = [
   "FINAL",
 ];
 
-function isPlaceholder(name: string): boolean {
-  return /^\d/.test(name) || name.includes("/") || /^[WL]\d/.test(name);
+interface RawMatch {
+  round: string;
+  num?: number;
+  date: string;
+  time: string;
+  team1: string;
+  team2: string;
+  group?: string;
+}
+
+function parseUTCMs(date: string, time: string): number {
+  const [hhmm, offsetStr] = time.split(" ");
+  const [hours, minutes] = hhmm.split(":").map(Number);
+  const offsetHours = parseInt(offsetStr.replace("UTC", ""), 10);
+  const utcHours = hours - offsetHours;
+  const dt = new Date(`${date}T00:00:00Z`);
+  dt.setUTCHours(utcHours, minutes, 0, 0);
+  return dt.getTime();
+}
+
+// Build a lookup of worldcup.json knockout matches: utcMs → {team1, team2, num}
+const wjKnockout = (worldcupData as { matches: RawMatch[] }).matches
+  .filter((m) => !m.group)
+  .map((m) => ({ utcMs: parseUTCMs(m.date, m.time), team1: m.team1, team2: m.team2, num: m.num ?? 0 }));
+
+function closestWjMatch(utcMs: number) {
+  let best = wjKnockout[0];
+  let bestDiff = Math.abs(wjKnockout[0].utcMs - utcMs);
+  for (const m of wjKnockout) {
+    const diff = Math.abs(m.utcMs - utcMs);
+    if (diff < bestDiff) { bestDiff = diff; best = m; }
+  }
+  return best;
+}
+
+// Find the DB match nearest in time within ±2h
+function nearestDb<T extends { fechaPartido: Date }>(list: T[], utcMs: number): T | null {
+  const TWO_H = 2 * 60 * 60 * 1000;
+  let best: T | null = null;
+  let bestDiff = TWO_H;
+  for (const p of list) {
+    const diff = Math.abs(p.fechaPartido.getTime() - utcMs);
+    if (diff < bestDiff) { bestDiff = diff; best = p; }
+  }
+  return best;
 }
 
 export default async function AdminEliminatoriasPage() {
@@ -45,23 +89,22 @@ export default async function AdminEliminatoriasPage() {
     const fdHome = fdm.homeTeam.name ? normalizeTeamName(fdm.homeTeam.name) : null;
     const fdAway = fdm.awayTeam.name ? normalizeTeamName(fdm.awayTeam.name) : null;
 
-    // Match by date (±2 hours), since DB has placeholder names
     const fdTime = new Date(fdm.utcDate).getTime();
-    const db = dbPartidos.find(
-      (p) => Math.abs(p.fechaPartido.getTime() - fdTime) < 2 * 60 * 60 * 1000,
-    ) ?? null;
+    // Use nearest-in-time match (not just first within ±2h)
+    const db = nearestDb(dbPartidos, fdTime);
 
-    // Effective values to write: use API team if confirmed, keep DB value otherwise
     const syncLocal = fdHome ?? db?.equipoLocal ?? null;
     const syncAway = fdAway ?? db?.equipoVisitante ?? null;
 
-    // Up to date: all API-confirmed teams already match what's in DB
     const localOk = !fdHome || db?.equipoLocal === fdHome;
     const awayOk = !fdAway || db?.equipoVisitante === fdAway;
     const alreadyUpToDate = !!db && localOk && awayOk;
-
-    // Can sync: DB exists, at least one API team is confirmed, and something would change
     const canSync = !!db && !alreadyUpToDate && (!!fdHome || !!fdAway);
+
+    // Original placeholder names from worldcup.json (for potential revert)
+    const wj = closestWjMatch(db?.fechaPartido.getTime() ?? fdTime);
+    const originalLocal = wj.team1;
+    const originalVisitante = wj.team2;
 
     return {
       fdId: fdm.id,
@@ -77,14 +120,35 @@ export default async function AdminEliminatoriasPage() {
       dbEstado: db?.estado ?? null,
       syncEquipoLocal: syncLocal,
       syncEquipoVisitante: syncAway,
+      originalLocal,
+      originalVisitante,
       canSync,
       alreadyUpToDate,
     };
   });
 
+  // Detect duplicate team name pairs among knockout DB matches
+  const duplicados: DuplicadoPar[] = [];
+  const seen = new Map<string, (typeof dbPartidos)[0]>();
+  for (const p of dbPartidos) {
+    const key = `${p.equipoLocal}|${p.equipoVisitante}`;
+    const prev = seen.get(key);
+    if (prev) {
+      // Find placeholder for each using worldcup.json
+      const wj1 = closestWjMatch(prev.fechaPartido.getTime());
+      const wj2 = closestWjMatch(p.fechaPartido.getTime());
+      duplicados.push({
+        a: { id: prev.id, equipoLocal: prev.equipoLocal, equipoVisitante: prev.equipoVisitante, fecha: prev.fechaPartido.toISOString(), placeholder: `${wj1.team1} vs ${wj1.team2}` },
+        b: { id: p.id, equipoLocal: p.equipoLocal, equipoVisitante: p.equipoVisitante, fecha: p.fechaPartido.toISOString(), placeholder: `${wj2.team1} vs ${wj2.team2}` },
+      });
+    } else {
+      seen.set(key, p);
+    }
+  }
+
   return (
     <div className="space-y-5">
-      <EliminatoriasPanel rows={rows} error={error} />
+      <EliminatoriasPanel rows={rows} error={error} duplicados={duplicados} />
     </div>
   );
 }

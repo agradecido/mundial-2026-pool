@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { sincronizarEquipos, sincronizarTodos } from "@/app/admin/eliminatorias/actions";
+import { sincronizarEquipos, sincronizarTodos, revertirAPlaceholder } from "@/app/admin/eliminatorias/actions";
 import { getFlag } from "@/lib/flags";
 
 export interface EliminatoriaRow {
@@ -18,8 +18,15 @@ export interface EliminatoriaRow {
   dbEstado: string | null;
   syncEquipoLocal: string | null;
   syncEquipoVisitante: string | null;
+  originalLocal: string;
+  originalVisitante: string;
   canSync: boolean;
   alreadyUpToDate: boolean;
+}
+
+export interface DuplicadoPar {
+  a: { id: string; equipoLocal: string; equipoVisitante: string; fecha: string; placeholder: string };
+  b: { id: string; equipoLocal: string; equipoVisitante: string; fecha: string; placeholder: string };
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -70,11 +77,8 @@ function SyncButton({ row, onDone }: SyncButtonProps) {
     setErr(null);
     startTransition(async () => {
       const res = await sincronizarEquipos(dbPartidoId, syncEquipoLocal, syncEquipoVisitante);
-      if (res.error) {
-        setErr(res.error);
-      } else {
-        onDone(row.fdId, syncEquipoLocal, syncEquipoVisitante);
-      }
+      if (res.error) setErr(res.error);
+      else onDone(row.fdId, syncEquipoLocal, syncEquipoVisitante);
     });
   }
 
@@ -92,12 +96,97 @@ function SyncButton({ row, onDone }: SyncButtonProps) {
   );
 }
 
+interface RevertButtonProps {
+  partidoId: string;
+  placeholder: string; // "team1 vs team2" format
+  onDone: () => void;
+}
+
+function RevertButton({ partidoId, placeholder, onDone }: RevertButtonProps) {
+  const [pending, startTransition] = useTransition();
+  const [err, setErr] = useState<string | null>(null);
+  const [parts] = useState(() => placeholder.split(" vs "));
+
+  function handleRevert() {
+    setErr(null);
+    startTransition(async () => {
+      const res = await revertirAPlaceholder(partidoId, parts[0], parts[1]);
+      if (res.error) setErr(res.error);
+      else onDone();
+    });
+  }
+
+  return (
+    <div className="flex flex-col gap-1">
+      <button
+        onClick={handleRevert}
+        disabled={pending}
+        className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-400 hover:bg-amber-500/20 transition-colors disabled:opacity-50"
+      >
+        {pending ? "Revirtiendo…" : `Revertir → ${placeholder}`}
+      </button>
+      {err && <span className="text-xs text-red-400">{err}</span>}
+    </div>
+  );
+}
+
+interface DuplicadosBlockProps {
+  duplicados: DuplicadoPar[];
+}
+
+function DuplicadosBlock({ duplicados: initial }: DuplicadosBlockProps) {
+  const [list, setList] = useState(initial);
+
+  if (list.length === 0) return null;
+
+  function remove(id: string) {
+    setList((prev) => prev.filter((d) => d.a.id !== id && d.b.id !== id));
+  }
+
+  return (
+    <div className="rounded-xl border border-amber-500/40 bg-amber-950/30 p-4 space-y-4">
+      <div className="flex items-center gap-2">
+        <span className="text-amber-400 font-semibold text-sm">
+          {list.length} par{list.length !== 1 ? "es" : ""} de partidos duplicados
+        </span>
+        <span className="text-xs text-amber-600">— equipos repetidos en dos partidos distintos de la BD</span>
+      </div>
+      {list.map((d) => (
+        <div key={d.a.id + d.b.id} className="rounded-lg border border-white/10 bg-black/30 p-3 space-y-2">
+          <p className="text-white text-sm font-medium">
+            {getFlag(d.a.equipoLocal)} {d.a.equipoLocal} vs {d.a.equipoVisitante} {getFlag(d.a.equipoVisitante)}
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {[d.a, d.b].map((entry) => (
+              <div key={entry.id} className="rounded bg-white/5 p-2 space-y-1">
+                <p className="text-xs text-gray-400">
+                  {new Date(entry.fecha).toLocaleDateString("es-ES", {
+                    day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "UTC",
+                  })} UTC
+                </p>
+                <p className="text-xs text-gray-500 font-mono">Placeholder original: {entry.placeholder}</p>
+                <RevertButton
+                  partidoId={entry.id}
+                  placeholder={entry.placeholder}
+                  onDone={() => remove(entry.id)}
+                />
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-amber-700">Usa el botón "Revertir" en el partido incorrecto para restaurarlo a su placeholder original.</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 interface Props {
   rows: EliminatoriaRow[];
   error?: string;
+  duplicados: DuplicadoPar[];
 }
 
-export default function EliminatoriasPanel({ rows, error }: Props) {
+export default function EliminatoriasPanel({ rows, error, duplicados }: Props) {
   const [localRows, setLocalRows] = useState(rows);
   const [syncAllPending, startSyncAll] = useTransition();
   const [syncAllMsg, setSyncAllMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
@@ -172,32 +261,21 @@ export default function EliminatoriasPanel({ rows, error }: Props) {
       )}
 
       {syncAllMsg && (
-        <p
-          className={`text-sm rounded-lg px-3 py-2 ${
-            syncAllMsg.type === "ok"
-              ? "bg-emerald-950/50 text-emerald-400 border border-emerald-800"
-              : "bg-red-950/50 text-red-400 border border-red-900"
-          }`}
-        >
+        <p className={`text-sm rounded-lg px-3 py-2 ${syncAllMsg.type === "ok" ? "bg-emerald-950/50 text-emerald-400 border border-emerald-800" : "bg-red-950/50 text-red-400 border border-red-900"}`}>
           {syncAllMsg.text}
         </p>
       )}
 
+      {/* Duplicados */}
+      <DuplicadosBlock duplicados={duplicados} />
+
       {!error && localRows.length > 0 && (
         <div className="flex flex-wrap gap-4 text-xs text-gray-500">
-          <span>
-            <span className="text-white font-medium">{localRows.length}</span> partidos eliminatorias
-          </span>
-          <span>
-            <span className="text-white font-medium">{confirmados.length}</span> con equipos confirmados en API
-          </span>
-          <span>
-            <span className="text-emerald-400 font-medium">{actualizados.length}</span> ya actualizados en BD
-          </span>
+          <span><span className="text-white font-medium">{localRows.length}</span> partidos eliminatorias</span>
+          <span><span className="text-white font-medium">{confirmados.length}</span> con equipos confirmados en API</span>
+          <span><span className="text-emerald-400 font-medium">{actualizados.length}</span> ya actualizados en BD</span>
           {pendientes.length > 0 && (
-            <span>
-              <span className="text-blue-400 font-medium">{pendientes.length}</span> pendientes de sincronizar
-            </span>
+            <span><span className="text-blue-400 font-medium">{pendientes.length}</span> pendientes de sincronizar</span>
           )}
         </div>
       )}
@@ -223,16 +301,10 @@ export default function EliminatoriasPanel({ rows, error }: Props) {
                 >
                   <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">
                     {new Date(row.utcDate).toLocaleDateString("es-ES", {
-                      day: "2-digit",
-                      month: "short",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      timeZone: "UTC",
+                      day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "UTC",
                     })}
                   </td>
-                  <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">
-                    {row.faseLabel}
-                  </td>
+                  <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">{row.faseLabel}</td>
                   <td className="px-4 py-3 text-white whitespace-nowrap">
                     <TeamCell name={row.fdHomeTeam} />
                     <span className="text-gray-500 mx-2 text-xs">vs</span>
