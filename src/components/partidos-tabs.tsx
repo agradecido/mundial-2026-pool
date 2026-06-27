@@ -114,6 +114,14 @@ export default function PartidosTabs({
             </button>
           ))}
         </div>
+        {tab === "fecha" && (
+          <a
+            href="#fase-eliminatoria"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-sm font-medium text-gray-500 hover:text-gray-300 hover:border-white/20 transition-colors"
+          >
+            ↓ 16avos
+          </a>
+        )}
         {tab !== "fecha" && (
           <button
             onClick={() => setHidePast((v) => !v)}
@@ -185,14 +193,43 @@ export default function PartidosTabs({
                 );
                 if (!dayPartidos.length) return null;
 
-                const hasKnockout = dayPartidos.some((p) => p.fase !== "GRUPOS");
+                const grupoPartidos = dayPartidos.filter((p) => p.fase === "GRUPOS");
+                const knockoutPartidos = dayPartidos.filter((p) => p.fase !== "GRUPOS");
+
+                const hasKnockout = knockoutPartidos.length > 0;
                 const showSeparator = hasKnockout && !knockoutSeparatorShown;
                 if (hasKnockout) knockoutSeparatorShown = true;
 
+                const renderCard = (p: SerializedPartido) => (
+                  <PartidoCard
+                    key={`${p.id}-${pronosticoMap[p.id] ? 1 : 0}`}
+                    partido={p}
+                    pronostico={pronosticoMap[p.id] ?? null}
+                    odds={oddsMap?.[p.id] ?? null}
+                    showPrediccion={isInPrediccionWindow(key)}
+                    slotGroupStandings={slotGroupStandings}
+                  />
+                );
+
                 return (
                   <div key={key}>
+                    {/* Partidos de grupos de este día (si los hay) */}
+                    {grupoPartidos.length > 0 && (
+                      <section>
+                        <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-gray-500 capitalize">
+                          {formatDayHeader(grupoPartidos[0].fechaPartido)}
+                        </h2>
+                        <div className="glass-card p-4">
+                          <div className="space-y-1.5">
+                            {grupoPartidos.map(renderCard)}
+                          </div>
+                        </div>
+                      </section>
+                    )}
+
+                    {/* Separador antes del primer partido eliminatorio */}
                     {showSeparator && (
-                      <div className="flex items-center gap-4 my-8">
+                      <div id="fase-eliminatoria" className="flex items-center gap-4 my-8">
                         <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
                         <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-400/70 shrink-0">
                           Fase Eliminatoria
@@ -200,25 +237,23 @@ export default function PartidosTabs({
                         <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
                       </div>
                     )}
-                    <section>
-                      <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-gray-500 capitalize">
-                        {formatDayHeader(dayPartidos[0].fechaPartido)}
-                      </h2>
-                      <div className="glass-card p-4">
-                        <div className="space-y-1.5">
-                          {dayPartidos.map((p) => (
-                            <PartidoCard
-                              key={`${p.id}-${pronosticoMap[p.id] ? 1 : 0}`}
-                              partido={p}
-                              pronostico={pronosticoMap[p.id] ?? null}
-                              odds={oddsMap?.[p.id] ?? null}
-                              showPrediccion={isInPrediccionWindow(key)}
-                              slotGroupStandings={slotGroupStandings}
-                            />
-                          ))}
+
+                    {/* Partidos eliminatorios de este día (si los hay) */}
+                    {knockoutPartidos.length > 0 && (
+                      <section>
+                        {/* Solo mostrar el encabezado del día si no hubo grupos antes */}
+                        {grupoPartidos.length === 0 && (
+                          <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-gray-500 capitalize">
+                            {formatDayHeader(knockoutPartidos[0].fechaPartido)}
+                          </h2>
+                        )}
+                        <div className="glass-card p-4">
+                          <div className="space-y-1.5">
+                            {knockoutPartidos.map(renderCard)}
+                          </div>
                         </div>
-                      </div>
-                    </section>
+                      </section>
+                    )}
                   </div>
                 );
               });
