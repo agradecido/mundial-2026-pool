@@ -34,11 +34,11 @@ interface Props {
     };
 }
 
-/** Convierte Date ISO a valor compatible con datetime-local input */
+/** Convierte UTC ISO a valor compatible con datetime-local en hora de Madrid (Europe/Madrid) */
 function toDatetimeLocal(iso: string): string {
-    const d = new Date(iso);
-    const pad = (n: number) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    // sv-SE produce "YYYY-MM-DD HH:mm:ss" — formato cercano al que espera datetime-local
+    const str = new Date(iso).toLocaleString("sv-SE", { timeZone: "Europe/Madrid" });
+    return str.slice(0, 16).replace(" ", "T"); // "YYYY-MM-DDTHH:mm"
 }
 
 export default function PartidoEditForm({ partido }: Props) {
@@ -114,7 +114,7 @@ export default function PartidoEditForm({ partido }: Props) {
             {/* Fecha */}
             <div>
                 <label htmlFor="fecha" className="label-field">
-                    Fecha y hora
+                    Fecha y hora <span className="text-gray-500 font-normal">(hora española, UTC+2)</span>
                 </label>
                 <input
                     id="fecha"

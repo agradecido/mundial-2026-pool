@@ -221,7 +221,7 @@ export default function ResultadosPanel({ rows, error }: Props) {
                       month: "short",
                       hour: "2-digit",
                       minute: "2-digit",
-                      timeZone: "UTC",
+                      timeZone: "Europe/Madrid",
                     })}
                   </td>
                   <td className="px-4 py-3 text-white whitespace-nowrap">

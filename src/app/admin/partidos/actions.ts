@@ -7,6 +7,20 @@ import { generarBadges } from "@/lib/badges";
 import { revalidatePath, revalidateTag } from "next/cache";
 import type { EstadoPartido } from "@prisma/client";
 
+/**
+ * Convierte un string "YYYY-MM-DDTHH:mm" en hora de Madrid (Europe/Madrid) a Date UTC.
+ * Usa dos iteraciones para manejar correctamente el cambio de horario (CET/CEST).
+ */
+function madridLocalToUTC(dtLocal: string): Date {
+    const utcApprox = new Date(dtLocal + ":00Z");
+    const getOffset = (d: Date) => {
+        const madridStr = d.toLocaleString("sv-SE", { timeZone: "Europe/Madrid" });
+        return new Date(madridStr.replace(" ", "T") + "Z").getTime() - d.getTime();
+    };
+    const utcAdjusted = new Date(utcApprox.getTime() - getOffset(utcApprox));
+    return new Date(utcApprox.getTime() - getOffset(utcAdjusted));
+}
+
 async function requireAdminOrEditor() {
     const session = await auth();
     const role = session?.user?.role;
@@ -35,7 +49,7 @@ export async function actualizarPartido(
     if (gV !== null && (isNaN(gV) || gV < 0))
         return { error: "Goles visitante inválidos" };
 
-    const fecha = new Date(data.fechaPartido);
+    const fecha = madridLocalToUTC(data.fechaPartido);
     if (isNaN(fecha.getTime())) return { error: "Fecha inválida" };
 
     const equipoLocal = data.equipoLocal?.trim();

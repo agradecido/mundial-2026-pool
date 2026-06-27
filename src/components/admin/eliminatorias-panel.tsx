@@ -161,7 +161,7 @@ function DuplicadosBlock({ duplicados: initial }: DuplicadosBlockProps) {
               <div key={entry.id} className="rounded bg-white/5 p-2 space-y-1">
                 <p className="text-xs text-gray-400">
                   {new Date(entry.fecha).toLocaleDateString("es-ES", {
-                    day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "UTC",
+                    day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Madrid",
                   })} UTC
                 </p>
                 <p className="text-xs text-gray-500 font-mono">Placeholder original: {entry.placeholder}</p>
@@ -301,7 +301,7 @@ export default function EliminatoriasPanel({ rows, error, duplicados }: Props) {
                 >
                   <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">
                     {new Date(row.utcDate).toLocaleDateString("es-ES", {
-                      day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "UTC",
+                      day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Madrid",
                     })}
                   </td>
                   <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">{row.faseLabel}</td>
