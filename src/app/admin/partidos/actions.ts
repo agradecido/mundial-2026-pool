@@ -96,6 +96,21 @@ export async function actualizarPartido(
     return { ok: true };
 }
 
+export async function eliminarPartido(id: string): Promise<{ ok: boolean; error?: string }> {
+    const session = await auth();
+    if (session?.user?.role !== "ADMIN") return { ok: false, error: "No autorizado" };
+
+    await prisma.partido.delete({ where: { id } });
+
+    revalidateTag("ranking", "max");
+    revalidatePath("/admin/partidos");
+    revalidatePath("/quiniela");
+    revalidatePath("/quiniela/ranking");
+    revalidatePath("/ranking");
+
+    return { ok: true };
+}
+
 export async function recalcularTodosFinalizados() {
     await requireAdminOrEditor();
 

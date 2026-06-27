@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { LinkSpinner } from "@/components/nav-button";
 import PartidoEditForm from "@/components/admin/partido-edit-form";
+import EliminarPartidoButton from "@/components/admin/eliminar-partido-button";
 
 export default async function PartidoEditPage({
     params,
@@ -39,6 +40,10 @@ export default async function PartidoEditPage({
             </div>
 
             <PartidoEditForm partido={serialized} />
+
+            <div className="border-t border-white/10 pt-6">
+                <EliminarPartidoButton partidoId={id} />
+            </div>
         </div>
     );
 }
