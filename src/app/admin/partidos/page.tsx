@@ -6,6 +6,8 @@ import { LinkSpinner } from "@/components/nav-button";
 import { getFlag } from "@/lib/flags";
 import type { Fase, EstadoPartido } from "@prisma/client";
 import RecalcularTodosButton from "./recalcular-button";
+import { computeActualBracket } from "@/lib/bracket-scoring";
+import { resolveDbCode } from "@/lib/bracket";
 
 const FASE_LABELS: Record<Fase, string> = {
     GRUPOS: "Grupos",
@@ -40,21 +42,39 @@ export default async function AdminPartidosPage({
     const params = await searchParams;
     const { fase, q, estado } = params;
 
-    const partidos = await prisma.partido.findMany({
-        orderBy: [{ fase: "asc" }, { fechaPartido: "asc" }],
-        where: {
-            ...(fase ? { fase: fase as Fase } : {}),
-            ...(estado ? { estado: estado as EstadoPartido } : {}),
-            ...(q
-                ? {
-                    OR: [
-                        { equipoLocal: { contains: q, mode: "insensitive" } },
-                        { equipoVisitante: { contains: q, mode: "insensitive" } },
-                    ],
-                }
-                : {}),
-        },
-    });
+    const [partidos, allPartidos] = await Promise.all([
+        prisma.partido.findMany({
+            orderBy: [{ fase: "asc" }, { fechaPartido: "asc" }],
+            where: {
+                ...(fase ? { fase: fase as Fase } : {}),
+                ...(estado ? { estado: estado as EstadoPartido } : {}),
+                ...(q
+                    ? {
+                        OR: [
+                            { equipoLocal: { contains: q, mode: "insensitive" } },
+                            { equipoVisitante: { contains: q, mode: "insensitive" } },
+                        ],
+                    }
+                    : {}),
+            },
+        }),
+        prisma.partido.findMany({
+            select: {
+                equipoLocal: true, equipoVisitante: true,
+                golesLocalReal: true, golesVisitanteReal: true,
+                estado: true, fase: true, grupo: true,
+            },
+        }),
+    ]);
+
+    const actualBracket = computeActualBracket(allPartidos);
+    const isSlotCode = (name: string) =>
+        /^\d/.test(name) || name.includes("/") || /^[WL]\d/.test(name);
+    const resolveTeam = (name: string) => {
+        if (!isSlotCode(name)) return { display: name, resolved: true };
+        const r = resolveDbCode(name, actualBracket);
+        return r ? { display: r, resolved: true } : { display: name, resolved: false };
+    };
 
     return (
         <div className="space-y-5">
@@ -132,13 +152,21 @@ export default async function AdminPartidosPage({
                         {partidos.map((p) => (
                             <tr key={p.id} className="hover:bg-white/[0.02] transition-colors">
                                 <td className="px-4 py-3 text-white">
-                                    <span className="font-medium">
-                                        {getFlag(p.equipoLocal)} {p.equipoLocal}
-                                    </span>
-                                    <span className="text-gray-500 mx-2">vs</span>
-                                    <span className="font-medium">
-                                        {getFlag(p.equipoVisitante)} {p.equipoVisitante}
-                                    </span>
+                                    {(() => {
+                                        const local = resolveTeam(p.equipoLocal);
+                                        const visitante = resolveTeam(p.equipoVisitante);
+                                        return (
+                                            <>
+                                                <span className={`font-medium ${!local.resolved ? "text-gray-500 italic" : ""}`}>
+                                                    {local.resolved && getFlag(local.display)} {local.display}
+                                                </span>
+                                                <span className="text-gray-500 mx-2">vs</span>
+                                                <span className={`font-medium ${!visitante.resolved ? "text-gray-500 italic" : ""}`}>
+                                                    {visitante.resolved && getFlag(visitante.display)} {visitante.display}
+                                                </span>
+                                            </>
+                                        );
+                                    })()}
                                 </td>
                                 <td className="px-4 py-3 text-gray-400 hidden sm:table-cell">
                                     {p.grupo ? `Grupo ${p.grupo}` : FASE_LABELS[p.fase]}
