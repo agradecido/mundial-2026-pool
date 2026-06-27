@@ -16,7 +16,9 @@ export default async function AdminUsuariosPage() {
             email: true,
             image: true,
             role: true,
+            suspendido: true,
             fechaRegistro: true,
+            ultimoAccesoQuiniela: true,
             _count: { select: { pronosticos: true } },
             pronosticos: { select: { puntosGanados: true } },
             prediccionFutura: {
@@ -31,7 +33,9 @@ export default async function AdminUsuariosPage() {
         email: u.email,
         image: u.image,
         role: u.role,
+        suspendido: u.suspendido,
         fechaRegistro: u.fechaRegistro.toISOString(),
+        ultimoAccesoQuiniela: u.ultimoAccesoQuiniela?.toISOString() ?? null,
         _count: u._count,
         totalPuntos:
             u.pronosticos.reduce((s, p) => s + p.puntosGanados, 0) +

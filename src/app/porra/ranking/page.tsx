@@ -16,6 +16,7 @@ export default async function PorraRankingPage() {
 
   const [usuarios, partidos] = await Promise.all([
     prisma.user.findMany({
+      where: { suspendido: false },
       select: {
         id: true, name: true, image: true,
         ultimoAcceso: true,

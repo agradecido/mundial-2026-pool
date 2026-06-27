@@ -26,6 +26,7 @@ export default async function QuinielaRankingPage() {
 
     const [users, firstPartido, badges] = await Promise.all([
         prisma.user.findMany({
+            where: { suspendido: false },
             select: {
                 id: true,
                 name: true,

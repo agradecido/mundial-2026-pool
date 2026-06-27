@@ -152,6 +152,17 @@ Los usuarios pueden crear grupos privados de amigos con un código de invitació
 ### 3.7. Sistema de Modales de Anuncios
 Los admins pueden crear modales de anuncios (`Modal`) que aparecen a los usuarios. Cada usuario puede dismissarlos (`ModalDismissal`). Se gestionan desde `/admin/modales`.
 
+### 3.8. Criterios de Desempate en Fase de Grupos (Reglamento FIFA)
+Cuando dos o más equipos quedan igualados en puntos al final de la fase de grupos, se aplican estos criterios **en orden**:
+
+1. **Mayor número de puntos en el partido(s) disputado(s) entre los equipos empatados** (mini-liga entre los implicados).
+2. Si persiste el empate, se pasa a los resultados de los **tres partidos** del grupo:
+   a. Mejor diferencia de goles en el grupo.
+   b. Mayor número de goles marcados en el grupo.
+   c. Mejor conducta deportiva (menos tarjetas: amarilla = 1 pt, roja directa = 3 pts, amarilla + roja = 3 pts).
+
+Estos criterios afectan directamente a la lógica de `src/lib/thirds-table.ts` y a la página de clasificación (`src/app/clasificacion/`), que calculan las posiciones de grupo y los mejores terceros.
+
 ---
 
 ## 4. Scripts y Comandos del Entorno

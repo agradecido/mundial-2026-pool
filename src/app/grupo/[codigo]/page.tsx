@@ -36,7 +36,7 @@ export default async function GrupoPage({
 
   const [usuarios, partidos] = await Promise.all([
     prisma.user.findMany({
-      where: { id: { in: memberIds } },
+      where: { id: { in: memberIds }, suspendido: false },
       select: {
         id: true, name: true, image: true,
         ultimoAcceso: true,

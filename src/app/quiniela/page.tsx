@@ -14,11 +14,14 @@ export default async function PartidosPage() {
 
   const now = new Date();
 
+  void prisma.user.update({ where: { id: userId }, data: { ultimoAccesoQuiniela: now } });
+
   const [partidos, pronosticos, oddsEvents, allUsers, userBadge, allPartidosForBracket] = await Promise.all([
     prisma.partido.findMany({ orderBy: { fechaPartido: "asc" } }),
     prisma.pronostico.findMany({ where: { userId } }),
     getMundialOdds(),
     prisma.user.findMany({
+      where: { suspendido: false },
       select: {
         id: true,
         name: true,
@@ -83,20 +86,25 @@ export default async function PartidosPage() {
     Object.entries(rawBracket.grupos).filter(([g]) => completeGroups.has(g))
   );
 
-  // Add mathematically confirmed qualifiers from incomplete groups:
-  // A team is confirmed top-2 if STRICTLY fewer than 2 other teams can surpass
-  // their current points (ignoring tiebreakers — provisional only).
+  // Add mathematically confirmed qualifiers from incomplete groups.
+  // 1st is confirmed only if no other team can reach or tie their points.
+  // 2nd is confirmed only if 1st is confirmed AND no remaining team can reach or tie 2nd's points.
   for (const [grupo, teams] of Object.entries(groupStandings)) {
     if (completeGroups.has(grupo)) continue;
     const sorted = Object.entries(teams)
       .map(([team, d]) => ({ team, ...d }))
       .sort((a, b) => b.pts - a.pts);
     const maxPts = (t: (typeof sorted)[0]) => t.pts + 3 * t.remaining;
-    const confirmed = sorted.filter(
-      (c) => sorted.filter((t) => t.team !== c.team && maxPts(t) > c.pts).length < 2
+
+    const first = sorted[0];
+    if (sorted.some(t => t.team !== first.team && maxPts(t) >= first.pts)) continue;
+
+    const second = sorted[1];
+    if (!second) { bracketGrupos[grupo] = [first.team]; continue; }
+    const second2ndChallenged = sorted.some(
+      t => t.team !== first.team && t.team !== second.team && maxPts(t) >= second.pts
     );
-    if (confirmed.length > 0)
-      bracketGrupos[grupo] = confirmed.slice(0, 2).map((t) => t.team);
+    bracketGrupos[grupo] = second2ndChallenged ? [first.team] : [first.team, second.team];
   }
 
   const teamToGroup: Record<string, string> = {};

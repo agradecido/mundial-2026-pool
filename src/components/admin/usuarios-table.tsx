@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { cambiarRolUsuario, eliminarUsuario } from "@/app/admin/usuarios/actions";
+import { cambiarRolUsuario, eliminarUsuario, suspenderUsuario } from "@/app/admin/usuarios/actions";
 import Image from "next/image";
 import type { Role } from "@prisma/client";
 
@@ -11,7 +11,9 @@ interface Usuario {
     email: string;
     image: string | null;
     role: Role;
+    suspendido: boolean;
     fechaRegistro: string; // ISO
+    ultimoAccesoQuiniela: string | null; // ISO
     _count: { pronosticos: number };
     totalPuntos: number;
 }
@@ -54,6 +56,14 @@ export default function UsuariosTable({ usuarios, currentAdminId }: Props) {
         });
     }
 
+    function handleSuspend(userId: string, suspendido: boolean, name: string | null) {
+        clearError(userId);
+        startTransition(async () => {
+            const res = await suspenderUsuario(userId, suspendido);
+            if (res.error) setError(userId, res.error);
+        });
+    }
+
     return (
         <div className="overflow-x-auto rounded-xl border border-white/10">
             <table className="w-full text-sm">
@@ -61,6 +71,7 @@ export default function UsuariosTable({ usuarios, currentAdminId }: Props) {
                     <tr className="border-b border-white/10 text-left text-xs text-gray-500">
                         <th className="px-4 py-3 font-medium">Usuario</th>
                         <th className="px-4 py-3 font-medium hidden md:table-cell">Registro</th>
+                        <th className="px-4 py-3 font-medium hidden lg:table-cell">Últ. quiniela</th>
                         <th className="px-4 py-3 font-medium hidden sm:table-cell">Pronósticos</th>
                         <th className="px-4 py-3 font-medium hidden sm:table-cell">Puntos</th>
                         <th className="px-4 py-3 font-medium">Rol</th>
@@ -69,7 +80,7 @@ export default function UsuariosTable({ usuarios, currentAdminId }: Props) {
                 </thead>
                 <tbody className="divide-y divide-white/5">
                     {usuarios.map((u) => (
-                        <tr key={u.id} className="hover:bg-white/[0.02] transition-colors align-middle">
+                        <tr key={u.id} className={`hover:bg-white/[0.02] transition-colors align-middle ${u.suspendido ? "opacity-50" : ""}`}>
                             <td className="px-4 py-3">
                                 <div className="flex items-center gap-2.5">
                                     {u.image ? (
@@ -86,7 +97,14 @@ export default function UsuariosTable({ usuarios, currentAdminId }: Props) {
                                         </span>
                                     )}
                                     <div>
-                                        <p className="text-white font-medium leading-tight">{u.name ?? "—"}</p>
+                                        <div className="flex items-center gap-1.5">
+                                            <p className="text-white font-medium leading-tight">{u.name ?? "—"}</p>
+                                            {u.suspendido && (
+                                                <span className="rounded px-1 py-0.5 text-[10px] font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/20">
+                                                    suspendido
+                                                </span>
+                                            )}
+                                        </div>
                                         <p className="text-xs text-gray-500 truncate max-w-[160px]">{u.email}</p>
                                         {errors[u.id] && (
                                             <p className="text-xs text-red-400 mt-0.5">{errors[u.id]}</p>
@@ -100,6 +118,16 @@ export default function UsuariosTable({ usuarios, currentAdminId }: Props) {
                                     month: "short",
                                     year: "numeric",
                                 })}
+                            </td>
+                            <td className="px-4 py-3 text-gray-400 hidden lg:table-cell whitespace-nowrap">
+                                {u.ultimoAccesoQuiniela
+                                    ? new Date(u.ultimoAccesoQuiniela).toLocaleDateString("es-ES", {
+                                        day: "2-digit",
+                                        month: "short",
+                                        year: "numeric",
+                                    })
+                                    : <span className="text-gray-600">—</span>
+                                }
                             </td>
                             <td className="px-4 py-3 text-gray-300 hidden sm:table-cell">
                                 {u._count.pronosticos}
@@ -121,14 +149,28 @@ export default function UsuariosTable({ usuarios, currentAdminId }: Props) {
                             </td>
                             <td className="px-4 py-3 text-right">
                                 {u.id !== currentAdminId && (
-                                    <button
-                                        type="button"
-                                        onClick={() => handleDelete(u.id, u.name)}
-                                        disabled={pending}
-                                        className="rounded-lg border border-red-900/50 bg-red-950/30 px-3 py-1 text-xs text-red-400 hover:bg-red-950/60 hover:text-red-300 transition-colors disabled:opacity-50"
-                                    >
-                                        Eliminar
-                                    </button>
+                                    <div className="flex items-center justify-end gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleSuspend(u.id, !u.suspendido, u.name)}
+                                            disabled={pending}
+                                            className={`rounded-lg border px-3 py-1 text-xs transition-colors disabled:opacity-50 ${
+                                                u.suspendido
+                                                    ? "border-green-900/50 bg-green-950/30 text-green-400 hover:bg-green-950/60 hover:text-green-300"
+                                                    : "border-amber-900/50 bg-amber-950/30 text-amber-400 hover:bg-amber-950/60 hover:text-amber-300"
+                                            }`}
+                                        >
+                                            {u.suspendido ? "Reactivar" : "Suspender"}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleDelete(u.id, u.name)}
+                                            disabled={pending}
+                                            className="rounded-lg border border-red-900/50 bg-red-950/30 px-3 py-1 text-xs text-red-400 hover:bg-red-950/60 hover:text-red-300 transition-colors disabled:opacity-50"
+                                        >
+                                            Eliminar
+                                        </button>
+                                    </div>
                                 )}
                             </td>
                         </tr>

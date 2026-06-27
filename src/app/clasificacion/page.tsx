@@ -13,6 +13,48 @@ type Stats = {
 };
 
 type GrupoData = { letra: string; equipos: Stats[] };
+type MatchResult = { local: string; visitante: string; gl: number; gv: number };
+
+function sortGroupTeams(teams: Stats[], matches: MatchResult[]): Stats[] {
+  const byPoints = new Map<number, Stats[]>();
+  for (const t of teams) {
+    const tier = byPoints.get(t.pts) ?? [];
+    tier.push(t);
+    byPoints.set(t.pts, tier);
+  }
+  const result: Stats[] = [];
+  for (const pts of [...byPoints.keys()].sort((a, b) => b - a)) {
+    const tier = byPoints.get(pts)!;
+    if (tier.length === 1) { result.push(tier[0]); continue; }
+
+    const tiedSet = new Set(tier.map(t => t.team));
+    const h2h: Record<string, { pts: number; gf: number; gc: number }> = {};
+    for (const t of tier) h2h[t.team] = { pts: 0, gf: 0, gc: 0 };
+    for (const m of matches) {
+      if (!tiedSet.has(m.local) || !tiedSet.has(m.visitante)) continue;
+      h2h[m.local].gf += m.gl; h2h[m.local].gc += m.gv;
+      h2h[m.visitante].gf += m.gv; h2h[m.visitante].gc += m.gl;
+      if (m.gl > m.gv) h2h[m.local].pts += 3;
+      else if (m.gl < m.gv) h2h[m.visitante].pts += 3;
+      else { h2h[m.local].pts++; h2h[m.visitante].pts++; }
+    }
+
+    result.push(
+      ...[...tier].sort((a, b) => {
+        const ha = h2h[a.team], hb = h2h[b.team];
+        if (hb.pts !== ha.pts) return hb.pts - ha.pts;
+        const h2hGdA = ha.gf - ha.gc, h2hGdB = hb.gf - hb.gc;
+        if (h2hGdB !== h2hGdA) return h2hGdB - h2hGdA;
+        if (hb.gf !== ha.gf) return hb.gf - ha.gf;
+        const gdA = a.gf - a.gc, gdB = b.gf - b.gc;
+        if (gdB !== gdA) return gdB - gdA;
+        if (b.gf !== a.gf) return b.gf - a.gf;
+        return a.team.localeCompare(b.team);
+      })
+    );
+  }
+  return result;
+}
 
 const getClasificacion = unstable_cache(
   async (): Promise<GrupoData[]> => {
@@ -29,10 +71,12 @@ const getClasificacion = unstable_cache(
     });
 
     const groups: Record<string, Record<string, Stats>> = {};
+    const groupMatches: Record<string, MatchResult[]> = {};
 
     for (const p of partidos) {
       if (!p.grupo) continue;
       if (!groups[p.grupo]) groups[p.grupo] = {};
+      if (!groupMatches[p.grupo]) groupMatches[p.grupo] = [];
 
       const init = (t: string): Stats => ({ team: t, pj: 0, pg: 0, pe: 0, pp: 0, gf: 0, gc: 0, pts: 0 });
       if (!groups[p.grupo][p.equipoLocal]) groups[p.grupo][p.equipoLocal] = init(p.equipoLocal);
@@ -52,6 +96,8 @@ const getClasificacion = unstable_cache(
       if (gl > gv) { loc.pg++; loc.pts += 3; vis.pp++; }
       else if (gl < gv) { vis.pg++; vis.pts += 3; loc.pp++; }
       else { loc.pe++; loc.pts++; vis.pe++; vis.pts++; }
+
+      groupMatches[p.grupo].push({ local: p.equipoLocal, visitante: p.equipoVisitante, gl, gv });
     }
 
     return Object.entries(groups)
@@ -59,13 +105,7 @@ const getClasificacion = unstable_cache(
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([letra, teams]) => ({
         letra,
-        equipos: Object.values(teams).sort((a, b) => {
-          if (b.pts !== a.pts) return b.pts - a.pts;
-          const gdA = a.gf - a.gc, gdB = b.gf - b.gc;
-          if (gdB !== gdA) return gdB - gdA;
-          if (b.gf !== a.gf) return b.gf - a.gf;
-          return a.team.localeCompare(b.team);
-        }),
+        equipos: sortGroupTeams(Object.values(teams), groupMatches[letra] ?? []),
       }));
   },
   ["clasificacion-grupos"],
@@ -125,8 +165,8 @@ const getActualBracket = unstable_cache(
     );
 
     // Also add mathematically confirmed qualifiers from incomplete groups:
-    // build current standings + remaining matches, then check if STRICTLY
-    // fewer than 2 other teams can surpass a team's current points.
+    // build current standings + remaining matches, then check if fewer than 2
+    // other teams can reach or tie a team's current points (>= to cover tiebreaker risk).
     type TeamData = { pts: number; remaining: number };
     const groupStandings: Record<string, Record<string, TeamData>> = {};
     for (const p of partidos) {
@@ -151,11 +191,18 @@ const getActualBracket = unstable_cache(
         .map(([team, d]) => ({ team, ...d }))
         .sort((a, b) => b.pts - a.pts);
       const maxPts = (t: (typeof sorted)[0]) => t.pts + 3 * t.remaining;
-      const confirmed = sorted.filter(
-        (c) => sorted.filter((t) => t.team !== c.team && maxPts(t) > c.pts).length < 2
+
+      // 1st is confirmed only if no other team can reach or tie their points.
+      const first = sorted[0];
+      if (sorted.some(t => t.team !== first.team && maxPts(t) >= first.pts)) continue;
+
+      // 2nd is confirmed only if no other team (excluding confirmed 1st) can reach or tie their points.
+      const second = sorted[1];
+      if (!second) { grupos[grupo] = [first.team]; continue; }
+      const second2ndChallenged = sorted.some(
+        t => t.team !== first.team && t.team !== second.team && maxPts(t) >= second.pts
       );
-      if (confirmed.length > 0)
-        grupos[grupo] = confirmed.slice(0, 2).map((t) => t.team);
+      grupos[grupo] = second2ndChallenged ? [first.team] : [first.team, second.team];
     }
 
     // Build team→group map to filter terceros from incomplete groups.
@@ -187,6 +234,21 @@ export default async function ClasificacionPage() {
 
   const userGrupos = (userBracket?.picks as BracketPicks | null)?.grupos ?? {};
   const userTerceros = (userBracket?.picks as BracketPicks | null)?.terceros ?? [];
+
+  const tercerosList = grupos
+    .filter(g => g.equipos.length >= 3 && g.equipos[2].pj > 0)
+    .map(g => ({
+      ...g.equipos[2],
+      grupo: g.letra,
+      complete: g.equipos.every(e => e.pj === 3),
+    }))
+    .sort((a, b) => {
+      if (b.pts !== a.pts) return b.pts - a.pts;
+      const gdA = a.gf - a.gc, gdB = b.gf - b.gc;
+      if (gdB !== gdA) return gdB - gdA;
+      if (b.gf !== a.gf) return b.gf - a.gf;
+      return a.team.localeCompare(b.team);
+    });
 
   const bracketPicks: BracketPicks = {
     grupos: bracket.grupos,
@@ -252,6 +314,17 @@ export default async function ClasificacionPage() {
         </>
       )}
 
+      {/* 8 mejores terceros */}
+      {tercerosList.length > 0 && (
+        <div className="mt-10">
+          <div className="mb-4">
+            <h2 className="text-xl font-bold text-white">8 Mejores Terceros</h2>
+            <p className="text-sm text-gray-500 mt-1">Los 8 mejores de 12 clasifican a dieciseisavos</p>
+          </div>
+          <TercerosList terceros={tercerosList} userTerceros={userTerceros} />
+        </div>
+      )}
+
       {/* Knockout bracket */}
       {hasKnockoutTeams && (
         <div className="mt-12">
@@ -269,6 +342,92 @@ export default async function ClasificacionPage() {
         </div>
       )}
     </>
+  );
+}
+
+type TerceroEntry = Stats & { grupo: string; complete: boolean };
+
+function TercerosList({ terceros, userTerceros }: { terceros: TerceroEntry[]; userTerceros: string[] }) {
+  const hasUserPicks = userTerceros.length > 0;
+  return (
+    <div className="glass-card !p-0 overflow-hidden">
+      <table className="w-full">
+        <thead>
+          <tr className="border-b border-white/[0.06]">
+            <th className="pl-3 pr-1 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600">#</th>
+            <th className="px-2 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600">Equipo</th>
+            <th className="px-2 py-2.5 text-center text-[10px] font-semibold uppercase tracking-wider text-gray-600">Grupo</th>
+            <th className="px-2 py-2.5 text-center text-[10px] font-semibold uppercase tracking-wider text-gray-600">PJ</th>
+            <th className="px-2 py-2.5 text-center text-[10px] font-semibold uppercase tracking-wider text-gray-600 hidden sm:table-cell">G</th>
+            <th className="px-2 py-2.5 text-center text-[10px] font-semibold uppercase tracking-wider text-gray-600 hidden sm:table-cell">E</th>
+            <th className="px-2 py-2.5 text-center text-[10px] font-semibold uppercase tracking-wider text-gray-600 hidden sm:table-cell">P</th>
+            <th className="px-2 py-2.5 text-center text-[10px] font-semibold uppercase tracking-wider text-gray-600">GD</th>
+            <th className="px-2 py-2.5 text-center text-[10px] font-semibold uppercase tracking-wider text-gray-600 hidden sm:table-cell">GF</th>
+            <th className="pr-3 pl-2 py-2.5 text-center text-[10px] font-semibold uppercase tracking-wider text-gray-600">Pts</th>
+          </tr>
+        </thead>
+        <tbody>
+          {terceros.map((t, i) => {
+            const qualifies = i < 8;
+            const gd = t.gf - t.gc;
+            const userPicked = userTerceros.includes(t.team);
+            const rowCls = hasUserPicks
+              ? (userPicked ? (qualifies ? "bg-green-500/[0.10]" : "bg-amber-500/[0.08]") : (qualifies ? "bg-red-500/[0.06]" : ""))
+              : (qualifies ? "bg-[#00e87a]/[0.02]" : "");
+            return (
+              <tr key={t.team} className={`border-b border-white/[0.03] last:border-0 ${rowCls}`}>
+                <td className="pl-3 pr-1 py-2.5">
+                  <span className={`text-xs font-bold ${qualifies ? "text-[#00e87a]" : "text-gray-700"}`}>
+                    {i + 1}
+                  </span>
+                </td>
+                <td className="px-2 py-2.5">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="text-base leading-none shrink-0">{getFlag(t.team)}</span>
+                    <span className={`text-xs font-medium truncate ${qualifies ? "text-gray-200" : "text-gray-500"}`}>
+                      {t.team}
+                    </span>
+                    {hasUserPicks && userPicked && (
+                      <span className={`shrink-0 text-[10px] whitespace-nowrap ${qualifies ? "text-green-400" : "text-amber-400"}`}>
+                        (tu porra)
+                      </span>
+                    )}
+                    {!t.complete && (
+                      <span className="shrink-0 text-[10px] text-gray-600 whitespace-nowrap">●</span>
+                    )}
+                  </div>
+                </td>
+                <td className="px-2 py-2.5 text-center">
+                  <span className="inline-flex h-5 w-5 items-center justify-center rounded bg-white/[0.06] text-[10px] font-bold text-gray-400">
+                    {t.grupo}
+                  </span>
+                </td>
+                <td className="px-2 py-2.5 text-center text-xs text-gray-400 tabular-nums">{t.pj}</td>
+                <td className="px-2 py-2.5 text-center text-xs text-gray-500 tabular-nums hidden sm:table-cell">{t.pg}</td>
+                <td className="px-2 py-2.5 text-center text-xs text-gray-500 tabular-nums hidden sm:table-cell">{t.pe}</td>
+                <td className="px-2 py-2.5 text-center text-xs text-gray-500 tabular-nums hidden sm:table-cell">{t.pp}</td>
+                <td className="px-2 py-2.5 text-center text-xs tabular-nums">
+                  <span className={gd > 0 ? "text-[#00e87a]" : gd < 0 ? "text-red-400/70" : "text-gray-600"}>
+                    {gd > 0 ? `+${gd}` : gd}
+                  </span>
+                </td>
+                <td className="px-2 py-2.5 text-center text-xs text-gray-400 tabular-nums hidden sm:table-cell">{t.gf}</td>
+                <td className="pr-3 pl-2 py-2.5 text-center">
+                  <span className={`text-sm font-bold tabular-nums ${qualifies ? "text-white" : "text-gray-500"}`}>
+                    {t.pts}
+                  </span>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+      {terceros.some(t => !t.complete) && (
+        <p className="px-4 py-2.5 text-[11px] text-gray-600 border-t border-white/[0.04]">
+          ● Grupo no finalizado — la posición puede cambiar
+        </p>
+      )}
+    </div>
   );
 }
 

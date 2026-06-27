@@ -34,23 +34,62 @@ type PartidoRow = {
 };
 
 type Stats = { pts: number; gf: number; ga: number; gd: number };
+type MatchResult = { local: string; visitante: string; gl: number; gv: number };
 
-function sortedTeams(entries: [string, Stats][]): string[] {
-  return [...entries]
-    .sort(([na, a], [nb, b]) =>
-      b.pts - a.pts || b.gd - a.gd || b.gf - a.gf || na.localeCompare(nb)
-    )
-    .map(([t]) => t);
+function h2hStats(entries: [string, Stats][], matches: MatchResult[]) {
+  const tiedSet = new Set(entries.map(([t]) => t));
+  const h2h: Record<string, { pts: number; gf: number; gc: number }> = {};
+  for (const [t] of entries) h2h[t] = { pts: 0, gf: 0, gc: 0 };
+  for (const m of matches) {
+    if (!tiedSet.has(m.local) || !tiedSet.has(m.visitante)) continue;
+    h2h[m.local].gf += m.gl; h2h[m.local].gc += m.gv;
+    h2h[m.visitante].gf += m.gv; h2h[m.visitante].gc += m.gl;
+    if (m.gl > m.gv) h2h[m.local].pts += 3;
+    else if (m.gl < m.gv) h2h[m.visitante].pts += 3;
+    else { h2h[m.local].pts++; h2h[m.visitante].pts++; }
+  }
+  return h2h;
+}
+
+// matches only needed for within-group ties; omit for cross-group ranking (terceros)
+function sortedTeams(entries: [string, Stats][], matches: MatchResult[] = []): string[] {
+  const byPoints = new Map<number, [string, Stats][]>();
+  for (const e of entries) {
+    const tier = byPoints.get(e[1].pts) ?? [];
+    tier.push(e);
+    byPoints.set(e[1].pts, tier);
+  }
+  const result: string[] = [];
+  for (const pts of [...byPoints.keys()].sort((a, b) => b - a)) {
+    const tier = byPoints.get(pts)!;
+    if (tier.length === 1) { result.push(tier[0][0]); continue; }
+    const h2h = h2hStats(tier, matches);
+    result.push(
+      ...[...tier].sort(([na, a], [nb, b]) => {
+        const ha = h2h[na], hb = h2h[nb];
+        if (hb.pts !== ha.pts) return hb.pts - ha.pts;
+        const h2hGdA = ha.gf - ha.gc, h2hGdB = hb.gf - hb.gc;
+        if (h2hGdB !== h2hGdA) return h2hGdB - h2hGdA;
+        if (hb.gf !== ha.gf) return hb.gf - ha.gf;
+        if (b.gd !== a.gd) return b.gd - a.gd;
+        if (b.gf !== a.gf) return b.gf - a.gf;
+        return na.localeCompare(nb);
+      }).map(([t]) => t)
+    );
+  }
+  return result;
 }
 
 export function computeActualBracket(partidos: PartidoRow[]): ActualBracket {
   // ── Group standings ──────────────────────────────────────────────────────
   const groupMap: Record<string, Record<string, Stats>> = {};
+  const groupMatches: Record<string, MatchResult[]> = {};
 
   for (const p of partidos) {
     if (p.fase !== "GRUPOS" || p.estado !== "FINALIZADO" || p.golesLocalReal === null || p.golesVisitanteReal === null) continue;
     const g = p.grupo ?? "?";
     groupMap[g] ??= {};
+    groupMatches[g] ??= [];
 
     const upd = (team: string, gf: number, ga: number) => {
       groupMap[g][team] ??= { pts: 0, gf: 0, ga: 0, gd: 0 };
@@ -61,6 +100,7 @@ export function computeActualBracket(partidos: PartidoRow[]): ActualBracket {
     };
     upd(p.equipoLocal, p.golesLocalReal, p.golesVisitanteReal);
     upd(p.equipoVisitante, p.golesVisitanteReal, p.golesLocalReal);
+    groupMatches[g].push({ local: p.equipoLocal, visitante: p.equipoVisitante, gl: p.golesLocalReal, gv: p.golesVisitanteReal });
   }
 
   const grupos: Record<string, string[]> = {};
@@ -68,7 +108,7 @@ export function computeActualBracket(partidos: PartidoRow[]): ActualBracket {
   const allGrupos: Record<string, string[]> = {};
 
   for (const [g, stats] of Object.entries(groupMap)) {
-    const sorted = sortedTeams(Object.entries(stats));
+    const sorted = sortedTeams(Object.entries(stats), groupMatches[g] ?? []);
     grupos[g] = sorted.slice(0, 2);
     allGrupos[g] = Object.keys(stats);
     if (sorted[2]) thirdCandidates.push([sorted[2], stats[sorted[2]]]);

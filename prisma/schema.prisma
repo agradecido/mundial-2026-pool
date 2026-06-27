@@ -53,8 +53,10 @@ model User {
   image            String?
   password         String?
   role             Role      @default(JUGADOR)
+  suspendido       Boolean   @default(false)
   fechaRegistro    DateTime  @default(now())
   ultimoAcceso     DateTime?
+  ultimoAccesoQuiniela DateTime?
   hasChosenNickname Boolean  @default(false)
   welcomeModalViews Int      @default(0)
 

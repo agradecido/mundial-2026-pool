@@ -54,6 +54,21 @@ export async function eliminarUsuario(userId: string) {
     return { ok: true };
 }
 
+export async function suspenderUsuario(userId: string, suspendido: boolean) {
+    const adminId = await requireAdmin();
+
+    if (userId === adminId) {
+        return { error: "No puedes suspenderte a ti mismo." };
+    }
+
+    await prisma.user.update({ where: { id: userId }, data: { suspendido } });
+    revalidatePath("/admin/usuarios");
+    revalidatePath("/ranking");
+    revalidatePath("/quiniela/ranking");
+    revalidatePath("/porra/ranking");
+    return { ok: true };
+}
+
 export async function crearUsuario(data: {
     name: string;
     email: string;

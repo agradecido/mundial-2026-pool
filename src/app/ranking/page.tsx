@@ -27,6 +27,7 @@ const getRankingData = unstable_cache(
   async () => {
     const [users, partidos, firstPartido, grupos] = await Promise.all([
       prisma.user.findMany({
+        where: { suspendido: false },
         select: {
           id: true,
           name: true,
