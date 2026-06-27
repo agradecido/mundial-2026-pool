@@ -34,8 +34,8 @@ export interface FDMatch {
   status: FDStatus;
   stage: string;
   group: string | null;
-  homeTeam: { id: number; name: string; shortName?: string; tla?: string };
-  awayTeam: { id: number; name: string; shortName?: string; tla?: string };
+  homeTeam: { id: number; name: string | null; shortName?: string; tla?: string };
+  awayTeam: { id: number; name: string | null; shortName?: string; tla?: string };
   score: {
     winner: "HOME_TEAM" | "AWAY_TEAM" | "DRAW" | null;
     duration: FDDuration;
@@ -46,6 +46,12 @@ export interface FDMatch {
 
 export function normalizeTeamName(fdName: string): string {
   return FD_TO_DB[fdName] ?? fdName;
+}
+
+export async function getFDKnockoutMatches(): Promise<{ matches: FDMatch[]; error?: string }> {
+  const result = await getFDMatches();
+  if (result.error) return result;
+  return { matches: result.matches.filter((m) => m.stage !== "GROUP_STAGE") };
 }
 
 export async function getFDMatches(): Promise<{ matches: FDMatch[]; error?: string }> {

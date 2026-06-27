@@ -16,8 +16,8 @@ export default async function AdminResultadosPage() {
   ]);
 
   const rows: MatchRow[] = fdMatches.map((fdMatch) => {
-    const homeName = normalizeTeamName(fdMatch.homeTeam.name);
-    const awayName = normalizeTeamName(fdMatch.awayTeam.name);
+    const homeName = normalizeTeamName(fdMatch.homeTeam.name ?? "");
+    const awayName = normalizeTeamName(fdMatch.awayTeam.name ?? "");
 
     // Intentar match por nombre de equipo primero
     let partido = partidos.find(
@@ -50,8 +50,8 @@ export default async function AdminResultadosPage() {
     return {
       fdId: fdMatch.id,
       utcDate: fdMatch.utcDate,
-      homeTeamFD: fdMatch.homeTeam.name,
-      awayTeamFD: fdMatch.awayTeam.name,
+      homeTeamFD: fdMatch.homeTeam.name ?? "",
+      awayTeamFD: fdMatch.awayTeam.name ?? "",
       homeTeamNorm: homeName,
       awayTeamNorm: awayName,
       fdStatus: fdMatch.status,
