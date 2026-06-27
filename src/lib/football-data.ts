@@ -7,6 +7,7 @@ const COMPETITION = "WC";
 // Discrepancias conocidas entre Football-Data.org y nuestros nombres en BD
 const FD_TO_DB: Record<string, string> = {
   "Bosnia and Herzegovina": "Bosnia & Herzegovina",
+  "Bosnia-Herzegovina": "Bosnia & Herzegovina",
   "Congo DR": "DR Congo",
   "Korea Republic": "South Korea",
   "United States": "USA",
