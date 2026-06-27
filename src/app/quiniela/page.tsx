@@ -42,11 +42,12 @@ export default async function PartidosPage() {
 
   // ── Actual bracket (confirmed qualifiers: complete groups + math-locked teams) ─
 
-  type TeamData = { pts: number; remaining: number };
+  type TeamData = { pts: number; gf: number; gc: number; remainingOpponents: Set<string> };
   const totalPerGroup: Record<string, number> = {};
   const finalizadoPerGroup: Record<string, number> = {};
   const allGruposMap: Record<string, string[]> = {};
   const groupStandings: Record<string, Record<string, TeamData>> = {};
+  const groupH2H: Record<string, Map<string, string | null>> = {};
 
   for (const p of allPartidosForBracket) {
     if (p.fase !== "GRUPOS" || !p.grupo) continue;
@@ -58,18 +59,21 @@ export default async function PartidosPage() {
       if (!allGruposMap[g].includes(t)) allGruposMap[g].push(t);
 
     groupStandings[g] ??= {};
-    groupStandings[g][p.equipoLocal] ??= { pts: 0, remaining: 0 };
-    groupStandings[g][p.equipoVisitante] ??= { pts: 0, remaining: 0 };
+    groupH2H[g] ??= new Map();
+    groupStandings[g][p.equipoLocal] ??= { pts: 0, gf: 0, gc: 0, remainingOpponents: new Set() };
+    groupStandings[g][p.equipoVisitante] ??= { pts: 0, gf: 0, gc: 0, remainingOpponents: new Set() };
 
     if (p.estado === "FINALIZADO" && p.golesLocalReal !== null && p.golesVisitanteReal !== null) {
       finalizadoPerGroup[g] = (finalizadoPerGroup[g] ?? 0) + 1;
       const gl = p.golesLocalReal, gv = p.golesVisitanteReal;
-      if (gl > gv) groupStandings[g][p.equipoLocal].pts += 3;
-      else if (gl < gv) groupStandings[g][p.equipoVisitante].pts += 3;
-      else { groupStandings[g][p.equipoLocal].pts++; groupStandings[g][p.equipoVisitante].pts++; }
+      const loc = groupStandings[g][p.equipoLocal], vis = groupStandings[g][p.equipoVisitante];
+      if (gl > gv) loc.pts += 3; else if (gl < gv) vis.pts += 3; else { loc.pts++; vis.pts++; }
+      loc.gf += gl; loc.gc += gv; vis.gf += gv; vis.gc += gl;
+      const h2hKey = [p.equipoLocal, p.equipoVisitante].sort().join("|");
+      groupH2H[g].set(h2hKey, gl > gv ? p.equipoLocal : gl < gv ? p.equipoVisitante : null);
     } else if (p.estado !== "FINALIZADO") {
-      groupStandings[g][p.equipoLocal].remaining++;
-      groupStandings[g][p.equipoVisitante].remaining++;
+      groupStandings[g][p.equipoLocal].remainingOpponents.add(p.equipoVisitante);
+      groupStandings[g][p.equipoVisitante].remainingOpponents.add(p.equipoLocal);
     }
   }
 
@@ -86,25 +90,45 @@ export default async function PartidosPage() {
     Object.entries(rawBracket.grupos).filter(([g]) => completeGroups.has(g))
   );
 
-  // Add mathematically confirmed qualifiers from incomplete groups.
-  // 1st is confirmed only if no other team can reach or tie their points.
-  // 2nd is confirmed only if 1st is confirmed AND no remaining team can reach or tie 2nd's points.
+  // Math-confirmed qualifiers from incomplete groups.
+  // A rival can only challenge if they can exceed the leader's pts, OR tie on pts
+  // when the h2h match hasn't been played yet or the leader didn't win it.
+  const canChallenge = (
+    leader: string, leaderPts: number,
+    other: string, otherData: TeamData,
+    h2hMap: Map<string, string | null>
+  ): boolean => {
+    const maxPtsOther = otherData.pts + 3 * otherData.remainingOpponents.size;
+    if (maxPtsOther > leaderPts) return true;
+    if (maxPtsOther < leaderPts) return false;
+    if (otherData.remainingOpponents.has(leader)) return true;
+    const h2hKey = [leader, other].sort().join("|");
+    return h2hMap.get(h2hKey) !== leader;
+  };
+
   for (const [grupo, teams] of Object.entries(groupStandings)) {
     if (completeGroups.has(grupo)) continue;
+    const h2hMap = groupH2H[grupo] ?? new Map();
     const sorted = Object.entries(teams)
       .map(([team, d]) => ({ team, ...d }))
-      .sort((a, b) => b.pts - a.pts);
-    const maxPts = (t: (typeof sorted)[0]) => t.pts + 3 * t.remaining;
+      .sort((a, b) => {
+        if (b.pts !== a.pts) return b.pts - a.pts;
+        const gdA = a.gf - a.gc, gdB = b.gf - b.gc;
+        if (gdB !== gdA) return gdB - gdA;
+        if (b.gf !== a.gf) return b.gf - a.gf;
+        return a.team.localeCompare(b.team);
+      });
 
     const first = sorted[0];
-    if (sorted.some(t => t.team !== first.team && maxPts(t) >= first.pts)) continue;
+    if (sorted.some(t => t.team !== first.team && canChallenge(first.team, first.pts, t.team, t, h2hMap))) continue;
 
     const second = sorted[1];
     if (!second) { bracketGrupos[grupo] = [first.team]; continue; }
-    const second2ndChallenged = sorted.some(
-      t => t.team !== first.team && t.team !== second.team && maxPts(t) >= second.pts
+    const secondChallenged = sorted.some(
+      t => t.team !== first.team && t.team !== second.team &&
+           canChallenge(second.team, second.pts, t.team, t, h2hMap)
     );
-    bracketGrupos[grupo] = second2ndChallenged ? [first.team] : [first.team, second.team];
+    bracketGrupos[grupo] = secondChallenged ? [first.team] : [first.team, second.team];
   }
 
   const teamToGroup: Record<string, string> = {};

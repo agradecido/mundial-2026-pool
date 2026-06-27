@@ -164,45 +164,73 @@ const getActualBracket = unstable_cache(
       Object.entries(bracket.grupos).filter(([g]) => completeGroups.has(g))
     );
 
-    // Also add mathematically confirmed qualifiers from incomplete groups:
-    // build current standings + remaining matches, then check if fewer than 2
-    // other teams can reach or tie a team's current points (>= to cover tiebreaker risk).
-    type TeamData = { pts: number; remaining: number };
+    // Math-confirmed qualifiers from incomplete groups.
+    // A team's position is confirmed if no rival can exceed their points, AND
+    // any rival that could only tie has already lost the head-to-head to them.
+    type TeamData = { pts: number; gf: number; gc: number; remainingOpponents: Set<string> };
     const groupStandings: Record<string, Record<string, TeamData>> = {};
+    const groupH2H: Record<string, Map<string, string | null>> = {};
+
     for (const p of partidos) {
       if (p.fase !== "GRUPOS" || !p.grupo) continue;
       const g = p.grupo;
       groupStandings[g] ??= {};
-      groupStandings[g][p.equipoLocal] ??= { pts: 0, remaining: 0 };
-      groupStandings[g][p.equipoVisitante] ??= { pts: 0, remaining: 0 };
+      groupH2H[g] ??= new Map();
+      groupStandings[g][p.equipoLocal] ??= { pts: 0, gf: 0, gc: 0, remainingOpponents: new Set() };
+      groupStandings[g][p.equipoVisitante] ??= { pts: 0, gf: 0, gc: 0, remainingOpponents: new Set() };
       if (p.estado === "FINALIZADO" && p.golesLocalReal !== null && p.golesVisitanteReal !== null) {
         const gl = p.golesLocalReal, gv = p.golesVisitanteReal;
-        if (gl > gv) groupStandings[g][p.equipoLocal].pts += 3;
-        else if (gl < gv) groupStandings[g][p.equipoVisitante].pts += 3;
-        else { groupStandings[g][p.equipoLocal].pts++; groupStandings[g][p.equipoVisitante].pts++; }
+        const loc = groupStandings[g][p.equipoLocal];
+        const vis = groupStandings[g][p.equipoVisitante];
+        if (gl > gv) loc.pts += 3; else if (gl < gv) vis.pts += 3; else { loc.pts++; vis.pts++; }
+        loc.gf += gl; loc.gc += gv;
+        vis.gf += gv; vis.gc += gl;
+        const h2hKey = [p.equipoLocal, p.equipoVisitante].sort().join("|");
+        groupH2H[g].set(h2hKey, gl > gv ? p.equipoLocal : gl < gv ? p.equipoVisitante : null);
       } else if (p.estado !== "FINALIZADO") {
-        groupStandings[g][p.equipoLocal].remaining++;
-        groupStandings[g][p.equipoVisitante].remaining++;
+        groupStandings[g][p.equipoLocal].remainingOpponents.add(p.equipoVisitante);
+        groupStandings[g][p.equipoVisitante].remainingOpponents.add(p.equipoLocal);
       }
     }
+
+    // True if `other` can still deny `leader` their confirmed position.
+    const canChallenge = (
+      leader: string, leaderPts: number,
+      other: string, otherData: TeamData,
+      h2hMap: Map<string, string | null>
+    ): boolean => {
+      const maxPtsOther = otherData.pts + 3 * otherData.remainingOpponents.size;
+      if (maxPtsOther > leaderPts) return true;
+      if (maxPtsOther < leaderPts) return false;
+      // Can tie on points: check h2h to break the tie.
+      if (otherData.remainingOpponents.has(leader)) return true; // h2h match still pending
+      const h2hKey = [leader, other].sort().join("|");
+      return h2hMap.get(h2hKey) !== leader; // leader didn't clearly win the h2h
+    };
+
     for (const [grupo, teams] of Object.entries(groupStandings)) {
       if (completeGroups.has(grupo)) continue;
+      const h2hMap = groupH2H[grupo] ?? new Map();
       const sorted = Object.entries(teams)
         .map(([team, d]) => ({ team, ...d }))
-        .sort((a, b) => b.pts - a.pts);
-      const maxPts = (t: (typeof sorted)[0]) => t.pts + 3 * t.remaining;
+        .sort((a, b) => {
+          if (b.pts !== a.pts) return b.pts - a.pts;
+          const gdA = a.gf - a.gc, gdB = b.gf - b.gc;
+          if (gdB !== gdA) return gdB - gdA;
+          if (b.gf !== a.gf) return b.gf - a.gf;
+          return a.team.localeCompare(b.team);
+        });
 
-      // 1st is confirmed only if no other team can reach or tie their points.
       const first = sorted[0];
-      if (sorted.some(t => t.team !== first.team && maxPts(t) >= first.pts)) continue;
+      if (sorted.some(t => t.team !== first.team && canChallenge(first.team, first.pts, t.team, t, h2hMap))) continue;
 
-      // 2nd is confirmed only if no other team (excluding confirmed 1st) can reach or tie their points.
       const second = sorted[1];
       if (!second) { grupos[grupo] = [first.team]; continue; }
-      const second2ndChallenged = sorted.some(
-        t => t.team !== first.team && t.team !== second.team && maxPts(t) >= second.pts
+      const secondChallenged = sorted.some(
+        t => t.team !== first.team && t.team !== second.team &&
+             canChallenge(second.team, second.pts, t.team, t, h2hMap)
       );
-      grupos[grupo] = second2ndChallenged ? [first.team] : [first.team, second.team];
+      grupos[grupo] = secondChallenged ? [first.team] : [first.team, second.team];
     }
 
     // Build team→group map to filter terceros from incomplete groups.
