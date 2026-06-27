@@ -77,6 +77,18 @@ export default async function PartidosPage() {
     }
   }
 
+  const slotGroupStandings: Record<string, { team: string; pts: number; gd: number; gf: number }[]> = {};
+  for (const [grupo, teams] of Object.entries(groupStandings)) {
+    slotGroupStandings[grupo] = Object.entries(teams)
+      .map(([team, d]) => ({ team, pts: d.pts, gd: d.gf - d.gc, gf: d.gf }))
+      .sort((a, b) => {
+        if (b.pts !== a.pts) return b.pts - a.pts;
+        if (b.gd !== a.gd) return b.gd - a.gd;
+        if (b.gf !== a.gf) return b.gf - a.gf;
+        return a.team.localeCompare(b.team);
+      });
+  }
+
   const completeGroups = new Set(
     Object.entries(totalPerGroup)
       .filter(([g, total]) => (finalizadoPerGroup[g] ?? 0) >= total)
@@ -193,8 +205,8 @@ export default async function PartidosPage() {
 
     return [{
       ...base,
-      equipoLocal: resolvedLocal ?? "Por definir",
-      equipoVisitante: resolvedVisitante ?? "Por definir",
+      equipoLocal: resolvedLocal ?? p.equipoLocal,
+      equipoVisitante: resolvedVisitante ?? p.equipoVisitante,
     }];
   });
 
@@ -222,6 +234,7 @@ export default async function PartidosPage() {
         pronosticoMap={pronosticoMap}
         oddsMap={oddsMap}
         userBadge={userBadge ? { emoji: userBadge.emoji, titulo: userBadge.titulo, descripcion: userBadge.descripcion } : null}
+        slotGroupStandings={slotGroupStandings}
       />
     </div>
   );

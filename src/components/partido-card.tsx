@@ -50,6 +50,7 @@ interface Props {
   odds?: { home: number; draw: number; away: number } | null;
   leaderPronostico?: { name: string | null; golesLocal: number; golesVisitante: number } | null;
   showPrediccion?: boolean;
+  slotGroupStandings?: Record<string, GroupTeamEntry[]>;
 }
 
 const FASE_LABEL: Record<string, string> = {
@@ -138,7 +139,91 @@ function CheckIcon() {
   );
 }
 
-export default function PartidoCard({ partido, pronostico, odds, leaderPronostico, showPrediccion }: Props) {
+// ── Slot standings helpers ───────────────────────────────────────────────────
+
+type GroupTeamEntry = { team: string; pts: number; gd: number; gf: number };
+type ParsedSlot =
+  | { type: "group"; pos: number; group: string }
+  | { type: "thirds"; groups: string[] };
+
+function parseSlotCode(code: string): ParsedSlot | null {
+  const m = code.match(/^([12])([A-L])$/);
+  if (m) return { type: "group", pos: parseInt(m[1]), group: m[2] };
+  if (code.includes("/")) {
+    const groups = code.match(/[A-L]/g) ?? [];
+    if (groups.length > 0) return { type: "thirds", groups };
+  }
+  return null;
+}
+
+function SlotStandingsPopover({
+  code,
+  standings,
+}: {
+  code: string;
+  standings: Record<string, GroupTeamEntry[]>;
+}) {
+  const parsed = parseSlotCode(code);
+  if (!parsed) return null;
+
+  const cls =
+    "absolute z-30 top-full left-1/2 -translate-x-1/2 mt-1.5 w-max min-w-[176px] max-w-[220px] rounded-xl border border-white/[0.12] bg-[#111] shadow-xl shadow-black/60 p-2";
+
+  if (parsed.type === "group") {
+    const teams = standings[parsed.group] ?? [];
+    return (
+      <div className={cls}>
+        <p className="text-[9px] font-bold uppercase tracking-widest text-gray-600 mb-1.5 px-1">
+          Grupo {parsed.group}
+        </p>
+        {teams.map((t, i) => (
+          <div
+            key={t.team}
+            className={`flex items-center gap-2 px-1.5 py-[3px] rounded-lg ${i + 1 === parsed.pos ? "bg-white/[0.06]" : ""}`}
+          >
+            <span className={`text-[10px] tabular-nums w-3 shrink-0 ${i + 1 === parsed.pos ? "text-gray-400" : "text-gray-700"}`}>
+              {i + 1}
+            </span>
+            <span className="text-sm leading-none shrink-0">{getFlag(t.team)}</span>
+            <span className={`text-[12px] flex-1 truncate ${i + 1 === parsed.pos ? "text-gray-100 font-medium" : "text-gray-500"}`}>
+              {t.team}
+            </span>
+            <span className={`text-[10px] tabular-nums font-mono shrink-0 ${i + 1 === parsed.pos ? "text-gray-300" : "text-gray-700"}`}>
+              {t.pts}p
+            </span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  const candidates = parsed.groups.flatMap((g) => {
+    const t = standings[g]?.[2];
+    return t ? [{ group: g, ...t }] : [];
+  });
+
+  return (
+    <div className={cls}>
+      <p className="text-[9px] font-bold uppercase tracking-widest text-gray-600 mb-1.5 px-1">
+        Posibles rivales (3º)
+      </p>
+      {candidates.length === 0 ? (
+        <p className="text-[11px] text-gray-700 px-1 py-0.5">Sin datos</p>
+      ) : (
+        candidates.map((c) => (
+          <div key={c.group} className="flex items-center gap-2 px-1.5 py-[3px]">
+            <span className="text-[10px] tabular-nums w-4 shrink-0 text-gray-600">3{c.group}</span>
+            <span className="text-sm leading-none shrink-0">{getFlag(c.team)}</span>
+            <span className="text-[12px] flex-1 truncate text-gray-400">{c.team}</span>
+            <span className="text-[10px] tabular-nums font-mono shrink-0 text-gray-700">{c.pts}p</span>
+          </div>
+        ))
+      )}
+    </div>
+  );
+}
+
+export default function PartidoCard({ partido, pronostico, odds, leaderPronostico, showPrediccion, slotGroupStandings }: Props) {
   const router = useRouter();
   const refreshed = useRef(false);
   const [locked, setLocked] = useState(false);
@@ -151,6 +236,9 @@ export default function PartidoCard({ partido, pronostico, odds, leaderPronostic
   const [saved, setSaved] = useState(!!pronostico);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+
+  // ── Slot standings popover ────────────────────────────────────────────────
+  const [slotOpen, setSlotOpen] = useState<"local" | "visitante" | null>(null);
 
   // ── Live match modal ──────────────────────────────────────────────────────
   const [liveOpen, setLiveOpen] = useState(false);
@@ -316,8 +404,8 @@ export default function PartidoCard({ partido, pronostico, odds, leaderPronostic
 
   // ── Display helpers ────────────────────────────────────────────────
   const teamsUnknown = isPlaceholder(partido.equipoLocal) && isPlaceholder(partido.equipoVisitante);
-  const displayLocal = isPlaceholder(partido.equipoLocal) ? "Por definir" : partido.equipoLocal;
-  const displayVisitante = isPlaceholder(partido.equipoVisitante) ? "Por definir" : partido.equipoVisitante;
+  const displayLocal = partido.equipoLocal;
+  const displayVisitante = partido.equipoVisitante;
   const isFinished = partido.estado === "FINALIZADO";
   const isLive = partido.estado === "EN_PROGRESO";
   const showInputs = !locked;
@@ -378,6 +466,9 @@ export default function PartidoCard({ partido, pronostico, odds, leaderPronostic
 
   return (
     <>
+      {slotOpen && (
+        <div className="fixed inset-0 z-20" onClick={() => setSlotOpen(null)} />
+      )}
       {liveOpen && (
         <LiveMatchModal
           equipoLocal={partido.equipoLocal}
@@ -417,9 +508,24 @@ export default function PartidoCard({ partido, pronostico, odds, leaderPronostic
               <span className="text-4xl lg:text-5xl leading-none drop-shadow-sm">
                 {flagLocal ?? <span className="text-gray-700">?</span>}
               </span>
-              <span className={`text-sm lg:text-base font-bold text-center leading-tight truncate w-full ${flagLocal ? "text-gray-100" : "text-gray-600 italic"}`}>
-                {displayLocal}
-              </span>
+              {isPlaceholder(partido.equipoLocal) && slotGroupStandings && parseSlotCode(partido.equipoLocal) ? (
+                <div className="relative w-full">
+                  <button
+                    type="button"
+                    onClick={() => setSlotOpen((v) => v === "local" ? null : "local")}
+                    className="w-full text-sm lg:text-base font-bold text-center text-gray-500 italic leading-tight hover:text-gray-300 transition-colors"
+                  >
+                    <span className="underline decoration-dashed decoration-gray-600 underline-offset-2">{displayLocal}</span>
+                  </button>
+                  {slotOpen === "local" && (
+                    <SlotStandingsPopover code={partido.equipoLocal} standings={slotGroupStandings} />
+                  )}
+                </div>
+              ) : (
+                <span className={`text-sm lg:text-base font-bold text-center leading-tight truncate w-full ${flagLocal ? "text-gray-100" : "text-gray-600 italic"}`}>
+                  {displayLocal}
+                </span>
+              )}
               {showInputs ? (
                 <input
                   type="text"
@@ -503,9 +609,24 @@ export default function PartidoCard({ partido, pronostico, odds, leaderPronostic
               <span className="text-4xl lg:text-5xl leading-none drop-shadow-sm">
                 {flagVisitante ?? <span className="text-gray-700">?</span>}
               </span>
-              <span className={`text-sm lg:text-base font-bold text-center leading-tight truncate w-full ${flagVisitante ? "text-gray-100" : "text-gray-600 italic"}`}>
-                {displayVisitante}
-              </span>
+              {isPlaceholder(partido.equipoVisitante) && slotGroupStandings && parseSlotCode(partido.equipoVisitante) ? (
+                <div className="relative w-full">
+                  <button
+                    type="button"
+                    onClick={() => setSlotOpen((v) => v === "visitante" ? null : "visitante")}
+                    className="w-full text-sm lg:text-base font-bold text-center text-gray-500 italic leading-tight hover:text-gray-300 transition-colors"
+                  >
+                    <span className="underline decoration-dashed decoration-gray-600 underline-offset-2">{displayVisitante}</span>
+                  </button>
+                  {slotOpen === "visitante" && (
+                    <SlotStandingsPopover code={partido.equipoVisitante} standings={slotGroupStandings} />
+                  )}
+                </div>
+              ) : (
+                <span className={`text-sm lg:text-base font-bold text-center leading-tight truncate w-full ${flagVisitante ? "text-gray-100" : "text-gray-600 italic"}`}>
+                  {displayVisitante}
+                </span>
+              )}
               {showInputs ? (
                 <input
                   type="text"
