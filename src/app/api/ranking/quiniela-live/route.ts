@@ -1,6 +1,7 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { calcularPuntos } from "@/lib/scoring";
+import { fetchLiveScore } from "@/lib/football-data";
 import type { Fase } from "@prisma/client";
 
 export type LiveRankingEntry = {
@@ -15,7 +16,7 @@ export type LiveRankingEntry = {
 // TTL of 30 s so multiple live cards don't hammer the DB / score-live on every render.
 let cache: { data: LiveRankingEntry[]; expiresAt: number } | null = null;
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   if (cache && Date.now() < cache.expiresAt) {
     return NextResponse.json(cache.data);
   }
@@ -38,21 +39,12 @@ export async function GET(req: NextRequest) {
     return NextResponse.json([]);
   }
 
-  // 2. Live scores — reuse the existing score-live route (which has its own 60s cache)
-  const origin = req.nextUrl.origin;
+  // 2. Live scores — call shared fetchLiveScore directly (no HTTP, shared in-memory cache)
   const scoreResults = await Promise.all(
     livePartidos.map(async p => {
-      try {
-        const res = await fetch(
-          `${origin}/api/partidos/score-live?team1=${encodeURIComponent(p.equipoLocal)}&team2=${encodeURIComponent(p.equipoVisitante)}`,
-          { cache: "no-store" },
-        );
-        if (!res.ok) return null;
-        const { home, away } = await res.json() as { home: number; away: number };
-        return { fase: p.fase as Fase, home, away, pronosticos: p.pronosticos };
-      } catch {
-        return null;
-      }
+      const score = await fetchLiveScore(p.equipoLocal, p.equipoVisitante);
+      if (!score) return null;
+      return { fase: p.fase as Fase, home: score.home, away: score.away, pronosticos: p.pronosticos };
     }),
   );
 

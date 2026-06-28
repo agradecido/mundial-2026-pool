@@ -55,6 +55,51 @@ export async function getFDKnockoutMatches(): Promise<{ matches: FDMatch[]; erro
   return { matches: result.matches.filter((m) => m.stage !== "GROUP_STAGE") };
 }
 
+// ── Live score helper (used by score-live and quiniela-live routes) ───────────
+
+export type ScoreData = { home: number; away: number; status: string };
+
+// Module-level cache — shared across all routes within the same process instance.
+// Null results are never cached so they retry immediately.
+const liveScoreCache = new Map<string, { data: ScoreData; expiresAt: number }>();
+
+export async function fetchLiveScore(team1: string, team2: string): Promise<ScoreData | null> {
+  const cacheKey = `${team1}|${team2}`;
+  const cached = liveScoreCache.get(cacheKey);
+  if (cached && Date.now() < cached.expiresAt) return cached.data;
+
+  const { matches, error } = await getFDMatches();
+  if (error || matches.length === 0) return null;
+
+  const match = matches.find(m => {
+    if (!m.homeTeam.name || !m.awayTeam.name) return false;
+    const home = normalizeTeamName(m.homeTeam.name);
+    const away = normalizeTeamName(m.awayTeam.name);
+    return (home === team1 && away === team2) || (home === team2 && away === team1);
+  });
+  if (!match) return null;
+
+  const swapped = match.homeTeam.name ? normalizeTeamName(match.homeTeam.name) === team2 : false;
+  const rawHome = match.score.fullTime.home;
+  const rawAway = match.score.fullTime.away;
+
+  const effectiveStatus =
+    match.status === "FINISHED" && (rawHome === null || rawAway === null)
+      ? "IN_PLAY"
+      : match.status;
+
+  const result: ScoreData = {
+    home: swapped ? (rawAway ?? 0) : (rawHome ?? 0),
+    away: swapped ? (rawHome ?? 0) : (rawAway ?? 0),
+    status: effectiveStatus,
+  };
+
+  liveScoreCache.set(cacheKey, { data: result, expiresAt: Date.now() + 60_000 });
+  return result;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 export async function getFDMatches(): Promise<{ matches: FDMatch[]; error?: string }> {
   const apiKey = process.env.FOOTBALL_DATA_API_TOKEN;
   if (!apiKey) return { matches: [], error: "FOOTBALL_DATA_API_TOKEN no está configurado" };
