@@ -639,9 +639,12 @@ export default function BracketTree({
                 {/* ── Split bracket layout (clasificacion) ── */}
                 {split && (() => {
                     // Pixel-based approach: no CSS variable dependency.
-                    // Compact card (text-[13px] name, text-[18px] emoji) ≈ 72px → D32H has 28px breathing room.
-                    const D32H = 100; // px per D32 slot
-                    const halfH = D32H * 8; // 800px total per half
+                    // Compact card (text-[13px] name, text-[18px] emoji) ≈ 72px → D32H has 40px breathing room.
+                    const D32H = 112; // px per D32 slot
+                    const halfH = D32H * 8; // 896px total per half
+                    // Column labels take ~28px above the match content. Outer container must
+                    // include that space so overflow-x-auto does not create a vertical scroll.
+                    const containerH = halfH + 28;
                     const SH = { D32: D32H, D16: D32H * 2, QF: D32H * 4, SF: D32H * 8 };
                     const colW = "min-w-[120px] lg:min-w-[175px]";
                     const cs = connectorSide;
@@ -656,7 +659,7 @@ export default function BracketTree({
                     };
 
                     return (
-                        <div className="flex gap-0 items-stretch" style={{ minWidth: 1600, height: halfH }}>
+                        <div className="flex gap-0 items-stretch" style={{ minWidth: 1600, height: containerH }}>
 
                             {/* ══ Left half: flows right toward center ══ */}
                             <Column label="16avos" widthClass={colW}>
