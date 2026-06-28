@@ -97,7 +97,7 @@ export async function GET(req: Request) {
       return { id: u.id, name: u.name, image: u.image, total: base + delta, delta, fechaRegistro: u.fechaRegistro };
     })
     .sort((a, b) => b.total - a.total || a.fechaRegistro.getTime() - b.fechaRegistro.getTime())
-    .slice(0, 5)
+    .slice(0, 8)
     .map(({ fechaRegistro: _, ...u }) => u);
 
   if (!partidoId) {
