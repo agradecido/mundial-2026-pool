@@ -219,17 +219,6 @@ export default function PartidosTabs({
                       </section>
                     )}
 
-                    {/* Separador antes del primer partido eliminatorio */}
-                    {showSeparator && (
-                      <div id="fase-eliminatoria" className="flex items-center gap-4 my-8">
-                        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-                        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-400/70 shrink-0">
-                          Fase Eliminatoria
-                        </span>
-                        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-                      </div>
-                    )}
-
                     {/* Partidos eliminatorios de este día (si los hay) */}
                     {knockoutPartidos.length > 0 && (
                       <section>
