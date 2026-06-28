@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
-import { guardarPronostico } from "@/app/quiniela/actions";
+import { guardarPronostico, resetearPronostico } from "@/app/quiniela/actions";
 import { getFlag } from "@/lib/flags";
 import type { EstadoPartido, Fase } from "@prisma/client";
 
@@ -46,6 +46,13 @@ export default function PartidoListRow({ partido, pronostico }: Props) {
   }, [partido.fechaPartido, partido.estado]);
 
   function handleSave() {
+    if (local === "" && visitante === "") {
+      startTransition(async () => {
+        const res = await resetearPronostico(partido.id);
+        if (!res.error) setSaved(false);
+      });
+      return;
+    }
     if (local === "" || visitante === "") return;
     startTransition(async () => {
       const res = await guardarPronostico(partido.id, Number(local), Number(visitante));

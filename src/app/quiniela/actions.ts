@@ -30,6 +30,26 @@ export async function guardarPronostico(
   return { ok: true };
 }
 
+export async function resetearPronostico(partidoId: string) {
+  const session = await auth();
+  if (!session?.user?.id) return { error: "No autenticado" };
+
+  const partido = await prisma.partido.findUnique({ where: { id: partidoId } });
+  if (!partido) return { error: "Partido no encontrado" };
+
+  const ahora = new Date();
+  const limite = new Date(partido.fechaPartido.getTime() - 15 * 60 * 1000);
+  if (ahora >= limite) return { error: "Pronóstico bloqueado" };
+
+  await prisma.pronostico.deleteMany({
+    where: { userId: session.user.id, partidoId },
+  });
+
+  revalidatePath("/quiniela");
+  revalidatePath("/quiniela/ranking");
+  return { ok: true };
+}
+
 export async function resetearPronosticosFuturos() {
   const session = await auth();
   if (!session?.user?.id) return { error: "No autenticado" };
