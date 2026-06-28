@@ -679,7 +679,7 @@ export default function PartidoCard({ partido, pronostico, odds, leaderPronostic
               ) : (
                 <button
                   type="submit"
-                  disabled={pending || local === "" || visitante === ""}
+                  disabled={pending || (local === "" && visitante === "" ? !saved : (local === "" || visitante === ""))}
                   className="btn-save h-9 px-5 text-xs font-bold tracking-widest uppercase disabled:opacity-40"
                 >
                   {pending ? (
