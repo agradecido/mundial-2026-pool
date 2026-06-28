@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { cambiarRolUsuario, eliminarUsuario, suspenderUsuario } from "@/app/admin/usuarios/actions";
 import Image from "next/image";
+import Link from "next/link";
 import type { Role } from "@prisma/client";
 
 interface Usuario {
@@ -148,30 +149,38 @@ export default function UsuariosTable({ usuarios, currentAdminId }: Props) {
                                 </select>
                             </td>
                             <td className="px-4 py-3 text-right">
-                                {u.id !== currentAdminId && (
-                                    <div className="flex items-center justify-end gap-2">
-                                        <button
-                                            type="button"
-                                            onClick={() => handleSuspend(u.id, !u.suspendido, u.name)}
-                                            disabled={pending}
-                                            className={`rounded-lg border px-3 py-1 text-xs transition-colors disabled:opacity-50 ${
-                                                u.suspendido
-                                                    ? "border-green-900/50 bg-green-950/30 text-green-400 hover:bg-green-950/60 hover:text-green-300"
-                                                    : "border-amber-900/50 bg-amber-950/30 text-amber-400 hover:bg-amber-950/60 hover:text-amber-300"
-                                            }`}
-                                        >
-                                            {u.suspendido ? "Reactivar" : "Suspender"}
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => handleDelete(u.id, u.name)}
-                                            disabled={pending}
-                                            className="rounded-lg border border-red-900/50 bg-red-950/30 px-3 py-1 text-xs text-red-400 hover:bg-red-950/60 hover:text-red-300 transition-colors disabled:opacity-50"
-                                        >
-                                            Eliminar
-                                        </button>
-                                    </div>
-                                )}
+                                <div className="flex items-center justify-end gap-2">
+                                    <Link
+                                        href={`/admin/usuarios/${u.id}/pronosticos`}
+                                        className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1 text-xs text-gray-400 hover:text-white hover:border-white/20 transition-colors"
+                                    >
+                                        Pronósticos
+                                    </Link>
+                                    {u.id !== currentAdminId && (
+                                        <>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleSuspend(u.id, !u.suspendido, u.name)}
+                                                disabled={pending}
+                                                className={`rounded-lg border px-3 py-1 text-xs transition-colors disabled:opacity-50 ${
+                                                    u.suspendido
+                                                        ? "border-green-900/50 bg-green-950/30 text-green-400 hover:bg-green-950/60 hover:text-green-300"
+                                                        : "border-amber-900/50 bg-amber-950/30 text-amber-400 hover:bg-amber-950/60 hover:text-amber-300"
+                                                }`}
+                                            >
+                                                {u.suspendido ? "Reactivar" : "Suspender"}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleDelete(u.id, u.name)}
+                                                disabled={pending}
+                                                className="rounded-lg border border-red-900/50 bg-red-950/30 px-3 py-1 text-xs text-red-400 hover:bg-red-950/60 hover:text-red-300 transition-colors disabled:opacity-50"
+                                            >
+                                                Eliminar
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
                             </td>
                         </tr>
                     ))}

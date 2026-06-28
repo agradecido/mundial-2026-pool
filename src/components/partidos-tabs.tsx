@@ -80,14 +80,19 @@ export default function PartidosTabs({
     return dayKey >= yesterdayKey && dayKey <= tomorrowKey;
   }
 
-  // Featured match: all EN_PROGRESO, or first future PROGRAMADO
+  // Featured match: EN_PROGRESO first, then PROGRAMADO already started, then next future PROGRAMADO
+  const nowTs = Date.now();
   const enJuego = partidos.filter((p) => p.estado === "EN_PROGRESO");
-  const programadosFuturos = partidos.filter(
-    (p) => p.estado === "PROGRAMADO" && new Date(p.fechaPartido) > new Date(),
+  const programadosEnCurso = partidos.filter(
+    (p) => p.estado === "PROGRAMADO" && new Date(p.fechaPartido).getTime() <= nowTs,
   );
-  const featuredList = enJuego.length > 0 ? enJuego : programadosFuturos.slice(0, 1);
+  const programadosFuturos = partidos.filter(
+    (p) => p.estado === "PROGRAMADO" && new Date(p.fechaPartido).getTime() > nowTs,
+  );
+  const activos = enJuego.length > 0 ? enJuego : programadosEnCurso;
+  const featuredList = activos.length > 0 ? activos : programadosFuturos.slice(0, 1);
   const featuredIds = new Set(featuredList.map((p) => p.id));
-  const isLive = enJuego.length > 0;
+  const isLive = activos.length > 0;
 
   // ── Lista view ───────────────────────────────────────────────
   const partidosLista = [

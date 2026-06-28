@@ -389,14 +389,14 @@ export default function PartidoCard({ partido, pronostico, odds, leaderPronostic
     if (partido.estado !== "EN_PROGRESO") return;
     const fetchRanking = async () => {
       try {
-        const res = await fetch("/api/ranking/quiniela-live");
+        const res = await fetch(`/api/ranking/quiniela-live?partidoId=${partido.id}`);
         if (res.ok) setLiveRankingTop5(await res.json() as LiveRankingEntry[]);
       } catch { /* ignore */ }
     };
     fetchRanking();
     const id = setInterval(fetchRanking, 60_000);
     return () => clearInterval(id);
-  }, [partido.estado]);
+  }, [partido.estado, partido.id]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -822,9 +822,16 @@ export default function PartidoCard({ partido, pronostico, odds, leaderPronostic
                         <span className="flex-1 flex items-center gap-1.5 min-w-0">
                           <span className="text-[11px] text-gray-300 truncate">{u.name ?? "—"}</span>
                           {u.delta > 0 && (
-                            <span className="text-[10px] text-amber-400 tabular-nums shrink-0">+{u.delta} puntos</span>
+                            <span className="text-[10px] text-amber-400 tabular-nums shrink-0">+{u.delta} pts</span>
                           )}
                         </span>
+                        {u.pronostico != null ? (
+                          <span className="text-[11px] tabular-nums text-gray-500 shrink-0 mx-1">
+                            {u.pronostico.golesLocal}-{u.pronostico.golesVisitante}
+                          </span>
+                        ) : (
+                          <span className="text-[11px] text-gray-700 shrink-0 mx-1">—</span>
+                        )}
                         <span className="text-[11px] font-bold tabular-nums text-white shrink-0">{u.total}</span>
                       </div>
                     );
