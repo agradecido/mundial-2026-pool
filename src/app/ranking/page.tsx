@@ -178,7 +178,24 @@ export default async function RankingPage({
 }: {
   searchParams: Promise<{ tab?: string }>;
 }) {
-  const [session, params, data] = await Promise.all([auth(), searchParams, getRankingData()]);
+  // livePartidos is NOT inside getRankingData (which is cached) so it's always fresh
+  const [session, params, data, livePartidos] = await Promise.all([
+    auth(),
+    searchParams,
+    getRankingData(),
+    prisma.partido.findMany({
+      where: { estado: "EN_PROGRESO" },
+      select: {
+        id: true,
+        equipoLocal: true,
+        equipoVisitante: true,
+        fase: true,
+        pronosticos: {
+          select: { userId: true, golesLocal: true, golesVisitante: true },
+        },
+      },
+    }),
+  ]);
   const currentUserId = session!.user.id;
   const activeTab = params.tab === "porra" ? "porra" : params.tab === "grupos" ? "grupos" : "quiniela";
 
@@ -200,6 +217,7 @@ export default async function RankingPage({
         tournamentStarted={data.tournamentStarted}
         preTournamentQuinielaEntries={data.preTournamentQuinielaEntries}
         preTournamentPorraEntries={data.preTournamentPorraEntries}
+        livePartidos={livePartidos}
       />
     </div>
   );
