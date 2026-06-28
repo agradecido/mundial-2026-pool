@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { getFlag } from "@/lib/flags";
 import type { BracketPicks } from "@/lib/bracket";
 import { computeActualBracket } from "@/lib/bracket-scoring";
+import { resolveDbCode } from "@/lib/bracket";
 import BracketTree from "@/components/bracket-tree";
 
 type Stats = {
@@ -117,6 +118,7 @@ const getActualBracket = unstable_cache(
     const now = new Date();
     const partidos = await prisma.partido.findMany({
       select: {
+        id: true,
         equipoLocal: true,
         equipoVisitante: true,
         golesLocalReal: true,
@@ -240,7 +242,35 @@ const getActualBracket = unstable_cache(
     }
     const terceros = bracket.terceros.filter(t => completeGroups.has(teamToGroup[t] ?? ""));
 
-    return { ...bracket, grupos, terceros, allGrupos };
+    const fullBracket = { ...bracket, grupos, terceros, allGrupos };
+
+    const isSlotCode = (name: string) =>
+      /^\d/.test(name) || name.includes("/") || /^[WL]\d/.test(name);
+
+    const knockoutFases = new Set(["DIECISEISAVOS", "OCTAVOS"]);
+    const knockoutPartidos = partidos
+      .filter(p => knockoutFases.has(p.fase))
+      .sort((a, b) => a.fechaPartido.getTime() - b.fechaPartido.getTime())
+      .map(p => {
+        const local = isSlotCode(p.equipoLocal)
+          ? (resolveDbCode(p.equipoLocal, fullBracket) ?? p.equipoLocal)
+          : p.equipoLocal;
+        const visitante = isSlotCode(p.equipoVisitante)
+          ? (resolveDbCode(p.equipoVisitante, fullBracket) ?? p.equipoVisitante)
+          : p.equipoVisitante;
+        return {
+          id: p.id,
+          fase: p.fase,
+          fechaPartido: p.fechaPartido.toISOString(),
+          equipoLocal: local,
+          equipoVisitante: visitante,
+          golesLocalReal: p.golesLocalReal,
+          golesVisitanteReal: p.golesVisitanteReal,
+          estado: p.estado,
+        };
+      });
+
+    return { ...fullBracket, knockoutPartidos };
   },
   ["clasificacion-bracket"],
   { tags: ["ranking"] },
@@ -285,12 +315,23 @@ export default async function ClasificacionPage() {
   };
 
   const hasKnockoutTeams = Object.keys(bracket.grupos).length > 0;
+  const { knockoutPartidos } = bracket as typeof bracket & {
+    knockoutPartidos: Array<{
+      id: string; fase: string; fechaPartido: string;
+      equipoLocal: string; equipoVisitante: string;
+      golesLocalReal: number | null; golesVisitanteReal: number | null;
+      estado: string;
+    }>;
+  };
+  const hasKnockoutMatches = knockoutPartidos?.length > 0;
+  const hasStartedKnockout = knockoutPartidos?.some(p => p.estado !== "PROGRAMADO");
+  const subtitle = hasStartedKnockout ? "Fase Eliminatoria · Mundial 2026" : "Fase de Grupos · Mundial 2026";
 
   return (
     <>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-white">Clasificación</h1>
-        <p className="text-sm text-gray-500 mt-1">Fase de Grupos · Mundial 2026</p>
+        <p className="text-sm text-gray-500 mt-1">{subtitle}</p>
       </div>
 
       {grupos.length === 0 ? (
@@ -369,7 +410,104 @@ export default async function ClasificacionPage() {
           />
         </div>
       )}
+
+      {/* Knockout match results */}
+      {hasKnockoutMatches && (
+        <KnockoutResultsSection partidos={knockoutPartidos} />
+      )}
     </>
+  );
+}
+
+type KnockoutPartido = {
+  id: string; fase: string; fechaPartido: string;
+  equipoLocal: string; equipoVisitante: string;
+  golesLocalReal: number | null; golesVisitanteReal: number | null;
+  estado: string;
+};
+
+const FASE_LABEL: Record<string, string> = {
+  DIECISEISAVOS: "Dieciseisavos de Final",
+  OCTAVOS: "Octavos de Final",
+  CUARTOS: "Cuartos de Final",
+  SEMIFINAL: "Semifinales",
+  TERCER_PUESTO: "Tercer y Cuarto Puesto",
+  FINAL: "Final",
+};
+
+const ESTADO_BADGE: Record<string, string> = {
+  EN_PROGRESO: "En juego",
+  FINALIZADO: "Finalizado",
+};
+
+function KnockoutResultsSection({ partidos }: { partidos: KnockoutPartido[] }) {
+  const byFase: Record<string, KnockoutPartido[]> = {};
+  for (const p of partidos) {
+    (byFase[p.fase] ??= []).push(p);
+  }
+  const faseOrder = ["DIECISEISAVOS", "OCTAVOS", "CUARTOS", "SEMIFINAL", "TERCER_PUESTO", "FINAL"];
+  const fasesPresentes = faseOrder.filter(f => byFase[f]?.length);
+
+  return (
+    <div className="mt-12 space-y-8">
+      {fasesPresentes.map(fase => (
+        <div key={fase}>
+          <div className="mb-4">
+            <h2 className="text-xl font-bold text-white">{FASE_LABEL[fase] ?? fase}</h2>
+          </div>
+          <div className="glass-card !p-0 overflow-hidden">
+            <table className="w-full text-sm">
+              <tbody className="divide-y divide-white/[0.04]">
+                {(byFase[fase] ?? []).map(p => {
+                  const isSlot = (n: string) => /^\d/.test(n) || n.includes("/") || /^[WL]\d/.test(n);
+                  const localSlot = isSlot(p.equipoLocal);
+                  const visitanteSlot = isSlot(p.equipoVisitante);
+                  const played = p.golesLocalReal !== null && p.golesVisitanteReal !== null;
+                  const fecha = new Date(p.fechaPartido).toLocaleDateString("es-ES", {
+                    weekday: "short", day: "numeric", month: "short",
+                    hour: "2-digit", minute: "2-digit", timeZone: "Europe/Madrid",
+                  });
+                  return (
+                    <tr key={p.id} className="hover:bg-white/[0.02] transition-colors">
+                      <td className="pl-4 pr-2 py-3 text-xs text-gray-600 whitespace-nowrap w-32">{fecha}</td>
+                      <td className="px-2 py-3 text-right">
+                        <span className={`text-sm font-medium ${localSlot ? "text-gray-500 font-mono text-xs" : "text-gray-200"}`}>
+                          {!localSlot && <span className="mr-1.5">{getFlag(p.equipoLocal)}</span>}
+                          {p.equipoLocal}
+                        </span>
+                      </td>
+                      <td className="px-3 py-3 text-center whitespace-nowrap">
+                        {played ? (
+                          <span className="font-mono font-bold text-white tabular-nums">
+                            {p.golesLocalReal} – {p.golesVisitanteReal}
+                          </span>
+                        ) : (
+                          <span className="text-gray-700 text-xs">vs</span>
+                        )}
+                        {p.estado === "EN_PROGRESO" && (
+                          <span className="ml-1.5 text-[10px] text-amber-400 font-semibold">● {ESTADO_BADGE[p.estado]}</span>
+                        )}
+                      </td>
+                      <td className="px-2 py-3 text-left">
+                        <span className={`text-sm font-medium ${visitanteSlot ? "text-gray-500 font-mono text-xs" : "text-gray-200"}`}>
+                          {!visitanteSlot && <span className="mr-1.5">{getFlag(p.equipoVisitante)}</span>}
+                          {p.equipoVisitante}
+                        </span>
+                      </td>
+                      <td className="pr-4 pl-2 py-3 text-right w-20">
+                        {p.estado === "FINALIZADO" && (
+                          <span className="text-[10px] text-emerald-600">{ESTADO_BADGE[p.estado]}</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 

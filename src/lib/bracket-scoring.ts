@@ -1,5 +1,5 @@
 import type { BracketPicks } from "./bracket";
-import { ALL_MATCHES, PHASE_MATCHES, resolveSlot } from "./bracket";
+import { ALL_MATCHES, BRACKET_THIRD_TO_DB, PHASE_MATCHES, resolveSlot } from "./bracket";
 
 // Points for correctly predicting a team advances past each round
 const ROUND_PTS: Record<string, number> = {
@@ -129,18 +129,41 @@ export function computeActualBracket(partidos: PartidoRow[]): ActualBracket {
     if (!teamA || !teamB) continue;
 
     const fase = roundToFase[match.round];
-    const p = partidos.find(
-      r => r.fase === fase &&
-        ((r.equipoLocal === teamA && r.equipoVisitante === teamB) ||
-          (r.equipoLocal === teamB && r.equipoVisitante === teamA))
-    );
-    if (!p || p.estado !== "FINALIZADO" || p.golesLocalReal === null || p.golesVisitanteReal === null) continue;
-
-    if (p.golesLocalReal > p.golesVisitanteReal) resultados[match.id] = p.equipoLocal;
-    else if (p.golesVisitanteReal > p.golesLocalReal) resultados[match.id] = p.equipoVisitante;
+    const winner = findKnockoutWinner(partidos, match.slotA, match.slotB, teamA, teamB, fase);
+    if (winner) resultados[match.id] = winner;
   }
 
   return { grupos, terceros, resultados, allGrupos };
+}
+
+/** Find the winning team name for a knockout match, checking both real names and raw slot codes. */
+function findKnockoutWinner(
+  partidos: PartidoRow[],
+  slotA: string,
+  slotB: string,
+  teamA: string,
+  teamB: string,
+  fase: string,
+): string | undefined {
+  const dbSlotA = BRACKET_THIRD_TO_DB[slotA] ?? slotA;
+  const dbSlotB = BRACKET_THIRD_TO_DB[slotB] ?? slotB;
+
+  const p = partidos.find(
+    r => r.fase === fase &&
+      ((r.equipoLocal === teamA && r.equipoVisitante === teamB) ||
+        (r.equipoLocal === teamB && r.equipoVisitante === teamA) ||
+        (r.equipoLocal === dbSlotA && r.equipoVisitante === dbSlotB) ||
+        (r.equipoLocal === dbSlotB && r.equipoVisitante === dbSlotA))
+  );
+
+  if (!p) return undefined;
+  if (p.estado !== "FINALIZADO" || p.golesLocalReal === null || p.golesVisitanteReal === null) return undefined;
+  if (p.golesLocalReal === p.golesVisitanteReal) return undefined;
+
+  const localIsA = p.equipoLocal === teamA || p.equipoLocal === dbSlotA;
+  const localWins = p.golesLocalReal > p.golesVisitanteReal;
+  const winnerIsA = localIsA ? localWins : !localWins;
+  return winnerIsA ? teamA : teamB;
 }
 
 const PHASE_TO_SCORE_KEY: Record<string, keyof BracketScore> = {

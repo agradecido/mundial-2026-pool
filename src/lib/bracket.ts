@@ -94,23 +94,52 @@ export const NUM_TO_MATCHID: Record<number, string> = {
   101: "SF-1", 102: "SF-2",
 };
 
+// Maps the "3X/Y/Z" slot format stored in the DB (from worldcup.json) to the
+// internal bracket slot format used by resolveSlot.
+const DB_THIRD_TO_BRACKET: Record<string, string> = {
+  "3A/B/C/D/F": "3:D32-1",
+  "3C/D/F/G/H": "3:D32-2",
+  "3B/E/F/I/J": "3:D32-7",
+  "3A/E/H/I/J": "3:D32-8",
+  "3C/E/F/H/I": "3:D32-11",
+  "3E/H/I/J/K": "3:D32-12",
+  "3E/F/G/I/J": "3:D32-15",
+  "3D/E/I/J/L": "3:D32-16",
+};
+
+// Inverse: internal bracket "3:D32-X" slot → DB "3X/Y/Z" slot code.
+export const BRACKET_THIRD_TO_DB: Record<string, string> = Object.fromEntries(
+  Object.entries(DB_THIRD_TO_BRACKET).map(([db, br]) => [br, db])
+);
+
 /**
- * Resolve a DB slot code (e.g. "2A", "1E", "W74") to an actual team name
- * using the current bracket state. Returns undefined if the team is not yet known.
+ * Resolve a DB slot code (e.g. "2A", "1E", "W74", "3A/B/C/D/F") to an actual
+ * team name using the current bracket state. Returns undefined if not yet known.
  */
 export function resolveDbCode(
   code: string,
-  bracket: { grupos: Record<string, string[]>; resultados: Record<string, string> }
+  bracket: {
+    grupos: Record<string, string[]>;
+    resultados: Record<string, string>;
+    terceros?: string[];
+    allGrupos?: Record<string, string[]>;
+  }
 ): string | undefined {
   // "1X" or "2X" → first/second in group X
-  const gm = code.match(/^([12])([A-L])$/);
+  const gm = /^([12])([A-L])$/.exec(code);
   if (gm) return bracket.grupos[gm[2]]?.[gm[1] === "1" ? 0 : 1];
 
   // "W{num}" → winner of a previous match
-  const wm = code.match(/^W(\d+)$/);
+  const wm = /^W(\d+)$/.exec(code);
   if (wm) {
-    const matchId = NUM_TO_MATCHID[parseInt(wm[1])];
+    const matchId = NUM_TO_MATCHID[Number.parseInt(wm[1])];
     if (matchId) return bracket.resultados[matchId];
+  }
+
+  // "3A/B/C/D/F" style → best third-place team from specified groups
+  const bracketSlot = DB_THIRD_TO_BRACKET[code];
+  if (bracketSlot && bracket.terceros && bracket.allGrupos) {
+    return resolveSlot(bracketSlot, bracket.grupos, bracket.terceros, bracket.resultados, bracket.allGrupos);
   }
 
   return undefined;
