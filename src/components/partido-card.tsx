@@ -795,6 +795,46 @@ export default function PartidoCard({ partido, pronostico, odds, leaderPronostic
           </div>
         )}
 
+                {/* ── Ranking en vivo ─────────────────────────────────────────────── */}
+        {partido.estado === "EN_PROGRESO" && (
+          <div className="border-t border-white/[0.05]">
+            <div className="px-4 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-400/80 flex items-center gap-1.5 mb-3">
+                <span className="size-1.5 rounded-full bg-amber-400 animate-pulse" />
+                Ranking en vivo
+              </p>
+              {!liveRankingTop5 ? (
+                <p className="text-center text-xs text-gray-700 animate-pulse py-1">Calculando…</p>
+              ) : (
+                <div className="space-y-1">
+                  {liveRankingTop5.map((u, i) => {
+                    const initials = (u.name ?? "?").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+                    return (
+                      <div key={u.id} className="flex items-center gap-2 py-1 border-b border-white/[0.04] last:border-0">
+                        <span className="text-[10px] text-gray-600 tabular-nums w-3 shrink-0">{i + 1}</span>
+                        {u.image ? (
+                          <img src={u.image} alt={u.name ?? ""} className="size-5 rounded-full shrink-0 object-cover" />
+                        ) : (
+                          <span className="size-5 rounded-full bg-white/10 flex items-center justify-center text-[8px] font-bold text-gray-400 shrink-0">
+                            {initials}
+                          </span>
+                        )}
+                        <span className="flex-1 flex items-center gap-1.5 min-w-0">
+                          <span className="text-[11px] text-gray-300 truncate">{u.name ?? "—"}</span>
+                          {u.delta > 0 && (
+                            <span className="text-[10px] text-amber-400 tabular-nums shrink-0">+{u.delta} puntos</span>
+                          )}
+                        </span>
+                        <span className="text-[11px] font-bold tabular-nums text-white shrink-0">{u.total}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* ── Pronósticos / Puntuaciones ──────────────────────────────── */}
         <div className="border-t border-white/[0.05]">
           <button
@@ -803,7 +843,7 @@ export default function PartidoCard({ partido, pronostico, odds, leaderPronostic
             className="w-full flex items-center justify-between px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-gray-600 hover:text-gray-400 transition-colors"
           >
             <span className="flex items-center gap-1.5">
-              {isFinished || isActuallyLive ? "Puntuaciones" : "Pronósticos"}
+              {isFinished || isActuallyLive ? "Puntuaciones en este partido" : "Pronósticos"}
               {isActuallyLive && <span className="size-1.5 rounded-full bg-yellow-300 animate-pulse" />}
             </span>
             <span className="text-[9px]">{puntosOpen ? "▲" : "▼"}</span>
@@ -898,46 +938,6 @@ export default function PartidoCard({ partido, pronostico, odds, leaderPronostic
                 )}
               </div>
             )}
-          </div>
-        )}
-
-        {/* ── Ranking en vivo ─────────────────────────────────────────────── */}
-        {partido.estado === "EN_PROGRESO" && (
-          <div className="border-t border-white/[0.05]">
-            <div className="px-4 py-3">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-400/80 flex items-center gap-1.5 mb-3">
-                <span className="size-1.5 rounded-full bg-amber-400 animate-pulse" />
-                Ranking en vivo
-              </p>
-              {!liveRankingTop5 ? (
-                <p className="text-center text-xs text-gray-700 animate-pulse py-1">Calculando…</p>
-              ) : (
-                <div className="space-y-1">
-                  {liveRankingTop5.map((u, i) => {
-                    const initials = (u.name ?? "?").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
-                    return (
-                      <div key={u.id} className="flex items-center gap-2 py-1 border-b border-white/[0.04] last:border-0">
-                        <span className="text-[10px] text-gray-600 tabular-nums w-3 shrink-0">{i + 1}</span>
-                        {u.image ? (
-                          <img src={u.image} alt={u.name ?? ""} className="size-5 rounded-full shrink-0 object-cover" />
-                        ) : (
-                          <span className="size-5 rounded-full bg-white/10 flex items-center justify-center text-[8px] font-bold text-gray-400 shrink-0">
-                            {initials}
-                          </span>
-                        )}
-                        <span className="flex-1 flex items-center gap-1.5 min-w-0">
-                          <span className="text-[11px] text-gray-300 truncate">{u.name ?? "—"}</span>
-                          {u.delta > 0 && (
-                            <span className="text-[10px] text-amber-400 tabular-nums shrink-0">+{u.delta} puntos</span>
-                          )}
-                        </span>
-                        <span className="text-[11px] font-bold tabular-nums text-white shrink-0">{u.total}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
           </div>
         )}
 
