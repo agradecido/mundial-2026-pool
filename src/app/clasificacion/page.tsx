@@ -334,12 +334,35 @@ export default async function ClasificacionPage() {
         <p className="text-sm text-gray-500 mt-1">{subtitle}</p>
       </div>
 
+      {/* Knockout bracket */}
+      {hasKnockoutTeams && (
+        <div className="mb-12">
+          <div className="mb-5">
+            <h2 className="text-xl font-bold text-white">Eliminatorias</h2>
+            <p className="text-sm text-gray-500 mt-1">Se actualiza conforme se confirman posiciones</p>
+          </div>
+          <BracketTree
+            picks={bracketPicks}
+            locked
+            allGrupos={bracket.allGrupos}
+            emptyChampionLabel="Por confirmar"
+            split
+          />
+        </div>
+      )}
+
+      {/* Knockout match results */}
+      {hasKnockoutMatches && (
+        <KnockoutResultsSection partidos={knockoutPartidos} />
+      )}
+
+      {/* Fase de grupos */}
       {grupos.length === 0 ? (
         <div className="glass-card p-16 text-center text-gray-600">
           Los partidos de la fase de grupos aún no han comenzado
         </div>
       ) : (
-        <>
+        <div className={hasKnockoutMatches || hasKnockoutTeams ? "mt-12" : ""}>
           {/* Legend */}
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mb-4 text-[11px] text-gray-600">
             {Object.keys(userGrupos).length > 0 ? (
@@ -380,7 +403,7 @@ export default async function ClasificacionPage() {
               <GrupoCard key={letra} letra={letra} equipos={equipos} userPicks={userGrupos[letra]} terceros={userTerceros} />
             ))}
           </div>
-        </>
+        </div>
       )}
 
       {/* 8 mejores terceros */}
@@ -392,28 +415,6 @@ export default async function ClasificacionPage() {
           </div>
           <TercerosList terceros={tercerosList} userTerceros={userTerceros} />
         </div>
-      )}
-
-      {/* Knockout bracket */}
-      {hasKnockoutTeams && (
-        <div className="mt-12">
-          <div className="mb-5">
-            <h2 className="text-xl font-bold text-white">Eliminatorias</h2>
-            <p className="text-sm text-gray-500 mt-1">Se actualiza conforme se confirman posiciones</p>
-          </div>
-          <BracketTree
-            picks={bracketPicks}
-            locked
-            allGrupos={bracket.allGrupos}
-            emptyChampionLabel="Por confirmar"
-            split
-          />
-        </div>
-      )}
-
-      {/* Knockout match results */}
-      {hasKnockoutMatches && (
-        <KnockoutResultsSection partidos={knockoutPartidos} />
       )}
     </>
   );
