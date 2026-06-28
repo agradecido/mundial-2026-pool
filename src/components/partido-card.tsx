@@ -925,11 +925,13 @@ export default function PartidoCard({ partido, pronostico, odds, leaderPronostic
                             {initials}
                           </span>
                         )}
-                        <span className="flex-1 text-[11px] text-gray-300 truncate">{u.name ?? "—"}</span>
+                        <span className="flex-1 flex items-center gap-1.5 min-w-0">
+                          <span className="text-[11px] text-gray-300 truncate">{u.name ?? "—"}</span>
+                          {u.delta > 0 && (
+                            <span className="text-[10px] text-amber-400 tabular-nums shrink-0">+{u.delta} puntos</span>
+                          )}
+                        </span>
                         <span className="text-[11px] font-bold tabular-nums text-white shrink-0">{u.total}</span>
-                        {u.delta > 0 && (
-                          <span className="text-[10px] text-amber-400 tabular-nums shrink-0">+{u.delta}●</span>
-                        )}
                       </div>
                     );
                   })}
