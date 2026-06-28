@@ -110,7 +110,7 @@ export default function PartidosTabs({
                   : "text-gray-500 hover:text-gray-300"
               }`}
             >
-              {t === "fecha" ? "Por fecha" : "Lista"}
+              {t === "fecha" ? "Detallado" : "Compacto"}
             </button>
           ))}
         </div>
