@@ -292,3 +292,9 @@ Si la rama `dev` no existe o necesita resetearse desde el estado actual de produ
   - `EN_PROGRESO` → etiqueta "Puntuaciones", proyección en tiempo real con el marcador live.
   - `FINALIZADO` → etiqueta "Puntuaciones", muestra puntos ganados + marcador pronosticado de cada usuario.
   - El endpoint `/api/partidos/puntos` devuelve también `golesLocal` y `golesVisitante` para mostrarlos junto a los puntos.
+
+---
+
+## 7. Convenciones para Agentes de IA
+
+- **Mensajes de commit siempre en inglés.** Usar el formato convencional (`feat:`, `fix:`, `chore:`, etc.).
