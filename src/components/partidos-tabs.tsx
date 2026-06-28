@@ -114,14 +114,6 @@ export default function PartidosTabs({
             </button>
           ))}
         </div>
-        {tab === "fecha" && (
-          <a
-            href="#fase-eliminatoria"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-sm font-medium text-gray-500 hover:text-gray-300 hover:border-white/20 transition-colors"
-          >
-            ↓ 16avos
-          </a>
-        )}
         {tab !== "fecha" && (
           <button
             onClick={() => setHidePast((v) => !v)}
