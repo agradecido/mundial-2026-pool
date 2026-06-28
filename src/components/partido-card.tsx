@@ -3,6 +3,7 @@
 import { useState, useTransition, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { guardarPronostico, resetearPronostico } from "@/app/quiniela/actions";
+import type { LiveRankingEntry } from "@/app/api/ranking/quiniela-live/route";
 import { getFlag } from "@/lib/flags";
 import LiveMatchModal from "@/components/live-match-modal";
 import type { EstadoPartido, Fase } from "@prisma/client";
@@ -268,6 +269,9 @@ export default function PartidoCard({ partido, pronostico, odds, leaderPronostic
   // ── Live score ────────────────────────────────────────────────────────────
   const [liveScore, setLiveScore] = useState<{ home: number; away: number } | null>(null);
 
+  // ── Live ranking top 5 ────────────────────────────────────────────────────
+  const [liveRankingTop5, setLiveRankingTop5] = useState<LiveRankingEntry[] | null>(null);
+
   async function fetchH2H() {
     if (h2hData || h2hLoading) return;
     setH2hLoading(true);
@@ -380,6 +384,19 @@ export default function PartidoCard({ partido, pronostico, odds, leaderPronostic
     const id = setInterval(poll, 60_000);
     return () => clearInterval(id);
   }, [partido.estado, partido.fechaPartido, partido.equipoLocal, partido.equipoVisitante, router]);
+
+  useEffect(() => {
+    if (partido.estado !== "EN_PROGRESO") return;
+    const fetchRanking = async () => {
+      try {
+        const res = await fetch("/api/ranking/quiniela-live");
+        if (res.ok) setLiveRankingTop5(await res.json() as LiveRankingEntry[]);
+      } catch { /* ignore */ }
+    };
+    fetchRanking();
+    const id = setInterval(fetchRanking, 60_000);
+    return () => clearInterval(id);
+  }, [partido.estado]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -884,6 +901,43 @@ export default function PartidoCard({ partido, pronostico, odds, leaderPronostic
           </div>
         )}
 
+        {/* ── Ranking en vivo ─────────────────────────────────────────────── */}
+        {partido.estado === "EN_PROGRESO" && (
+          <div className="border-t border-white/[0.05]">
+            <div className="px-4 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-400/80 flex items-center gap-1.5 mb-3">
+                <span className="size-1.5 rounded-full bg-amber-400 animate-pulse" />
+                Ranking en vivo
+              </p>
+              {!liveRankingTop5 ? (
+                <p className="text-center text-xs text-gray-700 animate-pulse py-1">Calculando…</p>
+              ) : (
+                <div className="space-y-1">
+                  {liveRankingTop5.map((u, i) => {
+                    const initials = (u.name ?? "?").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+                    return (
+                      <div key={u.id} className="flex items-center gap-2 py-1 border-b border-white/[0.04] last:border-0">
+                        <span className="text-[10px] text-gray-600 tabular-nums w-3 shrink-0">{i + 1}</span>
+                        {u.image ? (
+                          <img src={u.image} alt={u.name ?? ""} className="size-5 rounded-full shrink-0 object-cover" />
+                        ) : (
+                          <span className="size-5 rounded-full bg-white/10 flex items-center justify-center text-[8px] font-bold text-gray-400 shrink-0">
+                            {initials}
+                          </span>
+                        )}
+                        <span className="flex-1 text-[11px] text-gray-300 truncate">{u.name ?? "—"}</span>
+                        <span className="text-[11px] font-bold tabular-nums text-white shrink-0">{u.total}</span>
+                        {u.delta > 0 && (
+                          <span className="text-[10px] text-amber-400 tabular-nums shrink-0">+{u.delta}●</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
       </div>
     </>
