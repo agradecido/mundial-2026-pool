@@ -28,6 +28,7 @@ type PartidoRow = {
   equipoVisitante: string;
   golesLocalReal: number | null;
   golesVisitanteReal: number | null;
+  ganadorPenales?: string | null;
   estado: string;
   fase: string;
   grupo: string | null;
@@ -158,9 +159,15 @@ function findKnockoutWinner(
 
   if (!p) return undefined;
   if (p.estado !== "FINALIZADO" || p.golesLocalReal === null || p.golesVisitanteReal === null) return undefined;
-  if (p.golesLocalReal === p.golesVisitanteReal) return undefined;
 
   const localIsA = p.equipoLocal === teamA || p.equipoLocal === dbSlotA;
+
+  if (p.golesLocalReal === p.golesVisitanteReal) {
+    // Decided by penalties — use the stored penalty winner
+    if (!p.ganadorPenales) return undefined;
+    return p.ganadorPenales === (localIsA ? teamA : teamB) ? teamA : teamB;
+  }
+
   const localWins = p.golesLocalReal > p.golesVisitanteReal;
   const winnerIsA = localIsA ? localWins : !localWins;
   return winnerIsA ? teamA : teamB;

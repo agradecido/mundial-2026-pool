@@ -123,6 +123,7 @@ const getActualBracket = unstable_cache(
         equipoVisitante: true,
         golesLocalReal: true,
         golesVisitanteReal: true,
+        ganadorPenales: true,
         estado: true,
         fase: true,
         grupo: true,

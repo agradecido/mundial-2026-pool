@@ -62,6 +62,7 @@ export default async function AdminPartidosPage({
             select: {
                 equipoLocal: true, equipoVisitante: true,
                 golesLocalReal: true, golesVisitanteReal: true,
+                ganadorPenales: true,
                 estado: true, fase: true, grupo: true,
             },
         }),

@@ -35,6 +35,7 @@ export default async function PartidosPage() {
       select: {
         equipoLocal: true, equipoVisitante: true,
         golesLocalReal: true, golesVisitanteReal: true,
+        ganadorPenales: true,
         estado: true, fase: true, grupo: true, fechaPartido: true,
       },
     }),

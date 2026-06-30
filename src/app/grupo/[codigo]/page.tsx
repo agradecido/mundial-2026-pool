@@ -49,6 +49,7 @@ export default async function GrupoPage({
       select: {
         equipoLocal: true, equipoVisitante: true,
         golesLocalReal: true, golesVisitanteReal: true,
+        ganadorPenales: true,
         estado: true, fase: true, grupo: true,
       },
     }),

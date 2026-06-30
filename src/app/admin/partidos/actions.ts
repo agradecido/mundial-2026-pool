@@ -36,6 +36,7 @@ export async function actualizarPartido(
         equipoVisitante?: string;
         golesLocalReal: string;
         golesVisitanteReal: string;
+        ganadorPenales?: string;
     }
 ) {
     await requireAdminOrEditor();
@@ -59,6 +60,10 @@ export async function actualizarPartido(
     if (equipoVisitante !== undefined && equipoVisitante === "")
         return { error: "El nombre del equipo visitante no puede estar vacío" };
 
+    // ganadorPenales only applies when both scores are set and equal (draw after extra time)
+    const isDraw = gL !== null && gV !== null && gL === gV;
+    const ganadorPenales = isDraw && data.ganadorPenales ? data.ganadorPenales : null;
+
     await prisma.partido.update({
         where: { id },
         data: {
@@ -68,6 +73,7 @@ export async function actualizarPartido(
             ...(equipoVisitante !== undefined && { equipoVisitante }),
             golesLocalReal: gL,
             golesVisitanteReal: gV,
+            ganadorPenales,
         },
     });
 

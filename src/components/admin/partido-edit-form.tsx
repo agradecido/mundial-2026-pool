@@ -31,6 +31,7 @@ interface Props {
         estado: EstadoPartido;
         golesLocalReal: number | null;
         golesVisitanteReal: number | null;
+        ganadorPenales: string | null;
     };
 }
 
@@ -52,10 +53,12 @@ export default function PartidoEditForm({ partido }: Props) {
     const [golesV, setGolesV] = useState(
         partido.golesVisitanteReal !== null ? String(partido.golesVisitanteReal) : ""
     );
+    const [ganadorPenales, setGanadorPenales] = useState(partido.ganadorPenales ?? "");
     const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
     const [pending, startTransition] = useTransition();
 
     const isKnockout = partido.fase !== "GRUPOS";
+    const isDraw = golesL !== "" && golesV !== "" && golesL === golesV;
 
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -68,6 +71,7 @@ export default function PartidoEditForm({ partido }: Props) {
                 equipoVisitante: isKnockout ? equipoVisitante : undefined,
                 golesLocalReal: golesL,
                 golesVisitanteReal: golesV,
+                ganadorPenales: isKnockout && isDraw ? ganadorPenales : undefined,
             });
             if (res.error) {
                 setMsg({ type: "err", text: res.error });
@@ -189,6 +193,34 @@ export default function PartidoEditForm({ partido }: Props) {
                     )}
                 </div>
             </div>
+
+            {/* Ganador por penales — solo visible en eliminatorias con empate */}
+            {isKnockout && isDraw && (
+                <div>
+                    <label className="label-field">Ganador por penales</label>
+                    <div className="mt-1 flex gap-2">
+                        {[equipoLocal, equipoVisitante].map((equipo) => (
+                            <button
+                                key={equipo}
+                                type="button"
+                                onClick={() => setGanadorPenales(ganadorPenales === equipo ? "" : equipo)}
+                                className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                                    ganadorPenales === equipo
+                                        ? "border-[#00e87a] bg-[#00e87a]/10 text-[#00e87a]"
+                                        : "border-white/10 bg-white/5 text-gray-400 hover:border-white/20 hover:text-white"
+                                }`}
+                            >
+                                {equipo}
+                            </button>
+                        ))}
+                    </div>
+                    {!ganadorPenales && (
+                        <p className="mt-1 text-xs text-amber-500">
+                            Selecciona el equipo que ganó en la tanda de penales.
+                        </p>
+                    )}
+                </div>
+            )}
 
             {/* Feedback */}
             {msg && (

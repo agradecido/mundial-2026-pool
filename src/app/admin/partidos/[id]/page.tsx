@@ -21,6 +21,7 @@ export default async function PartidoEditPage({
     const serialized = {
         ...partido,
         fechaPartido: partido.fechaPartido.toISOString(),
+        ganadorPenales: partido.ganadorPenales ?? null,
     };
 
     return (

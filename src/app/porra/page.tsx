@@ -19,6 +19,7 @@ export default async function LlavesPage() {
         equipoVisitante: true,
         golesLocalReal: true,
         golesVisitanteReal: true,
+        ganadorPenales: true,
         estado: true,
         fase: true,
         grupo: true,
