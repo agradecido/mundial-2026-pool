@@ -1,5 +1,17 @@
 import type { BracketPicks } from "./bracket";
-import { ALL_MATCHES, BRACKET_THIRD_TO_DB, PHASE_MATCHES, resolveSlot } from "./bracket";
+import { ALL_MATCHES, BRACKET_THIRD_TO_DB, NUM_TO_MATCHID, PHASE_MATCHES, resolveSlot } from "./bracket";
+
+// Inverse of NUM_TO_MATCHID: bracket match ID → FIFA match number
+const MATCHID_TO_NUM: Record<string, number> = Object.fromEntries(
+  Object.entries(NUM_TO_MATCHID).map(([k, v]) => [v, parseInt(k)])
+);
+
+// Converts "W:D16-1" (internal bracket slot) to "W89" (DB seed format), or undefined if not a W-slot.
+function bracketSlotToDbCode(slot: string): string | undefined {
+  if (!slot.startsWith("W:")) return undefined;
+  const num = MATCHID_TO_NUM[slot.slice(2)];
+  return num !== undefined ? `W${num}` : undefined;
+}
 
 // Points for correctly predicting a team advances past each round
 const ROUND_PTS: Record<string, number> = {
@@ -148,24 +160,36 @@ function findKnockoutWinner(
 ): string | undefined {
   const dbSlotA = BRACKET_THIRD_TO_DB[slotA] ?? slotA;
   const dbSlotB = BRACKET_THIRD_TO_DB[slotB] ?? slotB;
+  // "W{num}" format stored by the seed script (e.g. "W89", "W90")
+  const wCodeA = bracketSlotToDbCode(slotA);
+  const wCodeB = bracketSlotToDbCode(slotB);
 
   const p = partidos.find(
     r => r.fase === fase &&
       ((r.equipoLocal === teamA && r.equipoVisitante === teamB) ||
         (r.equipoLocal === teamB && r.equipoVisitante === teamA) ||
         (r.equipoLocal === dbSlotA && r.equipoVisitante === dbSlotB) ||
-        (r.equipoLocal === dbSlotB && r.equipoVisitante === dbSlotA))
+        (r.equipoLocal === dbSlotB && r.equipoVisitante === dbSlotA) ||
+        (wCodeA && wCodeB && (
+          (r.equipoLocal === wCodeA && r.equipoVisitante === wCodeB) ||
+          (r.equipoLocal === wCodeB && r.equipoVisitante === wCodeA)
+        ))
+      )
   );
 
   if (!p) return undefined;
   if (p.estado !== "FINALIZADO" || p.golesLocalReal === null || p.golesVisitanteReal === null) return undefined;
 
-  const localIsA = p.equipoLocal === teamA || p.equipoLocal === dbSlotA;
+  const localIsA = p.equipoLocal === teamA || p.equipoLocal === dbSlotA || p.equipoLocal === wCodeA;
 
   if (p.golesLocalReal === p.golesVisitanteReal) {
     // Decided by penalties — use the stored penalty winner
     if (!p.ganadorPenales) return undefined;
-    return p.ganadorPenales === (localIsA ? teamA : teamB) ? teamA : teamB;
+    // ganadorPenales may be stored as real name or as a slot code
+    const ganadorIsA = p.ganadorPenales === teamA || p.ganadorPenales === dbSlotA || p.ganadorPenales === wCodeA;
+    const ganadorIsB = p.ganadorPenales === teamB || p.ganadorPenales === dbSlotB || p.ganadorPenales === wCodeB;
+    if (!ganadorIsA && !ganadorIsB) return undefined;
+    return ganadorIsA ? teamA : teamB;
   }
 
   const localWins = p.golesLocalReal > p.golesVisitanteReal;

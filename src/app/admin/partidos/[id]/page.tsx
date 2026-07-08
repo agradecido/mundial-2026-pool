@@ -5,6 +5,8 @@ import Link from "next/link";
 import { LinkSpinner } from "@/components/nav-button";
 import PartidoEditForm from "@/components/admin/partido-edit-form";
 import EliminarPartidoButton from "@/components/admin/eliminar-partido-button";
+import { computeActualBracket } from "@/lib/bracket-scoring";
+import { resolveDbCode } from "@/lib/bracket";
 
 export default async function PartidoEditPage({
     params,
@@ -15,11 +17,35 @@ export default async function PartidoEditPage({
     if (session?.user?.role !== "ADMIN" && session?.user?.role !== "EDITOR") redirect("/");
 
     const { id } = await params;
-    const partido = await prisma.partido.findUnique({ where: { id } });
+    const [partido, allPartidos] = await Promise.all([
+        prisma.partido.findUnique({ where: { id } }),
+        prisma.partido.findMany({
+            select: {
+                equipoLocal: true, equipoVisitante: true,
+                golesLocalReal: true, golesVisitanteReal: true,
+                ganadorPenales: true,
+                estado: true, fase: true, grupo: true,
+            },
+        }),
+    ]);
     if (!partido) notFound();
+
+    const bracket = computeActualBracket(allPartidos);
+
+    const isSlotCode = (name: string) =>
+        /^\d/.test(name) || name.includes("/") || /^[WL]\d/.test(name);
+
+    const resolvedLocal = isSlotCode(partido.equipoLocal)
+        ? (resolveDbCode(partido.equipoLocal, bracket) ?? partido.equipoLocal)
+        : partido.equipoLocal;
+    const resolvedVisitante = isSlotCode(partido.equipoVisitante)
+        ? (resolveDbCode(partido.equipoVisitante, bracket) ?? partido.equipoVisitante)
+        : partido.equipoVisitante;
 
     const serialized = {
         ...partido,
+        equipoLocal: resolvedLocal,
+        equipoVisitante: resolvedVisitante,
         fechaPartido: partido.fechaPartido.toISOString(),
         ganadorPenales: partido.ganadorPenales ?? null,
     };
