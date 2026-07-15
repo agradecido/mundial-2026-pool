@@ -25,6 +25,7 @@ interface Props {
   oddsMap?: Record<string, { home: number; draw: number; away: number }>;
   userBadge?: { emoji: string; titulo: string; descripcion: string } | null;
   slotGroupStandings?: Record<string, { team: string; pts: number; gd: number; gf: number }[]>;
+  mostrarPronosticosAntes?: boolean;
 }
 
 function getDayKey(iso: string): string {
@@ -55,6 +56,7 @@ export default function PartidosTabs({
   oddsMap,
   userBadge,
   slotGroupStandings,
+  mostrarPronosticosAntes,
 }: Props) {
   const [tab, setTab] = useState<"fecha" | "lista">("fecha");
   const [hidePast, setHidePast] = useState(true);
@@ -173,6 +175,7 @@ export default function PartidosTabs({
                     pronostico={pronosticoMap[match.id] ?? null}
                     odds={oddsMap?.[match.id] ?? null}
                     slotGroupStandings={slotGroupStandings}
+                    mostrarPronosticosAntes={mostrarPronosticosAntes}
                   />
                 </div>
               ))}
@@ -205,6 +208,7 @@ export default function PartidosTabs({
                     odds={oddsMap?.[p.id] ?? null}
                     showPrediccion={isInPrediccionWindow(key)}
                     slotGroupStandings={slotGroupStandings}
+                    mostrarPronosticosAntes={mostrarPronosticosAntes}
                   />
                 );
 

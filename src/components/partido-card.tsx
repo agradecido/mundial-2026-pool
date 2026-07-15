@@ -52,6 +52,7 @@ interface Props {
   leaderPronostico?: { name: string | null; golesLocal: number; golesVisitante: number } | null;
   showPrediccion?: boolean;
   slotGroupStandings?: Record<string, GroupTeamEntry[]>;
+  mostrarPronosticosAntes?: boolean;
 }
 
 const FASE_LABEL: Record<string, string> = {
@@ -224,7 +225,7 @@ function SlotStandingsPopover({
   );
 }
 
-export default function PartidoCard({ partido, pronostico, odds, leaderPronostico, showPrediccion, slotGroupStandings }: Props) {
+export default function PartidoCard({ partido, pronostico, odds, leaderPronostico, showPrediccion, slotGroupStandings, mostrarPronosticosAntes = false }: Props) {
   const router = useRouter();
   const refreshed = useRef(false);
   const [locked, setLocked] = useState(false);
@@ -351,7 +352,7 @@ export default function PartidoCard({ partido, pronostico, odds, leaderPronostic
   function togglePuntos() {
     if (!puntosOpen) {
       if (partido.estado === "FINALIZADO" && !puntosData) fetchPuntos();
-      else if (isActuallyLive && !pronosticosData) fetchPronosticos();
+      else if ((isActuallyLive || mostrarPronosticosAntes) && !pronosticosData) fetchPronosticos();
     }
     setPuntosOpen((v) => !v);
   }
@@ -890,10 +891,16 @@ export default function PartidoCard({ partido, pronostico, odds, leaderPronostic
               )}
 
               {/* ── PROGRAMADO (partido aún no ha empezado) ── */}
-              {!isFinished && !isActuallyLive && (
+              {!isFinished && !isActuallyLive && !mostrarPronosticosAntes && (
                 <p className="text-center text-[11px] text-gray-700 py-2">
                   Los pronósticos se revelan al empezar el partido
                 </p>
+              )}
+              {!puntosLoading && !isFinished && !isActuallyLive && mostrarPronosticosAntes && pronosticosData?.length === 0 && (
+                <p className="text-center text-[11px] text-gray-700 py-2">Sin pronósticos todavía</p>
+              )}
+              {!puntosLoading && !isFinished && !isActuallyLive && mostrarPronosticosAntes && pronosticosData && pronosticosData.length > 0 && (
+                <PredictionList entries={pronosticosData} />
               )}
             </div>
           )}
@@ -949,6 +956,36 @@ export default function PartidoCard({ partido, pronostico, odds, leaderPronostic
 
       </div>
     </>
+  );
+}
+
+// ── PredictionList ────────────────────────────────────────────────────────────
+
+function PredictionList({ entries }: { entries: { name: string; image: string | null; golesLocal: number; golesVisitante: number }[] }) {
+  const sorted = [...entries].sort((a, b) =>
+    b.golesLocal - a.golesLocal || b.golesVisitante - a.golesVisitante
+  );
+  return (
+    <div className="space-y-1">
+      {sorted.map((u, i) => {
+        const initials = u.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
+        return (
+          <div key={i} className="flex items-center gap-2.5 py-1.5 border-b border-white/[0.04] last:border-0">
+            {u.image ? (
+              <img src={u.image} alt={u.name} className="size-5 rounded-full shrink-0 object-cover" />
+            ) : (
+              <span className="size-5 rounded-full bg-white/10 flex items-center justify-center text-[8px] font-bold text-gray-400 shrink-0">
+                {initials}
+              </span>
+            )}
+            <span className="flex-1 text-[11px] text-gray-300 truncate">{u.name}</span>
+            <span className="text-[11px] font-mono tabular-nums text-gray-500 shrink-0">
+              {u.golesLocal}–{u.golesVisitante}
+            </span>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 

@@ -280,3 +280,9 @@ model PartidoHistorico {
 
   @@index([equipo1, equipo2])
 }
+
+// Fila única (singleton) con ajustes globales editables desde /admin/ajustes.
+model Configuracion {
+  id                      String  @id @default("global")
+  mostrarPronosticosAntes Boolean @default(false)
+}

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getConfiguracion } from "@/lib/configuracion";
 
 export interface PronosticoEntry {
   name: string;
@@ -18,9 +19,13 @@ export async function GET(req: NextRequest) {
   });
   if (!partido) return NextResponse.json({ error: "Partido no encontrado" }, { status: 404 });
 
-  // Los pronósticos de los demás usuarios permanecen ocultos hasta que empiece el partido.
+  // Los pronósticos de los demás usuarios permanecen ocultos hasta que empiece el partido,
+  // salvo que un admin haya activado "mostrarPronosticosAntes" en /admin/ajustes.
   const hasStarted = partido.estado !== "PROGRAMADO" || Date.now() >= partido.fechaPartido.getTime();
-  if (!hasStarted) return NextResponse.json([]);
+  if (!hasStarted) {
+    const config = await getConfiguracion();
+    if (!config.mostrarPronosticosAntes) return NextResponse.json([]);
+  }
 
   const rows = await prisma.pronostico.findMany({
     where: { partidoId },

@@ -54,6 +54,7 @@ export default async function AdminLayout({
         { href: "/admin/modales", label: "Modales" },
         { href: "/admin/emails", label: "Emails" },
         { href: "/admin/badges", label: "Badges IA" },
+        { href: "/admin/ajustes", label: "Ajustes" },
     ];
 
     return (

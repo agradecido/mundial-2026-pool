@@ -7,6 +7,7 @@ import ResetQuinielaButton from "@/components/reset-quiniela-button";
 import { getMundialOdds, buildOddsMap } from "@/lib/odds-api";
 import { computeActualBracket } from "@/lib/bracket-scoring";
 import { resolveDbCode } from "@/lib/bracket";
+import { getConfiguracion } from "@/lib/configuracion";
 
 export default async function PartidosPage() {
   const session = await auth();
@@ -16,7 +17,7 @@ export default async function PartidosPage() {
 
   void prisma.user.update({ where: { id: userId }, data: { ultimoAccesoQuiniela: now } });
 
-  const [partidos, pronosticos, oddsEvents, allUsers, userBadge, allPartidosForBracket] = await Promise.all([
+  const [partidos, pronosticos, oddsEvents, allUsers, userBadge, allPartidosForBracket, configuracion] = await Promise.all([
     prisma.partido.findMany({ orderBy: { fechaPartido: "asc" } }),
     prisma.pronostico.findMany({ where: { userId } }),
     getMundialOdds(),
@@ -39,6 +40,7 @@ export default async function PartidosPage() {
         estado: true, fase: true, grupo: true, fechaPartido: true,
       },
     }),
+    getConfiguracion(),
   ]);
 
   // ── Actual bracket (confirmed qualifiers: complete groups + math-locked teams) ─
@@ -236,6 +238,7 @@ export default async function PartidosPage() {
         oddsMap={oddsMap}
         userBadge={userBadge ? { emoji: userBadge.emoji, titulo: userBadge.titulo, descripcion: userBadge.descripcion } : null}
         slotGroupStandings={slotGroupStandings}
+        mostrarPronosticosAntes={configuracion.mostrarPronosticosAntes}
       />
     </div>
   );
