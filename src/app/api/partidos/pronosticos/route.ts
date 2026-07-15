@@ -12,6 +12,16 @@ export async function GET(req: NextRequest) {
   const partidoId = new URL(req.url).searchParams.get("partidoId");
   if (!partidoId) return NextResponse.json({ error: "Missing partidoId" }, { status: 400 });
 
+  const partido = await prisma.partido.findUnique({
+    where: { id: partidoId },
+    select: { estado: true, fechaPartido: true },
+  });
+  if (!partido) return NextResponse.json({ error: "Partido no encontrado" }, { status: 404 });
+
+  // Los pronósticos de los demás usuarios permanecen ocultos hasta que empiece el partido.
+  const hasStarted = partido.estado !== "PROGRAMADO" || Date.now() >= partido.fechaPartido.getTime();
+  if (!hasStarted) return NextResponse.json([]);
+
   const rows = await prisma.pronostico.findMany({
     where: { partidoId },
     select: {
